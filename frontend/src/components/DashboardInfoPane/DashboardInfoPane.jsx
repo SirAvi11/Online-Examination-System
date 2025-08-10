@@ -2,13 +2,13 @@ const DashboardInfoPane = ({
   title = "Average Exam Scores By Module", 
   subtitle = "January - June 2024", 
   children, 
-  maxWidth = "20rem",
+  maxWidth = "100%",
   cardClassName = "",
   containerClassName = "",
   bodyClassName = ""
 }) => {
   return (
-    <div className={`bg-white p-3 d-flex justify-content-center align-items-start ${containerClassName}`}>
+    <div className={`bg-white d-flex justify-content-center align-items-start ${containerClassName}`}>
       <div 
         className={`card rounded-3 border-light shadow-sm ${cardClassName}`} 
         style={{ maxWidth: maxWidth }}

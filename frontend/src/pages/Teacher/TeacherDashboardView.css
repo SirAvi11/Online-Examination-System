@@ -21,3 +21,26 @@
   border-radius: 0.25rem;
   background-color: #f8f9fa;
 }
+
+.dashboard-main-body{
+  display: flex;
+  flex-wrap:nowrap;
+  gap: 1.2rem;
+}
+
+.metrics-cards{
+  display: flex;
+  gap:1.2rem;
+
+}
+
+.main-left-side{
+  display: flex;
+  flex-direction: column;
+  gap:1.2rem;
+}
+
+.main-columns{
+  display: flex;
+  gap:1.2rem;
+}
