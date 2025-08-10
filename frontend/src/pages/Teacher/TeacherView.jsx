@@ -48,7 +48,7 @@ const TeacherView = () => {
     <>
       <Header />
       <Dashboard>
-        <Sidebar setActiveView={setActiveView} />
+        <Sidebar setActiveView={setActiveView} userRole={user?.role} />
         <MainContent>
           {renderView()}
         </MainContent>

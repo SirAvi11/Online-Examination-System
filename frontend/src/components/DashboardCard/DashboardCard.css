@@ -1,8 +1,11 @@
 .card-custom {
     width: 12rem;
     border-radius: 0.5rem;
-    border: 1px solid #d1d5db; /* Tailwind gray-300 */
+    border: 1px solid #d1d5db; 
     padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
 }
 .text-xs {
     font-size: 0.75rem;
