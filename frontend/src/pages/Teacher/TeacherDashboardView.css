@@ -1,0 +1,23 @@
+/* TeacherDashboardView.css */
+.teacher-dashboard {
+  padding: 1.5rem;
+}
+
+.activity-feed {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.calendar {
+  font-size: 0.85rem;
+}
+
+.calendar th, .calendar td {
+  width: calc(100% / 7);
+}
+
+.event-item {
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  background-color: #f8f9fa;
+}
