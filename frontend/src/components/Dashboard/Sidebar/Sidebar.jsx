@@ -1,14 +1,16 @@
 import SidebarLink from './SidebarLink';
 import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 
 const Sidebar = ({ setActiveView, userRole }) => {
-  
   const navigate = useNavigate();
 
-  
-// Common links for all roles
+  // Track currently active view
+  const [activeView, setActiveViewState] = useState('dashboard');
+
+  // Common links for all roles
   const commonLinks = [
-    { icon: 'fa-th-large', label: 'Dashboard', view: 'dashboard', active: true },
+    { icon: 'fa-th-large', label: 'Dashboard', view: 'dashboard' },
     { icon: 'fa-file-alt', label: 'Exams', view: 'exams' }
   ];
 
@@ -33,19 +35,15 @@ const Sidebar = ({ setActiveView, userRole }) => {
     if (view === 'logout') {
       handleLogout();
     } else {
+      setActiveViewState(view);
       setActiveView(view);
     }
   };
 
   const handleLogout = () => {
-    // Clear user data from storage
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    
-    // Redirect to login page
     navigate('/login');
-    
-    // Optional: Refresh the app state
     window.location.reload();
   };
 
@@ -57,6 +55,7 @@ const Sidebar = ({ setActiveView, userRole }) => {
           <SidebarLink 
             key={`main-${index}`} 
             {...link} 
+            active={activeView === link.view}
             onClick={() => handleLinkClick(link.view)}
           />
         ))}
@@ -66,6 +65,7 @@ const Sidebar = ({ setActiveView, userRole }) => {
           <SidebarLink 
             key={`secondary-${index}`} 
             {...link} 
+            active={activeView === link.view}
             onClick={() => handleLinkClick(link.view || link.action)}
           />
         ))}

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Modal, Button, Table, Form } from "react-bootstrap";
 
 export default function TeacherModulesView() {
@@ -57,7 +57,7 @@ export default function TeacherModulesView() {
   const handleBack = () => setSelectedModule(null);
 
   return (
-    <div className="p-4">
+    <div className="p-4" style={{width: "100%"}}>
       {!selectedModule ? (
         <>
           {/* Modules Header */}

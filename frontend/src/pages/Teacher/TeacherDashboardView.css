@@ -1,6 +1,9 @@
 /* TeacherDashboardView.css */
 .teacher-dashboard {
   padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
 }
 
 .activity-feed {
@@ -26,6 +29,7 @@
   display: flex;
   flex-wrap:nowrap;
   gap: 1.2rem;
+  flex-grow:1;
 }
 
 .metrics-cards{
@@ -40,7 +44,12 @@
   gap:1.2rem;
 }
 
+.main-right-side{
+  flex-grow:1;
+}
+
 .main-columns{
   display: flex;
   gap:1.2rem;
+  flex-grow:1
 }
