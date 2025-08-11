@@ -1,0 +1,13 @@
+.editable-cell {
+  position: relative;
+}
+.editable-cell .cell-edit-btn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.editable-cell:hover .cell-edit-btn {
+  opacity: 1;
+}
