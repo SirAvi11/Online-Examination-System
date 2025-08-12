@@ -7,7 +7,7 @@ import TeacherDashboardView from './TeacherDashboardView';
 import TeacherExamView from './TeacherExamView';
 import TeacherScheduleView from './TeacherScheduleView';
 import TeacherInsightsView from './TeacherInsightsView';
-import TeacherModulesView from './TeacherModulesView';
+import TeacherModulesView from './TeacherModules/TeacherModulesView';
 import { useNavigate } from 'react-router-dom';
 
 const TeacherView = () => {

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Modal, Button, Table, Form } from "react-bootstrap";
 import "./TeacherModulesView.css"; // <-- New CSS file
+import TeacherQuestionBank from "./TeacherQuestionBank";
 
 export default function TeacherModulesView() {
   const [modules, setModules] = useState([
@@ -38,23 +39,6 @@ export default function TeacherModulesView() {
 
   const handleOpenQuestionBank = (module) => {
     setSelectedModule(module);
-    if (!questionBank[module.id]) {
-      setQuestionBank({ ...questionBank, [module.id]: [] });
-    }
-  };
-
-  const handleAddQuestion = () => {
-    if (!newQuestion.question.trim()) return;
-    const updatedBank = {
-      ...questionBank,
-      [selectedModule.id]: [
-        ...(questionBank[selectedModule.id] || []),
-        { ...newQuestion }
-      ]
-    };
-    setQuestionBank(updatedBank);
-    setModules(modules.map(m => m.id === selectedModule.id ? { ...m, questions: updatedBank[selectedModule.id].length } : m));
-    setNewQuestion({ question: "", options: ["", "", "", ""], answer: "" });
   };
 
   const startEditing = (moduleId, field) => {
@@ -116,7 +100,7 @@ export default function TeacherModulesView() {
             </Button>
           </div>
 
-          <Table striped bordered hover responsive>
+          <Table striped bordered hover responsive >
             <thead>
               <tr>
                 <th style={{ minWidth: 320 }}>Module Name</th>
@@ -258,74 +242,10 @@ export default function TeacherModulesView() {
           </Modal>
         </>
       ) : (
-        <>
-          <div className="d-flex justify-content-between align-items-center mb-4">
-            <h3>Question Bank - {selectedModule.name}</h3>
-            <Button variant="secondary" onClick={handleBack}>← Back to Modules</Button>
-          </div>
-
-          <div className="mb-4 p-3 border rounded">
-            <h5>Add New Question</h5>
-            <Form>
-              <Form.Group className="mb-3">
-                <Form.Label>Question</Form.Label>
-                <Form.Control
-                  type="text"
-                  placeholder="Enter the question"
-                  value={newQuestion.question}
-                  onChange={(e) => setNewQuestion({ ...newQuestion, question: e.target.value })}
-                />
-              </Form.Group>
-              {newQuestion.options.map((opt, idx) => (
-                <Form.Group key={idx} className="mb-2">
-                  <Form.Label>Option {idx + 1}</Form.Label>
-                  <Form.Control
-                    type="text"
-                    placeholder={`Enter option ${idx + 1}`}
-                    value={opt}
-                    onChange={(e) => {
-                      const updatedOptions = [...newQuestion.options];
-                      updatedOptions[idx] = e.target.value;
-                      setNewQuestion({ ...newQuestion, options: updatedOptions });
-                    }}
-                  />
-                </Form.Group>
-              ))}
-              <Form.Group className="mb-3">
-                <Form.Label>Correct Answer</Form.Label>
-                <Form.Select
-                  value={newQuestion.answer}
-                  onChange={(e) => setNewQuestion({ ...newQuestion, answer: e.target.value })}
-                >
-                  <option value="">Select correct answer</option>
-                  {newQuestion.options.map((opt, idx) => (
-                    <option key={idx} value={opt}>{opt || `Option ${idx + 1}`}</option>
-                  ))}
-                </Form.Select>
-              </Form.Group>
-              <Button variant="success" onClick={handleAddQuestion}>Add Question</Button>
-            </Form>
-          </div>
-
-          <Table striped bordered hover responsive>
-            <thead>
-              <tr>
-                <th>Question</th>
-                <th>Options</th>
-                <th>Answer</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(questionBank[selectedModule.id] || []).map((q, i) => (
-                <tr key={i}>
-                  <td>{q.question}</td>
-                  <td>{q.options.join(", ")}</td>
-                  <td>{q.answer}</td>
-                </tr>
-              ))}
-            </tbody>
-          </Table>
-        </>
+        <TeacherQuestionBank
+          onBack={handleBack}
+          selectedModule = {selectedModule}
+        />
       )}
     </div>
   );
