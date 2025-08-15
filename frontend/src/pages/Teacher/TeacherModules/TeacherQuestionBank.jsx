@@ -46,12 +46,26 @@ export default function TeacherQuestionBank({ selectedModule, onBack }) {
         <Button variant="outline-secondary" onClick={onBack}>
           ← Back to Modules
         </Button>
-        <h4 className="m-0">Question Bank - {selectedModule.name}</h4>
+        <div className="text-center">
+          <h5
+            className="mb-1 fw-bold"
+            style={{ letterSpacing: "1px", fontSize: "1.2rem" }}
+          >
+            Question Bank ({questions.length})
+          </h5>
+          <h6
+            className="mb-0 text-secondary"
+            style={{ letterSpacing: "0.5px", fontSize: "1rem" }}
+          >
+            {selectedModule.name}
+          </h6>
+        </div>
+
         <div className="d-flex gap-2">
-          <Button variant="primary" onClick={() => setShowModal(true)}>
+          <Button variant="outline-secondary" onClick={() => setShowModal(true)}>
             <i className="fa fa-plus me-2"></i>Add New Question
           </Button>
-          <Button variant="outline-primary">
+          <Button variant="outline-secondary">
             <i className="fa fa-upload me-2"></i>Upload from CSV
           </Button>
         </div>

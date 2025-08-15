@@ -72,3 +72,17 @@ exports.deleteModule = async (req, res) => {
     res.status(500).json({ error: 'Failed to delete module' });
   }
 };
+
+// DELETE multiple modules
+exports.deleteModulesBulk = async (req, res) => {
+  const { ids } = req.body; // array of IDs
+  if (!ids || !Array.isArray(ids)) return res.status(400).json({ error: "Invalid ids array" });
+
+  try {
+    const result = await Module.deleteMany({ _id: { $in: ids } });
+    res.json({ message: `Deleted ${result.deletedCount} module(s)` });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to delete modules' });
+  }
+};

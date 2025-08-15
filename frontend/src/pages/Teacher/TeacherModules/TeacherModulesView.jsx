@@ -3,15 +3,15 @@ import { Modal, Button, Table, Form } from "react-bootstrap";
 import "./TeacherModulesView.css";
 import TeacherQuestionBank from "./TeacherQuestionBank";
 
-export default function TeacherModulesView({teacherId}) {
+export default function TeacherModulesView({ teacherId }) {
   const [modules, setModules] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [newModule, setNewModule] = useState({ name: "", description: "" });
   const [selectedModule, setSelectedModule] = useState(null);
   const [editing, setEditing] = useState({});
   const [editingValues, setEditingValues] = useState({});
+  const [selectedModuleIds, setSelectedModuleIds] = useState([]);
 
-  // Fetch modules from backend
   useEffect(() => {
     if (!teacherId) return;
     fetchModules();
@@ -21,24 +21,31 @@ export default function TeacherModulesView({teacherId}) {
     try {
       const res = await fetch(`http://localhost:5000/api/modules?teacherId=${teacherId}`);
       const data = await res.json();
-      setModules(data);
+      setModules(data.sort((a, b) => new Date(b.date) - new Date(a.date)));
     } catch (err) {
       console.error("Error fetching modules:", err);
     }
   };
 
-  // Save new module with teacherId
+  const getRandomColor = () => {
+    const letters = '0123456789ABCDEF';
+    let color = '#';
+    for (let i = 0; i < 6; i++) {
+      color += letters[Math.floor(Math.random() * 16)];
+    }
+    return color;
+  };
+
   const handleSaveModule = async () => {
     if (!newModule.name.trim()) return;
-
     try {
       const res = await fetch("http://localhost:5000/api/modules", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...newModule, teacherId })
+        body: JSON.stringify({ ...newModule, teacherId, color: getRandomColor() })
       });
       const savedModule = await res.json();
-      setModules(prev => [...prev, savedModule]);
+      setModules(prev => [savedModule, ...prev]);
       setNewModule({ name: "", description: "" });
       setShowModal(false);
     } catch (err) {
@@ -50,6 +57,7 @@ export default function TeacherModulesView({teacherId}) {
     setSelectedModule(module);
   };
 
+  // --- Editing Functions ---
   const startEditing = (moduleId, field) => {
     const key = `${moduleId}-${field}`;
     const module = modules.find(m => m._id === moduleId) || {};
@@ -62,20 +70,15 @@ export default function TeacherModulesView({teacherId}) {
     setEditingValues(prev => ({ ...prev, [key]: value }));
   };
 
-  // Save inline edits to backend
   const saveEditing = async (moduleId, field) => {
     const key = `${moduleId}-${field}`;
     const newVal = (editingValues[key] ?? "").trim();
     if (field === "name" && newVal === "") return;
-
     const updatedModule = { [field]: newVal };
-
-    // Optional: also update color
     if (field === "name") {
       const colorKey = `${moduleId}-color`;
       updatedModule.color = editingValues[colorKey] ?? modules.find(m => m._id === moduleId)?.color;
     }
-
     try {
       const res = await fetch(`http://localhost:5000/api/modules/${moduleId}`, {
         method: "PUT",
@@ -83,25 +86,10 @@ export default function TeacherModulesView({teacherId}) {
         body: JSON.stringify(updatedModule)
       });
       const data = await res.json();
-
-      // Update local state
       setModules(prev => prev.map(m => m._id === moduleId ? data : m));
-
       // Clear editing states
-      setEditing(prev => {
-        const copy = { ...prev };
-        delete copy[`${moduleId}-name`];
-        delete copy[`${moduleId}-description`];
-        delete copy[`${moduleId}-color`];
-        return copy;
-      });
-      setEditingValues(prev => {
-        const copy = { ...prev };
-        delete copy[`${moduleId}-name`];
-        delete copy[`${moduleId}-description`];
-        delete copy[`${moduleId}-color`];
-        return copy;
-      });
+      setEditing(prev => { const copy = { ...prev }; delete copy[`${moduleId}-name`]; delete copy[`${moduleId}-description`]; delete copy[`${moduleId}-color`]; return copy; });
+      setEditingValues(prev => { const copy = { ...prev }; delete copy[`${moduleId}-name`]; delete copy[`${moduleId}-description`]; delete copy[`${moduleId}-color`]; return copy; });
     } catch (err) {
       console.error("Failed to update module:", err);
     }
@@ -109,18 +97,77 @@ export default function TeacherModulesView({teacherId}) {
 
   const handleBack = () => setSelectedModule(null);
 
+  // --- Selection Functions ---
+  const toggleSelectModule = (moduleId) => {
+    setSelectedModuleIds(prev =>
+      prev.includes(moduleId)
+        ? prev.filter(id => id !== moduleId)
+        : [...prev, moduleId]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedModuleIds.length === modules.length) {
+      setSelectedModuleIds([]);
+    } else {
+      setSelectedModuleIds(modules.map(m => m._id));
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    if (selectedModuleIds.length === 0) return;
+    if (!window.confirm(`Are you sure you want to delete ${selectedModuleIds.length} module(s)?`)) return;
+
+    try {
+      await fetch("http://localhost:5000/api/modules", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: selectedModuleIds })
+      });
+      setModules(prev => prev.filter(m => !selectedModuleIds.includes(m._id)));
+      setSelectedModuleIds([]);
+    } catch (err) {
+      console.error("Failed to delete modules:", err);
+    }
+  };
+
   return (
-    <div className="p-4" style={{ width: "100%" }}>
+    <div className="p-4" style={{ width: "100%", position: "relative" }}>
       {!selectedModule ? (
         <>
-          <div className="d-flex justify-content-between align-items-center mb-4">
-            <h3>Modules</h3>
-            <Button variant="primary" onClick={() => setShowModal(true)}>+ New Module</Button>
+          <div className="header-container" style={{ position: "relative" }}>
+            <div className="d-flex justify-content-between align-items-center mb-4">
+              <h3>Modules ({modules.length})</h3>
+              <Button variant="outline-secondary" onClick={() => setShowModal(true)} disabled={selectedModuleIds.length > 0}>+ New Module</Button>
+            </div>
+
+            {/* Overlay for bulk delete */}
+            {selectedModuleIds.length > 0 && (
+              <div className="overlay show">
+                <Button variant="danger" onClick={handleDeleteSelected}>
+                  <i className="fa fa-trash" /> Delete
+                </Button>
+                <button
+                  className="btn-close-selection"
+                  onClick={() => setSelectedModuleIds([])}
+                >
+                </button>
+              </div>
+            )}
+
+
           </div>
 
           <Table striped bordered hover responsive>
             <thead>
               <tr>
+                <th>
+                  <Form.Check
+                    type="checkbox"
+                    checked={selectedModuleIds.length === modules.length && modules.length > 0}
+                    onChange={toggleSelectAll}
+                  />
+                </th>
                 <th style={{ minWidth: 320 }}>Module Name</th>
                 <th>Description</th>
                 <th>Questions</th>
@@ -129,14 +176,22 @@ export default function TeacherModulesView({teacherId}) {
               </tr>
             </thead>
             <tbody>
-              {modules.map((module) => {
+              {modules.map(module => {
                 const nameKey = `${module._id}-name`;
                 const descKey = `${module._id}-description`;
                 const isEditingName = !!editing[nameKey];
                 const isEditingDesc = !!editing[descKey];
+                const isSelected = selectedModuleIds.includes(module._id);
 
                 return (
                   <tr key={module._id} style={{ backgroundColor: module.color || "#fff" }}>
+                    <td>
+                      <Form.Check
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => toggleSelectModule(module._id)}
+                      />
+                    </td>
                     <td className="editable-cell">
                       <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                         {isEditingName && (
@@ -148,17 +203,8 @@ export default function TeacherModulesView({teacherId}) {
                           />
                         )}
                         {!isEditingName && (
-                          <span
-                            style={{
-                              display: "inline-block",
-                              width: "12px",
-                              height: "24px",
-                              borderRadius: "6px",
-                              backgroundColor: module.color || "#000000"
-                            }}
-                          />
+                          <span style={{ display: "inline-block", width: "12px", height: "24px", borderRadius: "6px", backgroundColor: module.color || "#000000" }} />
                         )}
-
                         {isEditingName ? (
                           <Form.Control
                             type="text"
@@ -170,7 +216,6 @@ export default function TeacherModulesView({teacherId}) {
                         ) : (
                           <strong>{module.name}</strong>
                         )}
-
                         <Button
                           variant="link"
                           size="sm"
@@ -208,7 +253,7 @@ export default function TeacherModulesView({teacherId}) {
                     <td>{module.questionCount ?? 0}</td>
                     <td>{new Date(module.date).toLocaleDateString()}</td>
                     <td>
-                      <Button variant="info" size="sm" onClick={() => handleOpenQuestionBank(module)}>
+                      <Button variant="outline-info" size="sm" onClick={() => handleOpenQuestionBank(module)}>
                         See question bank
                       </Button>
                     </td>
@@ -254,7 +299,7 @@ export default function TeacherModulesView({teacherId}) {
         </>
       ) : (
         <TeacherQuestionBank
-          onBack={() => setSelectedModule(null)}
+          onBack={handleBack}
           selectedModule={selectedModule}
         />
       )}
