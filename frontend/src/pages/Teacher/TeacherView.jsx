@@ -33,7 +33,7 @@ const TeacherView = () => {
       case 'exams':
         return <TeacherExamView />;
       case 'modules':
-        return <TeacherModulesView />;
+        return <TeacherModulesView teacherId={user.id} />;
       case 'schedules':
         return <TeacherScheduleView />;
       case 'insights':

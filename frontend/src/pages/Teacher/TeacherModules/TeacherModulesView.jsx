@@ -1,40 +1,49 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Modal, Button, Table, Form } from "react-bootstrap";
-import "./TeacherModulesView.css"; // <-- New CSS file
+import "./TeacherModulesView.css";
 import TeacherQuestionBank from "./TeacherQuestionBank";
 
-export default function TeacherModulesView() {
-  const [modules, setModules] = useState([
-    { id: 1, name: "Mathematics", description: "Algebra, calculus basics", questions: 25, date: "2025-08-10", color:"#ff0000" },
-    { id: 2, name: "Physics", description: "Mechanics & Thermodynamics", questions: 18, date: "2025-08-05", color:"#0000ff" },
-  ]);
-
+export default function TeacherModulesView({teacherId}) {
+  const [modules, setModules] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [newModule, setNewModule] = useState({ name: "", description: "" });
-
   const [selectedModule, setSelectedModule] = useState(null);
-  const [questionBank, setQuestionBank] = useState({});
-  const [newQuestion, setNewQuestion] = useState({ question: "", options: ["", "", "", ""], answer: "" });
-
   const [editing, setEditing] = useState({});
   const [editingValues, setEditingValues] = useState({});
 
+  // Fetch modules from backend
+  useEffect(() => {
+    if (!teacherId) return;
+    fetchModules();
+  }, [teacherId]);
 
-  const handleSaveModule = () => {
+  const fetchModules = async () => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/modules?teacherId=${teacherId}`);
+      const data = await res.json();
+      setModules(data);
+    } catch (err) {
+      console.error("Error fetching modules:", err);
+    }
+  };
+
+  // Save new module with teacherId
+  const handleSaveModule = async () => {
     if (!newModule.name.trim()) return;
-    const newId = modules.length ? Math.max(...modules.map(m => m.id)) + 1 : 1;
-    setModules([
-      ...modules,
-      {
-        id: newId,
-        name: newModule.name,
-        description: newModule.description || "",
-        questions: 0,
-        date: new Date().toISOString().split("T")[0],
-      },
-    ]);
-    setNewModule({ name: "", description: "" });
-    setShowModal(false);
+
+    try {
+      const res = await fetch("http://localhost:5000/api/modules", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...newModule, teacherId })
+      });
+      const savedModule = await res.json();
+      setModules(prev => [...prev, savedModule]);
+      setNewModule({ name: "", description: "" });
+      setShowModal(false);
+    } catch (err) {
+      console.error("Failed to save module:", err);
+    }
   };
 
   const handleOpenQuestionBank = (module) => {
@@ -43,7 +52,7 @@ export default function TeacherModulesView() {
 
   const startEditing = (moduleId, field) => {
     const key = `${moduleId}-${field}`;
-    const module = modules.find(m => m.id === moduleId) || {};
+    const module = modules.find(m => m._id === moduleId) || {};
     setEditing(prev => ({ ...prev, [key]: true }));
     setEditingValues(prev => ({ ...prev, [key]: module[field] ?? "" }));
   };
@@ -53,38 +62,49 @@ export default function TeacherModulesView() {
     setEditingValues(prev => ({ ...prev, [key]: value }));
   };
 
-  const saveEditing = (moduleId, field) => {
+  // Save inline edits to backend
+  const saveEditing = async (moduleId, field) => {
     const key = `${moduleId}-${field}`;
     const newVal = (editingValues[key] ?? "").trim();
     if (field === "name" && newVal === "") return;
+
+    const updatedModule = { [field]: newVal };
+
+    // Optional: also update color
     if (field === "name") {
-      const newName = (editingValues[`${moduleId}-name`] ?? "").trim();
-      const newColor = editingValues[`${moduleId}-color`] ?? modules.find(m => m.id === moduleId)?.color;
+      const colorKey = `${moduleId}-color`;
+      updatedModule.color = editingValues[colorKey] ?? modules.find(m => m._id === moduleId)?.color;
+    }
 
-      if (newName === "") return;
+    try {
+      const res = await fetch(`http://localhost:5000/api/modules/${moduleId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedModule)
+      });
+      const data = await res.json();
 
-      setModules(prev => prev.map(m =>
-        m.id === moduleId ? { ...m, name: newName, color: newColor } : m
-      ));
+      // Update local state
+      setModules(prev => prev.map(m => m._id === moduleId ? data : m));
 
-      // Clear both editing states
+      // Clear editing states
       setEditing(prev => {
         const copy = { ...prev };
         delete copy[`${moduleId}-name`];
+        delete copy[`${moduleId}-description`];
         delete copy[`${moduleId}-color`];
         return copy;
       });
-      
       setEditingValues(prev => {
         const copy = { ...prev };
         delete copy[`${moduleId}-name`];
+        delete copy[`${moduleId}-description`];
         delete copy[`${moduleId}-color`];
         return copy;
       });
-
-        return;
+    } catch (err) {
+      console.error("Failed to update module:", err);
     }
-
   };
 
   const handleBack = () => setSelectedModule(null);
@@ -95,12 +115,10 @@ export default function TeacherModulesView() {
         <>
           <div className="d-flex justify-content-between align-items-center mb-4">
             <h3>Modules</h3>
-            <Button variant="primary" onClick={() => setShowModal(true)}>
-              + New Module
-            </Button>
+            <Button variant="primary" onClick={() => setShowModal(true)}>+ New Module</Button>
           </div>
 
-          <Table striped bordered hover responsive >
+          <Table striped bordered hover responsive>
             <thead>
               <tr>
                 <th style={{ minWidth: 320 }}>Module Name</th>
@@ -112,23 +130,24 @@ export default function TeacherModulesView() {
             </thead>
             <tbody>
               {modules.map((module) => {
-                const nameKey = `${module.id}-name`;
-                const descKey = `${module.id}-description`;
+                const nameKey = `${module._id}-name`;
+                const descKey = `${module._id}-description`;
                 const isEditingName = !!editing[nameKey];
                 const isEditingDesc = !!editing[descKey];
 
                 return (
-                  <tr key={module.id}>
+                  <tr key={module._id} style={{ backgroundColor: module.color || "#fff" }}>
                     <td className="editable-cell">
                       <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                        {isEditingName ? (
+                        {isEditingName && (
                           <input
                             type="color"
-                            value={module.color ?? editingValues[`${module.id}-color`] ?? "#000000"}
-                            onChange={(e) => changeEditingValue(module.id, "color", e.target.value)}
+                            value={editingValues[`${module._id}-color`] ?? module.color ?? "#000000"}
+                            onChange={(e) => changeEditingValue(module._id, "color", e.target.value)}
                             style={{ width: "24px", height: "24px", border: "none", padding: 0 }}
                           />
-                        ) : (
+                        )}
+                        {!isEditingName && (
                           <span
                             style={{
                               display: "inline-block",
@@ -144,8 +163,8 @@ export default function TeacherModulesView() {
                           <Form.Control
                             type="text"
                             value={editingValues[nameKey] ?? ""}
-                            onChange={(e) => changeEditingValue(module.id, "name", e.target.value)}
-                            onKeyDown={(e) => { if (e.key === "Enter") saveEditing(module.id, "name"); }}
+                            onChange={(e) => changeEditingValue(module._id, "name", e.target.value)}
+                            onKeyDown={(e) => { if (e.key === "Enter") saveEditing(module._id, "name"); }}
                             autoFocus
                           />
                         ) : (
@@ -156,13 +175,12 @@ export default function TeacherModulesView() {
                           variant="link"
                           size="sm"
                           className="cell-edit-btn"
-                          onClick={() => isEditingName ? saveEditing(module.id, "name") : startEditing(module.id, "name")}
+                          onClick={() => isEditingName ? saveEditing(module._id, "name") : startEditing(module._id, "name")}
                         >
                           <i className={`fa ${isEditingName ? "fa-save" : "fa-edit"}`} />
                         </Button>
                       </div>
                     </td>
-
 
                     <td className="editable-cell">
                       {isEditingDesc ? (
@@ -170,8 +188,8 @@ export default function TeacherModulesView() {
                           as="textarea"
                           rows={2}
                           value={editingValues[descKey] ?? ""}
-                          onChange={(e) => changeEditingValue(module.id, "description", e.target.value)}
-                          onKeyDown={(e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) saveEditing(module.id, "description"); }}
+                          onChange={(e) => changeEditingValue(module._id, "description", e.target.value)}
+                          onKeyDown={(e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) saveEditing(module._id, "description"); }}
                           autoFocus
                         />
                       ) : (
@@ -181,14 +199,14 @@ export default function TeacherModulesView() {
                         variant="link"
                         size="sm"
                         className="cell-edit-btn"
-                        onClick={() => isEditingDesc ? saveEditing(module.id, "description") : startEditing(module.id, "description")}
+                        onClick={() => isEditingDesc ? saveEditing(module._id, "description") : startEditing(module._id, "description")}
                       >
                         <i className={`fa ${isEditingDesc ? "fa-save" : "fa-edit"}`} />
                       </Button>
                     </td>
 
-                    <td>{module.questions}</td>
-                    <td>{module.date}</td>
+                    <td>{module.questionCount ?? 0}</td>
+                    <td>{new Date(module.date).toLocaleDateString()}</td>
                     <td>
                       <Button variant="info" size="sm" onClick={() => handleOpenQuestionBank(module)}>
                         See question bank
@@ -200,6 +218,7 @@ export default function TeacherModulesView() {
             </tbody>
           </Table>
 
+          {/* New Module Modal */}
           <Modal show={showModal} onHide={() => setShowModal(false)}>
             <Modal.Header closeButton>
               <Modal.Title>Add New Module</Modal.Title>
@@ -212,9 +231,7 @@ export default function TeacherModulesView() {
                     type="text"
                     placeholder="Enter module name"
                     value={newModule.name}
-                    onChange={(e) =>
-                      setNewModule({ ...newModule, name: e.target.value })
-                    }
+                    onChange={(e) => setNewModule({ ...newModule, name: e.target.value })}
                   />
                 </Form.Group>
                 <Form.Group controlId="moduleDesc" className="mb-3">
@@ -224,27 +241,21 @@ export default function TeacherModulesView() {
                     rows={3}
                     placeholder="Enter module description"
                     value={newModule.description}
-                    onChange={(e) =>
-                      setNewModule({ ...newModule, description: e.target.value })
-                    }
+                    onChange={(e) => setNewModule({ ...newModule, description: e.target.value })}
                   />
                 </Form.Group>
               </Form>
             </Modal.Body>
             <Modal.Footer>
-              <Button variant="secondary" onClick={() => setShowModal(false)}>
-                Cancel
-              </Button>
-              <Button variant="primary" onClick={handleSaveModule}>
-                Save
-              </Button>
+              <Button variant="secondary" onClick={() => setShowModal(false)}>Cancel</Button>
+              <Button variant="primary" onClick={handleSaveModule}>Save</Button>
             </Modal.Footer>
           </Modal>
         </>
       ) : (
         <TeacherQuestionBank
-          onBack={handleBack}
-          selectedModule = {selectedModule}
+          onBack={() => setSelectedModule(null)}
+          selectedModule={selectedModule}
         />
       )}
     </div>

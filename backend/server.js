@@ -5,6 +5,8 @@ const path = require('path');
 const cors = require('cors');
 const userRoutes = require('./routes/userRoutes');
 const teacherRoutes = require('./routes/teacherRoutes');
+const moduleRoutes = require('./routes/moduleRoutes.js');
+
 
 dotenv.config();
 connectDB();
@@ -26,6 +28,7 @@ app.use(cors(corsOptions));
 // API Routes
 app.use('/api/users', userRoutes);
 app.use('/api/teachers', teacherRoutes);
+app.use('/api/modules', moduleRoutes);
 
 // Test route
 app.get('/api/test', (req, res) => {
