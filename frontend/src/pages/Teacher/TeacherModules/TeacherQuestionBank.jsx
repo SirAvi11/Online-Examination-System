@@ -1,42 +1,57 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Table, Button, Modal, Form, Row, Col, Collapse, Card, Badge } from "react-bootstrap";
 
 export default function TeacherQuestionBank({ selectedModule, onBack }) {
   const [showModal, setShowModal] = useState(false);
   const [expandedRow, setExpandedRow] = useState(null);
-
+  const [questions, setQuestions] = useState([]);
   const [newQuestion, setNewQuestion] = useState({
     question: "",
     image: "",
     options: ["", "", "", ""],
     answer: "",
+    marks: 1,
+    paperId: "" // optional
   });
 
-  const [questions, setQuestions] = useState([
-    {
-      question: "What is the capital of France?",
-      image: "",
-      options: ["Paris", "London", "Berlin", "Madrid"],
-      answer: "Paris",
-    },
-    {
-      question: "Identify this landmark.",
-      image: "https://via.placeholder.com/200x150",
-      options: ["Eiffel Tower", "Big Ben", "Colosseum", "Taj Mahal"],
-      answer: "Eiffel Tower",
-    },
-    {
-      question: "Which planet is known as the Red Planet?",
-      image: "https://via.placeholder.com/200x150",
-      options: ["Earth", "Mars", "Jupiter", "Saturn"],
-      answer: "Mars",
-    },
-  ]);
+  // Fetch questions by moduleId on mount
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      try {
+        const res = await fetch(`http://localhost:5000/api/questions?moduleId=${selectedModule._id}`);
+        const data = await res.json();
+        setQuestions(data);
+      } catch (err) {
+        console.error("Failed to fetch questions:", err);
+      }
+    };
+    fetchQuestions();
+  }, [selectedModule._id]);
 
-  const handleAddQuestion = () => {
-    setQuestions([...questions, newQuestion]);
-    setShowModal(false);
-    setNewQuestion({ question: "", image: "", options: ["", "", "", ""], answer: "" });
+  // Add new question
+  const handleAddQuestion = async () => {
+    if (!newQuestion.question.trim() || !newQuestion.answer) return;
+
+    const correctOptionIndex = newQuestion.options.findIndex(opt => opt === newQuestion.answer);
+    if (correctOptionIndex === -1) return alert("Correct answer must match one of the options");
+
+    try {
+      const res = await fetch("http://localhost:5000/api/questions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...newQuestion,
+          moduleId: selectedModule._id,
+          correctOptionIndex
+        })
+      });
+      const savedQuestion = await res.json();
+      setQuestions(prev => [...prev, savedQuestion]);
+      setShowModal(false);
+      setNewQuestion({ question: "", image: "", options: ["", "", "", ""], answer: "", marks: 1, paperId: "" });
+    } catch (err) {
+      console.error("Failed to save question:", err);
+    }
   };
 
   return (
@@ -46,17 +61,12 @@ export default function TeacherQuestionBank({ selectedModule, onBack }) {
         <Button variant="outline-secondary" onClick={onBack}>
           ← Back to Modules
         </Button>
+
         <div className="text-center">
-          <h5
-            className="mb-1 fw-bold"
-            style={{ letterSpacing: "1px", fontSize: "1.2rem" }}
-          >
+          <h5 className="mb-1 fw-bold" style={{ letterSpacing: "1px", fontSize: "1.2rem" }}>
             Question Bank ({questions.length})
           </h5>
-          <h6
-            className="mb-0 text-secondary"
-            style={{ letterSpacing: "0.5px", fontSize: "1rem" }}
-          >
+          <h6 className="mb-0 text-secondary" style={{ letterSpacing: "0.5px", fontSize: "1rem" }}>
             {selectedModule.name}
           </h6>
         </div>
@@ -83,11 +93,11 @@ export default function TeacherQuestionBank({ selectedModule, onBack }) {
         </thead>
         <tbody>
           {questions.map((q, i) => (
-            <React.Fragment key={i}>
+            <React.Fragment key={q._id}>
               <tr>
                 <td>{i + 1}</td>
-                <td>{q.question}</td>
-                <td>{q.answer}</td>
+                <td>{q.questionText}</td>
+                <td>{q.options[q.correctOptionIndex]}</td>
                 <td>
                   <Button
                     size="sm"
@@ -108,7 +118,7 @@ export default function TeacherQuestionBank({ selectedModule, onBack }) {
                             <h6 className="fw-bold mb-0">Q{i + 1}</h6>
                             {q.image && <Badge bg="secondary">Has Image</Badge>}
                           </div>
-                          <p className="mb-3">{q.question}</p>
+                          <p className="mb-3">{q.questionText}</p>
                           {q.image && (
                             <img
                               src={q.image}
@@ -122,7 +132,7 @@ export default function TeacherQuestionBank({ selectedModule, onBack }) {
                             {q.options.map((opt, idx) => (
                               <li
                                 key={idx}
-                                className={q.answer === opt ? "fw-bold text-success" : ""}
+                                className={q.correctOptionIndex === idx ? "fw-bold text-success" : ""}
                               >
                                 {opt}
                               </li>
@@ -155,6 +165,7 @@ export default function TeacherQuestionBank({ selectedModule, onBack }) {
                 onChange={(e) => setNewQuestion({ ...newQuestion, question: e.target.value })}
               />
             </Form.Group>
+
             <Form.Group className="mb-3">
               <Form.Label>Image URL (optional)</Form.Label>
               <Form.Control
@@ -182,7 +193,7 @@ export default function TeacherQuestionBank({ selectedModule, onBack }) {
               ))}
             </Row>
 
-            <Form.Group>
+            <Form.Group className="mb-3">
               <Form.Label>Correct Answer</Form.Label>
               <Form.Select
                 value={newQuestion.answer}
@@ -196,8 +207,19 @@ export default function TeacherQuestionBank({ selectedModule, onBack }) {
                 ))}
               </Form.Select>
             </Form.Group>
+
+            <Form.Group className="mb-3">
+              <Form.Label>Marks</Form.Label>
+              <Form.Control
+                type="number"
+                min={1}
+                value={newQuestion.marks}
+                onChange={(e) => setNewQuestion({ ...newQuestion, marks: Number(e.target.value) })}
+              />
+            </Form.Group>
           </Form>
         </Modal.Body>
+
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setShowModal(false)}>
             Cancel

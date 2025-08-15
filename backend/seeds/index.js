@@ -2,6 +2,7 @@ require('dotenv').config();
 const mongoose = require('mongoose');
 const { seedUsers } = require('./seedUsers.js');
 const { seedModules } = require('./seedModules.js');
+const { seedQuestions } = require('./seedQuestions.js');
 
 const runSeeds = async () => {
   try {
@@ -14,6 +15,12 @@ const runSeeds = async () => {
 
     // 2️⃣ Seed modules for the first teacher
     const modules = await seedModules(firstTeacher._id);
+
+    const physicsModule = modules.find(m => m.name === "Physics");
+    const moduleId = physicsModule._id;
+
+    // Seed questions
+    await seedQuestions(moduleId);
 
     console.log("All seed data inserted!");
     process.exit(0);

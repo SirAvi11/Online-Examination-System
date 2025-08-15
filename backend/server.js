@@ -6,6 +6,8 @@ const cors = require('cors');
 const userRoutes = require('./routes/userRoutes');
 const teacherRoutes = require('./routes/teacherRoutes');
 const moduleRoutes = require('./routes/moduleRoutes.js');
+const questionRoutes = require("./routes/questionRoutes.js");
+
 
 
 dotenv.config();
@@ -29,6 +31,8 @@ app.use(cors(corsOptions));
 app.use('/api/users', userRoutes);
 app.use('/api/teachers', teacherRoutes);
 app.use('/api/modules', moduleRoutes);
+app.use("/api/questions", questionRoutes);
+
 
 // Test route
 app.get('/api/test', (req, res) => {
