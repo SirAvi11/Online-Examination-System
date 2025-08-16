@@ -1,0 +1,19 @@
+.add-exam-card {
+  border: 2px dashed #8ab898; /* matches green theme */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #4a7c59;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  border-radius: 12px;
+  min-height: 180px;
+}
+
+.add-exam-card:hover {
+  background-color: #f0f9f4;
+}
+.add-exam-card .icon {
+  font-size: 36px;
+  margin-bottom: 8px;
+}

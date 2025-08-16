@@ -314,7 +314,6 @@ const StudentExamView = () => {
       position: 'fixed',
       bottom: 0,
       left: '50%',
-      width: '100%',
       backgroundColor: '#fff',
       padding: '0.75rem 0rem 1rem 0.75rem',
       zIndex: 1000,

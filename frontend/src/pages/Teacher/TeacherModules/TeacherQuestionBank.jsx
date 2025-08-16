@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { Table, Button, Modal, Form, Row, Col, Collapse, Card, Badge } from "react-bootstrap";
+import './TeacherQuestionBank.css';
 
 export default function TeacherQuestionBank({ selectedModule, onBack }) {
   const [showModal, setShowModal] = useState(false);
   const [expandedRow, setExpandedRow] = useState(null);
   const [questions, setQuestions] = useState([]);
+  const [selectedQuestionIds, setSelectedQuestionIds] = useState([]);
   const [newQuestion, setNewQuestion] = useState({
     question: "",
     image: "",
@@ -54,37 +56,103 @@ export default function TeacherQuestionBank({ selectedModule, onBack }) {
     }
   };
 
+  const toggleSelectQuestion = (questionId) => {
+    setSelectedQuestionIds(prev =>
+      prev.includes(questionId)
+        ? prev.filter(id => id !== questionId)
+        : [...prev, questionId]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedQuestionIds.length === questions.length) {
+      setSelectedQuestionIds([]);
+    } else {
+      setSelectedQuestionIds(questions.map(m => m._id));
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    if (selectedQuestionIds.length === 0) return;
+    try {
+      const res = await fetch("http://localhost:5000/api/questions/bulk-delete", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: selectedQuestionIds }),
+      });
+
+      if (res.ok) {
+        setQuestions((prev) =>
+          prev.filter((q) => !selectedQuestionIds.includes(q._id))
+        );
+        setSelectedQuestionIds([]);
+      } else {
+        const error = await res.json();
+        alert(error.message || "Error deleting questions");
+      }
+    } catch (err) {
+      console.error("Delete failed", err);
+    }
+  };
+
   return (
     <div className="p-3">
       {/* Toolbar */}
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <Button variant="outline-secondary" onClick={onBack}>
-          ← Back to Modules
-        </Button>
+      <div className="header-container" style={{ position: "relative" }}>
+        <div className="d-flex justify-content-between align-items-center mb-4">
+          <Button variant="outline-secondary" onClick={onBack}>
+            ← Back to Modules
+          </Button>
 
-        <div className="text-center">
-          <h5 className="mb-1 fw-bold" style={{ letterSpacing: "1px", fontSize: "1.2rem" }}>
-            Question Bank ({questions.length})
-          </h5>
-          <h6 className="mb-0 text-secondary" style={{ letterSpacing: "0.5px", fontSize: "1rem" }}>
-            {selectedModule.name}
-          </h6>
+          <div className="text-center">
+            <h5 className="mb-1 fw-bold" style={{ letterSpacing: "1px", fontSize: "1.2rem" }}>
+              Question Bank ({questions.length})
+            </h5>
+            <h6 className="mb-0 text-secondary" style={{ letterSpacing: "0.5px", fontSize: "1rem" }}>
+              {selectedModule.name}
+            </h6>
+          </div>
+
+          <div className="d-flex gap-2">
+            <Button
+              variant="outline-secondary"
+              onClick={() => setShowModal(true)}
+              disabled={selectedQuestionIds.length > 0} // ✅ disable when bulk delete active
+            >
+              <i className="fa fa-plus me-2"></i>Add New Question
+            </Button>
+            <Button variant="outline-secondary" disabled={selectedQuestionIds.length > 0}>
+              <i className="fa fa-upload me-2"></i>Upload from CSV
+            </Button>
+          </div>
         </div>
 
-        <div className="d-flex gap-2">
-          <Button variant="outline-secondary" onClick={() => setShowModal(true)}>
-            <i className="fa fa-plus me-2"></i>Add New Question
-          </Button>
-          <Button variant="outline-secondary">
-            <i className="fa fa-upload me-2"></i>Upload from CSV
-          </Button>
-        </div>
+        {/* ✅ Overlay to replace header */}
+        {selectedQuestionIds.length > 0 && (
+          <div className="overlay show">
+            <Button variant="danger" onClick={handleDeleteSelected}>
+              <i className="fa fa-trash" /> Delete
+            </Button>
+            <button
+              className="btn-close-selection"
+              onClick={() => setSelectedQuestionIds([])}
+            />
+          </div>
+        )}
       </div>
+
 
       {/* Table + Expandable Details */}
       <Table bordered hover responsive style={{ borderRadius: "0.75rem", overflow: "hidden" }}>
         <thead className="table-light">
           <tr>
+            <th>
+              <Form.Check
+                type="checkbox"
+                checked={selectedQuestionIds.length === questions.length && questions.length > 0}
+                onChange={toggleSelectAll}
+              />
+            </th>
             <th style={{ width: "50px" }}>#</th>
             <th>Question</th>
             <th>Answer</th>
@@ -95,6 +163,13 @@ export default function TeacherQuestionBank({ selectedModule, onBack }) {
           {questions.map((q, i) => (
             <React.Fragment key={q._id}>
               <tr>
+                <td>
+                  <Form.Check
+                    type="checkbox"
+                    checked={selectedQuestionIds.includes(q._id)}
+                    onChange={() => toggleSelectQuestion(q._id)}
+                  />
+                </td>
                 <td>{i + 1}</td>
                 <td>{q.questionText}</td>
                 <td>{q.options[q.correctOptionIndex]}</td>
