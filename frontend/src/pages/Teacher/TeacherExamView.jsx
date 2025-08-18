@@ -1,40 +1,99 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ExamStatusCard from '../../components/Exam/ExamStatusCard';
 
 const TeacherExamView = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
-  const [filterOpen, setFilterOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 15;
+  const itemsPerPage = 14;
 
-  // Sample exam data for teachers (same as Student for now)
-  const [exams, setExams] = useState([
-    {
-      id: 1,
-      title: 'Midterm Exam - Mathematics',
-      subtitle: 'Test Date:',
-      dateRange: 'Mar 15, 2025 - Mar 17, 2025',
-      status: 'In Progress',
-      statusVariant: 'primary'
-    },
-    {
-      id: 2,
-      title: 'Final Exam - Computer Science',
-      subtitle: 'Test Date:',
-      dateRange: 'May 10, 2025',
-      status: 'Upcoming',
-      statusVariant: 'warning'
-    }
-    // ...other sample exams
-  ]);
+  const [exams, setExams] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // 👇 compute status from time
+  const getExamStatus = (startTime, endTime) => {
+    const now = new Date();
+    const start = new Date(startTime);
+    const end = new Date(endTime);
+
+    if (now < start) return { status: 'Upcoming', statusVariant: 'warning' };
+    if (now >= start && now <= end) return { status: 'In Progress', statusVariant: 'primary' };
+    return { status: 'Completed', statusVariant: 'success' };
+  };
+
+  useEffect(() => {
+    const fetchExams = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          console.warn("⚠️ No token found, redirect to login maybe.");
+          setLoading(false);
+          return;
+        }
+
+        const response = await fetch('/api/exams', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-auth-token': token, 
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`Error ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+
+        // Map backend exam docs into frontend format
+        const mappedExams = data.map(exam => {
+          const { status, statusVariant } = getExamStatus(exam.startTime, exam.endTime);
+
+          const start = new Date(exam.startTime);
+          const end = new Date(exam.endTime);
+
+          // ✅ Format dates
+          const startDateStr = start.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+          const endDateStr = end.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+          const dateRange = (startDateStr === endDateStr)
+            ? startDateStr
+            : `${startDateStr} - ${endDateStr}`;
+
+          // ✅ Format times
+          const startTimeStr = start.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false });
+          const endTimeStr = end.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false });
+          const timeRange = `${startTimeStr} - ${endTimeStr}`;
+          console.log("TIme range", timeRange)
+
+          return {
+            id: exam._id,
+            title: exam.title,
+            totalMarks: exam.totalMarks,
+            dateRange,
+            timeRange,
+            status,
+            statusVariant,
+          };
+        });
+
+
+        setExams(mappedExams);
+      } catch (err) {
+        console.error("❌ Error fetching exams:", err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchExams();
+  }, []);
 
   // Filtering
   const filteredExams = exams.filter(exam =>
     exam.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Pagination logic
+  // Pagination
   const totalPages = Math.ceil(filteredExams.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const currentExams = filteredExams.slice(startIndex, startIndex + itemsPerPage);
@@ -45,7 +104,6 @@ const TeacherExamView = () => {
 
   const handleAddExam = () => {
     console.log("Open modal or form to create new exam");
-    // later: open modal to create exam
   };
 
   const goToPage = (page) => {
@@ -88,68 +146,74 @@ const TeacherExamView = () => {
       </div>
 
       {/* Exams Layout */}
-      <section
-        aria-label="Examination cards"
-        style={{
-          display: 'flex',
-          flexDirection: viewMode === 'grid' ? 'row' : 'column',
-          flexWrap: 'wrap',
-          gap: '0.7rem'
-        }}
-      >
-        {/* Fixed "Add Exam" card at first spot */}
-        <div
-          onClick={handleAddExam}
+      {loading ? (
+        <div className="text-center py-5">Loading exams...</div>
+      ) : (
+        <section
+          aria-label="Examination cards"
           style={{
-            flex: viewMode === 'grid' ? '1 1 calc(33.333% - 1rem)' : '1 1 100%',
-            maxWidth: viewMode === 'grid' ? '15rem' : '100%',
-            minHeight: '8rem',
-            border: '2px dashed #aaa',
-            borderRadius: '8px',
             display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#555',
-            cursor: 'pointer',
-            background: '#f9f9f9'
+            flexDirection: viewMode === 'grid' ? 'row' : 'column',
+            flexWrap: 'wrap',
+            gap: '0.7rem'
           }}
         >
-          <div className="text-center">
-            <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>+</div>
-            <div>Add New Exam</div>
-          </div>
-        </div>
-
-        {/* Existing exams */}
-        {currentExams.length > 0 ? (
-          currentExams.map(exam => (
-            <div
-              key={exam.id}
-              style={{
-                flex: viewMode === 'grid' ? '1 1 calc(33.333% - 1rem)' : '1 1 100%',
-                maxWidth: viewMode === 'grid' ? '15rem' : '100%'
-              }}
-            >
-              <ExamStatusCard
-                title={exam.title}
-                subtitle={exam.subtitle}
-                dateRange={exam.dateRange}
-                status={exam.status}
-                statusVariant={exam.statusVariant}
-                onCardClick={() => handleCardClick(exam.id)}
-                maxWidth={viewMode === 'list' ? '100%' : '20rem'}
-              />
+          {/* Add Exam card */}
+          <div
+            onClick={handleAddExam}
+            style={{
+              flex: viewMode === 'grid' ? '1 1 calc(33.333% - 1rem)' : '1 1 100%',
+              maxWidth: viewMode === 'grid' ? '15rem' : '100%',
+              minHeight: '8rem',
+              border: '2px dashed #aaa',
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#555',
+              cursor: 'pointer',
+              background: '#f9f9f9'
+            }}
+          >
+            <div className="text-center">
+              <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>+</div>
+              <div>Add New Exam</div>
             </div>
-          ))
-        ) : (
-          <div className="text-center py-5" style={{ width: '100%' }}>
-            <p className="text-muted">No exams found matching your search</p>
           </div>
-        )}
-      </section>
+
+          {/* Render fetched exams */}
+          {currentExams.length > 0 ? (
+            currentExams.map(exam => (
+              <div
+                key={exam.id}
+                style={{
+                  flex: viewMode === 'grid' ? '1 1 calc(33.333% - 1rem)' : '1 1 100%',
+                  maxWidth: viewMode === 'grid' ? '15rem' : '100%'
+                }}
+              >
+                <ExamStatusCard
+                  title={exam.title}
+                  subtitle={exam.subtitle}
+                  dateRange={exam.dateRange}
+                  timeRange={exam.timeRange}
+                  totalMarks={exam.totalMarks}
+                  status={exam.status}
+                  statusVariant={exam.statusVariant}
+                  onCardClick={() => handleCardClick(exam.id)}
+                  maxWidth={viewMode === 'list' ? '100%' : '20rem'}
+                />
+              </div>
+            ))
+          ) : (
+            <div className="text-center py-5" style={{ width: '100%' }}>
+              <p className="text-muted">No exams found matching your search</p>
+            </div>
+          )}
+        </section>
+      )}
 
       {/* Pagination */}
-      {totalPages > 1 && (
+      {!loading && totalPages > 1 && (
         <div className="d-flex justify-content-center mt-4" style={{
           position: 'fixed',
           bottom: 0,

@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const { seedUsers } = require('./seedUsers.js');
 const { seedModules } = require('./seedModules.js');
 const { seedQuestions } = require('./seedQuestions.js');
+const { seedExams } = require('./seedExams.js');
 
 const runSeeds = async () => {
   try {
@@ -21,6 +22,8 @@ const runSeeds = async () => {
 
     // Seed questions
     await seedQuestions(moduleId);
+
+    await seedExams(firstTeacher._id);
 
     console.log("All seed data inserted!");
     process.exit(0);

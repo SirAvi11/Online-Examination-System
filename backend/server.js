@@ -7,6 +7,7 @@ const userRoutes = require('./routes/userRoutes');
 const teacherRoutes = require('./routes/teacherRoutes');
 const moduleRoutes = require('./routes/moduleRoutes.js');
 const questionRoutes = require("./routes/questionRoutes.js");
+const examRoutes = require('./routes/examRoutes.js');
 
 
 
@@ -32,6 +33,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/teachers', teacherRoutes);
 app.use('/api/modules', moduleRoutes);
 app.use("/api/questions", questionRoutes);
+app.use("/api/exams", examRoutes);
 
 
 // Test route
