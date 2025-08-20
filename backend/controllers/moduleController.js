@@ -1,4 +1,5 @@
 const Module = require('../models/Module.js');
+const Question = require('../models/Question.js')
 
 // GET all modules (optionally filtered by teacherId)
 exports.getAllModules = async (req, res) => {
@@ -84,5 +85,23 @@ exports.deleteModulesBulk = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to delete modules' });
+  }
+};
+
+exports.getQuestionsByModule = async (req, res) => {
+  try {
+    const moduleId = req.params.id;
+
+    // Fetch questions for this module
+    const questions = await Question.find({ moduleId: moduleId });
+
+    if (!questions || questions.length === 0) {
+      return res.status(404).json({ message: "No questions found for this module" });
+    }
+
+    res.json(questions);
+  } catch (err) {
+    console.error("Error fetching questions:", err);
+    res.status(500).json({ error: "Server error fetching questions" });
   }
 };
