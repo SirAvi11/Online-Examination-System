@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { Modal, Button, Table, Form } from "react-bootstrap";
-import "./TeacherModulesView.css";
-import TeacherQuestionBank from "./TeacherQuestionBank";
+import "./ModulesView.css";
+import QuestionBank from "./QuestionBank";
 
-export default function TeacherModulesView({ teacherId }) {
+export default function ModulesView({ teacherId }) {
   const [modules, setModules] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [newModule, setNewModule] = useState({ name: "", description: "" });
@@ -298,7 +298,7 @@ export default function TeacherModulesView({ teacherId }) {
           </Modal>
         </>
       ) : (
-        <TeacherQuestionBank
+        <QuestionBank
           onBack={handleBack}
           selectedModule={selectedModule}
         />

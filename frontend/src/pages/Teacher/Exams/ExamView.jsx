@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
-import ExamStatusCard from '../../components/Exam/ExamStatusCard';
+import ExamStatusCard from '../../../components/Exam/ExamStatusCard';
+import ExamDetailsModal from './ExamDetailsModal';
+import './ExamView.css';
 
-const TeacherExamView = () => {
+const ExamView = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
   const [currentPage, setCurrentPage] = useState(1);
@@ -10,16 +12,8 @@ const TeacherExamView = () => {
   const [exams, setExams] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // 👇 compute status from time
-  const getExamStatus = (startTime, endTime) => {
-    const now = new Date();
-    const start = new Date(startTime);
-    const end = new Date(endTime);
-
-    if (now < start) return { status: 'Upcoming', statusVariant: 'warning' };
-    if (now >= start && now <= end) return { status: 'In Progress', statusVariant: 'primary' };
-    return { status: 'Completed', statusVariant: 'success' };
-  };
+  const [selectedExam, setSelectedExam] = useState(null);
+  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     const fetchExams = async () => {
@@ -88,6 +82,23 @@ const TeacherExamView = () => {
     fetchExams();
   }, []);
 
+    // 👇 compute status from time
+  const getExamStatus = (startTime, endTime) => {
+    const now = new Date();
+    const start = new Date(startTime);
+    const end = new Date(endTime);
+
+    if (now < start) return { status: 'Upcoming', statusVariant: 'warning' };
+    if (now >= start && now <= end) return { status: 'In Progress', statusVariant: 'primary' };
+    return { status: 'Completed', statusVariant: 'success' };
+  };
+
+  const handleCardClick = (examId) => {
+    const exam = exams.find(e => e.id === examId);
+    setSelectedExam(exam);
+    setShowModal(true);
+  };
+
   // Filtering
   const filteredExams = exams.filter(exam =>
     exam.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -97,10 +108,6 @@ const TeacherExamView = () => {
   const totalPages = Math.ceil(filteredExams.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const currentExams = filteredExams.slice(startIndex, startIndex + itemsPerPage);
-
-  const handleCardClick = (examId) => {
-    console.log(`Exam ${examId} clicked`);
-  };
 
   const handleAddExam = () => {
     console.log("Open modal or form to create new exam");
@@ -250,8 +257,19 @@ const TeacherExamView = () => {
           </nav>
         </div>
       )}
+
+      <ExamDetailsModal
+        show={showModal}
+        exam={selectedExam}
+        onClose={() => setShowModal(false)}
+        onSave={(updatedExam) => {
+          console.log("Save updated exam:", updatedExam);
+          // TODO: call API to update exam, then update local state
+          setShowModal(false);
+        }}
+      />
     </div>
   );
 };
 
-export default TeacherExamView;
+export default ExamView;

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Table, Button, Modal, Form, Row, Col, Collapse, Card, Badge } from "react-bootstrap";
-import './TeacherQuestionBank.css';
+import './QuestionBank.css';
 
-export default function TeacherQuestionBank({ selectedModule, onBack }) {
+export default function QuestionBank({ selectedModule, onBack }) {
   const [showModal, setShowModal] = useState(false);
   const [expandedRow, setExpandedRow] = useState(null);
   const [questions, setQuestions] = useState([]);
@@ -205,14 +205,6 @@ export default function TeacherQuestionBank({ selectedModule, onBack }) {
                             {q.image && <Badge bg="secondary">Has Image</Badge>}
                           </div>
                           <p className="mb-3">{q.questionText}</p>
-                          {/* {q.image && (
-                            <img
-                              src={q.image}
-                              alt="question"
-                              className="img-fluid rounded mb-3"
-                              style={{ maxHeight: "200px", objectFit: "cover" }}
-                            />
-                          )} */}
                           {q.imageUrl ? <img src={`http://localhost:5000${q.imageUrl}`} className="img-fluid rounded mb-3" alt="Question" style={{ maxHeight: "200px", width:"300px", objectFit: "cover" }} /> : "No image"}
                           <h6>Options:</h6>
                           <ul>

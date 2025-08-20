@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
 import { Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
-import DashboardCard from '../../components/DashboardCard/DashboardCard';
-import DashboardInfoPane from '../../components/DashboardInfoPane/DashboardInfoPane';
-import './TeacherDashboardView.css';
+import DashboardCard from '../../../components/DashboardCard/DashboardCard';
+import DashboardInfoPane from '../../../components/DashboardInfoPane/DashboardInfoPane';
+import './DashboardView.css';
 
 // Register ChartJS components once
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
@@ -24,7 +24,7 @@ const CALENDAR_WEEKS = [
   [26, 27, 28, 29, 30, 31, 1]
 ];
 
-const TeacherDashboardView = ({username}) => {
+const DashboardView = ({username}) => {
   // Memoized data to prevent unnecessary recalculations
   const modulesData = useMemo(() => ({
     labels: ['DB Systems', 'OOP', 'Algorithms', 'Networking'],
@@ -232,4 +232,4 @@ const TeacherDashboardView = ({username}) => {
   );
 };
 
-export default TeacherDashboardView;
+export default DashboardView;

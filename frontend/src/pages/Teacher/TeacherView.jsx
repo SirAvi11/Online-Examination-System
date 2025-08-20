@@ -3,11 +3,11 @@ import Dashboard from '../../components/Dashboard/Dashboard';
 import Sidebar from '../../components/Dashboard/Sidebar/Sidebar';
 import MainContent from '../../components/Dashboard/MainContent';
 import Header from '../../components/Header/Header';
-import TeacherDashboardView from './TeacherDashboardView';
-import TeacherExamView from './TeacherExamView';
+import DashboardView from './Dashboard/DashboardView';
+import ExamView from './Exams/ExamView';
 import TeacherScheduleView from './TeacherScheduleView';
 import TeacherInsightsView from './TeacherInsightsView';
-import TeacherModulesView from './TeacherModules/TeacherModulesView';
+import ModulesView from './Modules/ModulesView';
 import { useNavigate } from 'react-router-dom';
 
 const TeacherView = () => {
@@ -29,18 +29,18 @@ const TeacherView = () => {
   const renderView = () => {
     switch (activeView) {
       case 'dashboard':
-        return <TeacherDashboardView username={user?.name} />;
+        return <DashboardView username={user?.name} />;
       case 'exams':
-        return <TeacherExamView />;
+        return <ExamView />;
       case 'modules':
-        return <TeacherModulesView teacherId={user.id} />;
+        return <ModulesView teacherId={user.id} />;
       case 'schedules':
         return <TeacherScheduleView />;
       case 'insights':
         return <TeacherInsightsView />;
       // Add more cases as needed
       default:
-        return <TeacherDashboardView />;
+        return <DashboardView />;
     }
   };
 

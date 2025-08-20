@@ -1,0 +1,9 @@
+/* ExamDetailsModal.css */
+.modal.fade .modal-dialog {
+  transform: scale(0.7);
+  transition: transform 0.3s ease-out;
+}
+
+.modal.fade.show .modal-dialog {
+  transform: scale(1);
+}
