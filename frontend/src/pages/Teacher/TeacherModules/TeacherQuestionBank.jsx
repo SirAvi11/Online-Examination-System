@@ -7,14 +7,17 @@ export default function TeacherQuestionBank({ selectedModule, onBack }) {
   const [expandedRow, setExpandedRow] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [selectedQuestionIds, setSelectedQuestionIds] = useState([]);
+  const [preview, setPreview] = useState(null);
+
   const [newQuestion, setNewQuestion] = useState({
-    question: "",
-    image: "",
+    questionText: "",
+    imageFile: null,
     options: ["", "", "", ""],
     answer: "",
     marks: 1,
-    paperId: "" // optional
+    paperId: null
   });
+
 
   // Fetch questions by moduleId on mount
   useEffect(() => {
@@ -32,29 +35,37 @@ export default function TeacherQuestionBank({ selectedModule, onBack }) {
 
   // Add new question
   const handleAddQuestion = async () => {
-    if (!newQuestion.question.trim() || !newQuestion.answer) return;
+    if (!newQuestion.questionText.trim() || !newQuestion.answer) return;
 
     const correctOptionIndex = newQuestion.options.findIndex(opt => opt === newQuestion.answer);
     if (correctOptionIndex === -1) return alert("Correct answer must match one of the options");
 
     try {
+      const formData = new FormData();
+      formData.append("questionText", newQuestion.questionText);
+      formData.append("moduleId", selectedModule._id);
+      formData.append("marks", newQuestion.marks);
+      formData.append("correctOptionIndex", correctOptionIndex);
+      formData.append("options", JSON.stringify(newQuestion.options));
+      if (newQuestion.paperId) formData.append("paperId", newQuestion.paperId);
+      if (newQuestion.imageFile) formData.append("image", newQuestion.imageFile);
+
       const res = await fetch("http://localhost:5000/api/questions", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...newQuestion,
-          moduleId: selectedModule._id,
-          correctOptionIndex
-        })
+        body: formData
       });
+
       const savedQuestion = await res.json();
       setQuestions(prev => [...prev, savedQuestion]);
+
       setShowModal(false);
-      setNewQuestion({ question: "", image: "", options: ["", "", "", ""], answer: "", marks: 1, paperId: "" });
+      setNewQuestion({ questionText: "", imageFile: null, options: ["", "", "", ""], answer: "", marks: 1, paperId: "" });
     } catch (err) {
       console.error("Failed to save question:", err);
     }
   };
+
+
 
   const toggleSelectQuestion = (questionId) => {
     setSelectedQuestionIds(prev =>
@@ -143,10 +154,10 @@ export default function TeacherQuestionBank({ selectedModule, onBack }) {
 
 
       {/* Table + Expandable Details */}
-      <Table bordered hover responsive style={{ borderRadius: "0.75rem", overflow: "hidden" }}>
+      <Table striped bordered hover responsiv>
         <thead className="table-light">
           <tr>
-            <th>
+            <th style={{ width: "40px" }}>
               <Form.Check
                 type="checkbox"
                 checked={selectedQuestionIds.length === questions.length && questions.length > 0}
@@ -163,7 +174,7 @@ export default function TeacherQuestionBank({ selectedModule, onBack }) {
           {questions.map((q, i) => (
             <React.Fragment key={q._id}>
               <tr>
-                <td>
+                <td style={{ width: "40px" }}>
                   <Form.Check
                     type="checkbox"
                     checked={selectedQuestionIds.includes(q._id)}
@@ -194,14 +205,15 @@ export default function TeacherQuestionBank({ selectedModule, onBack }) {
                             {q.image && <Badge bg="secondary">Has Image</Badge>}
                           </div>
                           <p className="mb-3">{q.questionText}</p>
-                          {q.image && (
+                          {/* {q.image && (
                             <img
                               src={q.image}
                               alt="question"
                               className="img-fluid rounded mb-3"
                               style={{ maxHeight: "200px", objectFit: "cover" }}
                             />
-                          )}
+                          )} */}
+                          {q.imageUrl ? <img src={`http://localhost:5000${q.imageUrl}`} className="img-fluid rounded mb-3" alt="Question" style={{ maxHeight: "200px", width:"300px", objectFit: "cover" }} /> : "No image"}
                           <h6>Options:</h6>
                           <ul>
                             {q.options.map((opt, idx) => (
@@ -225,66 +237,93 @@ export default function TeacherQuestionBank({ selectedModule, onBack }) {
       </Table>
 
       {/* Add Question Modal */}
-      <Modal show={showModal} onHide={() => setShowModal(false)} centered>
+      <Modal show={showModal} onHide={() => setShowModal(false)} centered size="lg">
         <Modal.Header closeButton className="bg-primary text-white">
           <Modal.Title>Add New Question</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form>
+            {/* Question Details */}
             <Form.Group className="mb-3">
-              <Form.Label>Question Text</Form.Label>
+              <Form.Label><strong>Question Text</strong></Form.Label>
               <Form.Control
-                type="text"
-                placeholder="Enter question"
-                value={newQuestion.question}
-                onChange={(e) => setNewQuestion({ ...newQuestion, question: e.target.value })}
+                as="textarea"
+                rows={3}
+                placeholder="Enter the question here..."
+                value={newQuestion.questionText}
+                onChange={(e) => setNewQuestion({ ...newQuestion, questionText: e.target.value })}
               />
             </Form.Group>
 
             <Form.Group className="mb-3">
-              <Form.Label>Image URL (optional)</Form.Label>
-              <Form.Control
-                type="text"
-                placeholder="Enter image URL"
-                value={newQuestion.image}
-                onChange={(e) => setNewQuestion({ ...newQuestion, image: e.target.value })}
-              />
-            </Form.Group>
+  <Form.Label><strong>Attach Image (optional)</strong></Form.Label>
+  <div className="d-flex align-items-center gap-3">
+    {/* Hidden file input */}
+    <input
+      type="file"
+      accept="image/*"
+      id="imageUpload"
+      style={{ display: "none" }}
+      onChange={(e) => {
+        const file = e.target.files[0];
+        if (file) {
+          setNewQuestion({ ...newQuestion, imageFile: file });
+          setPreview(URL.createObjectURL(file)); // preview state
+        }
+      }}
+    />
 
+    {/* Upload button */}
+    <Button
+      variant="outline-primary"
+      onClick={() => document.getElementById("imageUpload").click()}
+    >
+      <i className="bi bi-upload"></i> Upload
+    </Button>
+
+    {/* Show preview if available */}
+    {preview && (
+      <img
+        src={preview}
+        alt="Preview"
+        style={{ width: "80px", height: "80px", objectFit: "cover", borderRadius: "6px" }}
+      />
+    )}
+  </div>
+</Form.Group>
+
+
+            {/* Options */}
+            <h6 className="mt-4">Options</h6>
             <Row>
               {newQuestion.options.map((opt, idx) => (
                 <Col md={6} key={idx} className="mb-3">
-                  <Form.Label>Option {idx + 1}</Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={opt}
-                    onChange={(e) => {
-                      const updated = [...newQuestion.options];
-                      updated[idx] = e.target.value;
-                      setNewQuestion({ ...newQuestion, options: updated });
-                    }}
+                  <Form.Check
+                    type="radio"
+                    name="correctOption"
+                    id={`option-${idx}`}
+                    label={
+                      <Form.Control
+                        type="text"
+                        placeholder={`Option ${idx + 1}`}
+                        value={opt}
+                        onChange={(e) => {
+                          const updated = [...newQuestion.options];
+                          updated[idx] = e.target.value;
+                          setNewQuestion({ ...newQuestion, options: updated });
+                        }}
+                      />
+                    }
+                    checked={newQuestion.answer === opt}
+                    onChange={() => setNewQuestion({ ...newQuestion, answer: opt })}
                   />
                 </Col>
               ))}
             </Row>
 
-            <Form.Group className="mb-3">
-              <Form.Label>Correct Answer</Form.Label>
-              <Form.Select
-                value={newQuestion.answer}
-                onChange={(e) => setNewQuestion({ ...newQuestion, answer: e.target.value })}
-              >
-                <option value="">Select answer</option>
-                {newQuestion.options.map((opt, idx) => (
-                  <option key={idx} value={opt}>
-                    {opt}
-                  </option>
-                ))}
-              </Form.Select>
-            </Form.Group>
-
-            <Form.Group className="mb-3">
-              <Form.Label>Marks</Form.Label>
+            {/* Marks */}
+            <Form.Group className="mb-3 mt-3">
+              <Form.Label><strong>Marks</strong></Form.Label>
               <Form.Control
                 type="number"
                 min={1}

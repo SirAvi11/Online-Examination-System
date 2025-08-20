@@ -17,27 +17,24 @@ const getQuestions = async (req, res) => {
 
 // POST new question
 const createQuestion = async (req, res) => {
-  const { moduleId, paperId, questionText, options, correctOptionIndex, marks } = req.body;
-
-  if (!moduleId || !questionText || !options || correctOptionIndex === undefined || !marks) {
-    return res.status(400).json({ message: "Missing required fields" });
-  }
-
   try {
-    const newQuestion = new Question({
+    const { paperId, moduleId, questionText, options, correctOptionIndex, marks } = req.body;
+
+    const question = new Question({
+      paperId: paperId || null,
       moduleId,
-      paperId,
       questionText,
-      options,
+      options: JSON.parse(options),  // comes as stringified array in FormData
       correctOptionIndex,
       marks,
+      imageUrl: req.file ? `/uploads/questions/${req.file.filename}` : null
     });
 
-    const savedQuestion = await newQuestion.save();
-    res.status(201).json(savedQuestion);
+    const saved = await question.save();
+    res.json(saved);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error saving question" });
+    console.error("Error saving question:", err);
+    res.status(500).json({ error: "Failed to save question" });
   }
 };
 

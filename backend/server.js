@@ -34,6 +34,8 @@ app.use('/api/teachers', teacherRoutes);
 app.use('/api/modules', moduleRoutes);
 app.use("/api/questions", questionRoutes);
 app.use("/api/exams", examRoutes);
+app.use("/uploads", express.static("uploads"));
+
 
 
 // Test route
