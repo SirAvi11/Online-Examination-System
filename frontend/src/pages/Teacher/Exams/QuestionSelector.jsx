@@ -1,82 +1,177 @@
 import { useState } from "react";
+import "./QuestionSelector.css";
 
 const QuestionSelector = ({ modules, onChange }) => {
   const [selectedModule, setSelectedModule] = useState(null);
   const [availableQuestions, setAvailableQuestions] = useState([]);
   const [examQuestions, setExamQuestions] = useState([]);
+  const [selectedAvailable, setSelectedAvailable] = useState([]);
+  const [selectedExam, setSelectedExam] = useState([]);
 
-    const handleModuleChange = async (moduleId) => {
-    setSelectedModule(moduleId);
+  const handleModuleChange = async (moduleId) => {
+  setSelectedModule(moduleId);
+  try {
+    const res = await fetch(`/api/modules/${moduleId}/questions`);
+    const data = await res.json();
 
-    try {
-        const res = await fetch(`/api/modules/${moduleId}/questions`);
-        const data = await res.json();
-
-        if (res.ok) {
-        setAvailableQuestions(data);
-        } else {
-        setAvailableQuestions([]);
-        }
-    } catch (err) {
-        console.error("Error fetching questions:", err);
-        setAvailableQuestions([]);
+    if (res.ok) {
+      // filter out questions that are already in examQuestions
+      const filteredQuestions = data.filter(
+        (q) => !examQuestions.some((eq) => eq._id === q._id)
+      );
+      setAvailableQuestions(filteredQuestions);
+    } else {
+      setAvailableQuestions([]);
     }
-    };
+  } catch (err) {
+    console.error("Error fetching questions:", err);
+    setAvailableQuestions([]);
+  }
+};
 
 
-  const addToExam = (question) => {
-    setExamQuestions([...examQuestions, question]);
-    setAvailableQuestions(availableQuestions.filter(q => q.id !== question.id));
+  const moveToExam = () => {
+    setExamQuestions([...examQuestions, ...selectedAvailable]);
+    setAvailableQuestions(
+      availableQuestions.filter((q) => !selectedAvailable.includes(q))
+    );
+    setSelectedAvailable([]);
   };
 
-  const removeFromExam = (question) => {
-    setAvailableQuestions([...availableQuestions, question]);
-    setExamQuestions(examQuestions.filter(q => q.id !== question.id));
-  };
-
-  const addCustomQuestion = (custom) => {
-    const newQuestion = { id: Date.now(), ...custom, type: "custom" };
-    setExamQuestions([...examQuestions, newQuestion]);
+  const moveToAvailable = () => {
+    setAvailableQuestions([...availableQuestions, ...selectedExam]);
+    setExamQuestions(examQuestions.filter((q) => !selectedExam.includes(q)));
+    setSelectedExam([]);
   };
 
   return (
     <div className="question-selector">
       {/* Module Dropdown */}
-      <select onChange={(e) => handleModuleChange(e.target.value)}>
-        <option value="">Select Module</option>
-        {modules.map(m => <option key={m._id} value={m._id}>{m.name}</option>)}
-      </select>
-
-      <div className="transfer-list">
-        <div className="list">
-          <h4>Available Questions</h4>
-          {availableQuestions.map(q => (
-            <div key={q.id} className="question">
-              <span>{q.text}</span>
-              <button onClick={() => addToExam(q)}>Add →</button>
-            </div>
+      <label>
+        Choose from existing modules:{" "}
+        <select onChange={(e) => handleModuleChange(e.target.value)}>
+          <option value="">Select Module</option>
+          {modules.map((m) => (
+            <option key={m._id} value={m._id}>
+              {m.name}
+            </option>
           ))}
+        </select>
+      </label>
+
+      <div className="transfer-container">
+        {/* Available List */}
+        <div className="list">
+          <div className="questions-fixed">
+            <h4 className="listbox-title">Available Questions</h4>
+            {/* Header Row */}
+            <div className="list-header">
+              <label className="question select-all">
+                <input
+                  type="checkbox"
+                  checked={
+                    availableQuestions.length > 0 &&
+                    selectedAvailable.length === availableQuestions.length
+                  }
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setSelectedAvailable(availableQuestions);
+                    } else {
+                      setSelectedAvailable([]);
+                    }
+                  }}
+                />
+                Select All
+              </label>
+              <span className="marks-label">Marks</span>
+            </div>
+          </div>
+          <div className="questions-scroll">
+            {availableQuestions.map((q) => (
+              <div key={q.id} className="question-row">
+                <label className="question">
+                  <input
+                    type="checkbox"
+                    checked={selectedAvailable.includes(q)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedAvailable([...selectedAvailable, q]);
+                      } else {
+                        setSelectedAvailable(
+                          selectedAvailable.filter((item) => item !== q)
+                        );
+                      }
+                    }}
+                  />
+                  <span className="question-text">{q.questionText}</span>
+                </label>
+                <span className="question-marks">{q.marks}</span>
+              </div>
+            ))}
+          </div>
         </div>
 
+        {/* Middle Buttons */}
+        <div className="buttons">
+          <button onClick={moveToExam} disabled={selectedAvailable.length === 0}>
+            →
+          </button>
+          <button onClick={moveToAvailable} disabled={selectedExam.length === 0}>
+            ←
+          </button>
+        </div>
+
+        {/* Exam List */}
         <div className="list">
-          <h4>Exam Questions</h4>
-          {examQuestions.map(q => (
-            <div key={q.id} className="question">
-              <span>{q.text}</span>
-              <button onClick={() => removeFromExam(q)}>← Remove</button>
+          <div className="questions-fixed">
+            <h4 className="listbox-title">Exam Questions</h4>
+            {/* Header Row */}
+            <div className="list-header">
+              <label className="question select-all">
+                <input
+                  type="checkbox"
+                  checked={
+                    examQuestions.length > 0 &&
+                    selectedExam.length === examQuestions.length
+                  }
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setSelectedExam(examQuestions);
+                    } else {
+                      setSelectedExam([]);
+                    }
+                  }}
+                />
+                Select All
+              </label>
+              <span className="marks-label">Marks</span>
             </div>
-          ))}
+          </div>
+          <div className="questions-scroll">
+            {examQuestions.map((q) => (
+              <div key={q.id} className="question-row">
+                <label className="question">
+                  <input
+                    type="checkbox"
+                    checked={selectedExam.includes(q)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedExam([...selectedExam, q]);
+                      } else {
+                        setSelectedExam(
+                          selectedExam.filter((item) => item !== q)
+                        );
+                      }
+                    }}
+                  />
+                  <span className="question-text">{q.questionText}</span>
+                </label>
+                <span className="question-marks">{q.marks}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
-
-      <button onClick={() => addCustomQuestion({
-        text: "New Custom Question",
-        options: ["A","B","C","D"],
-        correct: 1,
-        marks: 2
-      })}>
-        + Add Custom Question
-      </button>
     </div>
   );
 };

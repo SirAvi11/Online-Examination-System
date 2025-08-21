@@ -185,8 +185,8 @@ export default function AuthPage() {
         <div className="mb-5 d-flex justify-content-center">
           <h1 className="logo-text">
             <i className="fas fa-graduation-cap"></i>
-            <span>MASTERY</span>
-            <span className="green-text">HUB</span>
+            <span>SKILLS</span>
+            <span className="green-text">LAB</span>
           </h1>
         </div>
 

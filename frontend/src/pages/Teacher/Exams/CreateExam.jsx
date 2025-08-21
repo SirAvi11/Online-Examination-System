@@ -66,7 +66,8 @@ const CreateExam = ({ onBack }) => {
       {error && <p className="text-danger">Error: {error}</p>}
 
       {!loading && !error && (
-        <form className="card p-4 shadow-sm" onSubmit={handleSubmit}>
+        <>
+          <div className="card p-4 shadow-sm mb-2">
           {/* Exam Title */}
           <div className="mb-3">
             <label className="form-label">Exam Title</label>
@@ -149,20 +150,21 @@ const CreateExam = ({ onBack }) => {
               />
             </div>
           </div>
-
-          {/* Question Selector Section */}
-          <div className="mt-4">
-            <h5 className="fw-bold mb-3">Select Questions</h5>
-            <QuestionSelector onChange={handleQuestionsChange} modules={modules} />
           </div>
-
+          <div className="card p-4 shadow-sm">
+            {/* Question Selector Section */}
+            <div>
+              <h5 className="fw-bold mb-3">Select Questions</h5>
+              <QuestionSelector onChange={handleQuestionsChange} modules={modules} />
+            </div>
+          </div>
           {/* Submit */}
           <div className="d-flex justify-content-end mt-4">
-            <button type="submit" className="btn btn-primary px-4">
+            <button className="btn btn-primary px-4">
               Create Exam
             </button>
           </div>
-        </form>
+        </>
       )}
     </div>
   );
