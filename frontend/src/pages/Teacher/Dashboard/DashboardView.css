@@ -53,3 +53,34 @@
   gap:1.2rem;
   flex-grow:1
 }
+
+.main-right{
+  display: flex;
+  flex-direction: column;
+  gap:1.2rem;
+  flex-grow:1
+}
+.quick-action-buttons{
+  display: flex;
+  flex-wrap: nowrap;
+  gap:8px;
+    justify-content: flex-start;
+    align-items: center;
+    margin-top: 14px;
+}
+.action-buttons{
+  display: flex;
+  gap:8px;
+  flex-direction: column;
+  flex-grow: 1
+}
+
+.btn-outline-secondary:hover {
+  background-color: #9ad1f5; /* your custom hover color */
+  color: #fff; /* text color on hover */
+  border-color: #9ad1f5; /* border to match */
+}
+
+.btn-outline-secondary:hover i {
+  color: #fff;
+}

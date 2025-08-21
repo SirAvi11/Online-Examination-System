@@ -80,23 +80,42 @@ const DashboardView = ({username}) => {
                 <Bar data={modulesData} options={chartOptions} />
               </div>
             </DashboardInfoPane>
-            <DashboardInfoPane 
+            <div className='main-right'>
+              <DashboardInfoPane 
               title="Recent Activities" 
               subtitle="January - June 2024"
-            >
-              <div className="activity-feed" style={{ maxHeight: '300px', overflowY: 'auto' }}>
-                {activities.map(activity => (
-                  <div key={activity.id} className="activity-item border-bottom pb-3 mb-3">
-                    <div className="d-flex justify-content-between">
-                      <span className="fw-semibold">
-                        You {activity.action} the {activity.type}: "{activity.title}"
-                      </span>
-                      <span className="text-muted small">{activity.time}</span>
+              >
+                <div className="activity-feed" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                  {activities.map(activity => (
+                    <div key={activity.id} className="activity-item border-bottom pb-3 mb-3">
+                      <div className="d-flex justify-content-between">
+                        <span className="fw-semibold">
+                          You {activity.action} the {activity.type}: "{activity.title}"
+                        </span>
+                        <span className="text-muted small">{activity.time}</span>
+                      </div>
                     </div>
+                  ))}
+                </div>
+              </DashboardInfoPane>
+              <DashboardInfoPane 
+              title="Quick Actions" 
+              containerClassName ="flex-grow-1"
+              subtitle=''
+              >
+                <div className="quick-action-buttons" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                  <div className='action-buttons'>
+                    <button type="button" class="btn btn-outline-secondary">Generate Exam With AI<i class="fa fa-star ms-2"></i></button>
+                    <button type="button" class="btn btn-outline-secondary">Generate Reports<i class="fa-solid fa-chart-area ms-2"></i></button>
                   </div>
-                ))}
-              </div>
-            </DashboardInfoPane>
+                  <div className='action-buttons'>
+                    <button type="button" class="btn btn-outline-secondary">View Modules<i class="fa-solid fa-book ms-2"></i></button>
+                    <button type="button" class="btn btn-outline-secondary">Create Exams<i class="fa-solid fa-user-graduate ms-2"></i></button>
+                  </div>
+                </div>
+              </DashboardInfoPane>
+            </div>
+            
 
           </div>
         </div>
