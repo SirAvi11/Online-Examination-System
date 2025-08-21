@@ -20,8 +20,8 @@ const Header = ({
       <div className="d-flex align-items-center pe-3 header-border mx-3">
         <h6 className="header-logo-text">
           <i className="fas fa-graduation-cap"></i>
-          <span>MASTERY</span>
-          <span className="green-text">HUB</span>
+          <span>SKILLS</span>
+          <span className="green-text">LAB</span>
         </h6>
       </div>
       

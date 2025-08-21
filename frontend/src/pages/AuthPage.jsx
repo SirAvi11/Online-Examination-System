@@ -171,7 +171,7 @@ export default function AuthPage() {
           height="280"
           className="img-fluid"
         />
-        <h2 className="mt-4 fw-semibold text-dark" style={{ fontSize: '1.5rem' }}>Exam Mastery Hub</h2>
+        <h2 className="mt-4 fw-semibold text-dark" style={{ fontSize: '1.5rem' }}>Skills Lab</h2>
         <p className="abc text-secondary small mt-2 px-3">
           Unleash Your Academic Success with Exam Mastery Hub's Exam Excellence Platform
         </p>
