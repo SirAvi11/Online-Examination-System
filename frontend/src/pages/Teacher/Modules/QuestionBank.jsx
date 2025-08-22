@@ -1,6 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { Table, Button, Modal, Form, Row, Col, Collapse, Card, Badge } from "react-bootstrap";
-import './QuestionBank.css';
+import {
+  Table,
+  Button,
+  Modal,
+  Form,
+  Row,
+  Col,
+  Collapse,
+  Card,
+  Badge,
+} from "react-bootstrap";
+import "./QuestionBank.css";
 
 export default function QuestionBank({ selectedModule, onBack }) {
   const [showModal, setShowModal] = useState(false);
@@ -16,7 +26,7 @@ export default function QuestionBank({ selectedModule, onBack }) {
     options: ["", "", "", ""],
     answer: "",
     marks: 1,
-    paperId: null
+    paperId: null,
   });
 
   // ✅ duplicate modal state (better naming)
@@ -25,14 +35,16 @@ export default function QuestionBank({ selectedModule, onBack }) {
     existing: null,
     attempted: null,
     questionNumber: null,
-    message: null
+    message: null,
   });
 
   // Fetch questions by moduleId on mount
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/api/questions?moduleId=${selectedModule._id}`);
+        const res = await fetch(
+          `http://localhost:5000/api/questions?moduleId=${selectedModule._id}`
+        );
         const data = await res.json();
         setQuestions(data);
       } catch (err) {
@@ -47,8 +59,8 @@ export default function QuestionBank({ selectedModule, onBack }) {
     return text
       .toLowerCase()
       .trim()
-      .replace(/\s+/g, " ")        // collapse multiple spaces
-      .replace(/[?!.]+$/, "");     // remove ending punctuation
+      .replace(/\s+/g, " ") // collapse multiple spaces
+      .replace(/[?!.]+$/, ""); // remove ending punctuation
   };
 
   // Add new question
@@ -56,7 +68,7 @@ export default function QuestionBank({ selectedModule, onBack }) {
     if (!newQuestion.questionText.trim() || !newQuestion.answer) {
       return setDuplicateInfo({
         show: true,
-        message: "Please provide a valid question and answer."
+        message: "Please provide a valid question and answer.",
       });
     }
 
@@ -73,21 +85,23 @@ export default function QuestionBank({ selectedModule, onBack }) {
         show: true,
         questionNumber: duplicateIndex + 1,
         existing: questions[duplicateIndex].questionText,
-        attempted: newQuestion.questionText
+        attempted: newQuestion.questionText,
       });
     }
 
     // Check answer validity
-    const correctOptionIndex = newQuestion.options.findIndex(opt => opt === newQuestion.answer);
+    const correctOptionIndex = newQuestion.options.findIndex(
+      (opt) => opt === newQuestion.answer
+    );
     if (correctOptionIndex === -1) {
       return setDuplicateInfo({
         show: true,
-        message: "Correct answer must match one of the options."
+        message: "Correct answer must match one of the options.",
       });
     }
 
     try {
-      setIsSaving(true); 
+      setIsSaving(true);
       const formData = new FormData();
       formData.append("questionText", newQuestion.questionText);
       formData.append("moduleId", selectedModule._id);
@@ -95,15 +109,16 @@ export default function QuestionBank({ selectedModule, onBack }) {
       formData.append("correctOptionIndex", correctOptionIndex);
       formData.append("options", JSON.stringify(newQuestion.options));
       if (newQuestion.paperId) formData.append("paperId", newQuestion.paperId);
-      if (newQuestion.imageFile) formData.append("image", newQuestion.imageFile);
+      if (newQuestion.imageFile)
+        formData.append("image", newQuestion.imageFile);
 
       const res = await fetch("http://localhost:5000/api/questions", {
         method: "POST",
-        body: formData
+        body: formData,
       });
 
       const savedQuestion = await res.json();
-      setQuestions(prev => [...prev, savedQuestion]);
+      setQuestions((prev) => [...prev, savedQuestion]);
 
       setNewQuestion({
         questionText: "",
@@ -117,14 +132,14 @@ export default function QuestionBank({ selectedModule, onBack }) {
     } catch (err) {
       console.error("Failed to save question:", err);
     } finally {
-      setIsSaving(false); 
-    }     
+      setIsSaving(false);
+    }
   };
 
   const toggleSelectQuestion = (questionId) => {
-    setSelectedQuestionIds(prev =>
+    setSelectedQuestionIds((prev) =>
       prev.includes(questionId)
-        ? prev.filter(id => id !== questionId)
+        ? prev.filter((id) => id !== questionId)
         : [...prev, questionId]
     );
   };
@@ -133,18 +148,21 @@ export default function QuestionBank({ selectedModule, onBack }) {
     if (selectedQuestionIds.length === questions.length) {
       setSelectedQuestionIds([]);
     } else {
-      setSelectedQuestionIds(questions.map(m => m._id));
+      setSelectedQuestionIds(questions.map((m) => m._id));
     }
   };
 
   const handleDeleteSelected = async () => {
     if (selectedQuestionIds.length === 0) return;
     try {
-      const res = await fetch("http://localhost:5000/api/questions/bulk-delete", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids: selectedQuestionIds }),
-      });
+      const res = await fetch(
+        "http://localhost:5000/api/questions/bulk-delete",
+        {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ids: selectedQuestionIds }),
+        }
+      );
 
       if (res.ok) {
         setQuestions((prev) =>
@@ -170,10 +188,16 @@ export default function QuestionBank({ selectedModule, onBack }) {
           </Button>
 
           <div className="text-center">
-            <h5 className="mb-1 fw-bold" style={{ letterSpacing: "1px", fontSize: "1.2rem" }}>
+            <h5
+              className="mb-1 fw-bold"
+              style={{ letterSpacing: "1px", fontSize: "1.2rem" }}
+            >
               Question Bank ({questions.length})
             </h5>
-            <h6 className="mb-0 text-secondary" style={{ letterSpacing: "0.5px", fontSize: "1rem" }}>
+            <h6
+              className="mb-0 text-secondary"
+              style={{ letterSpacing: "0.5px", fontSize: "1rem" }}
+            >
               {selectedModule.name}
             </h6>
           </div>
@@ -186,7 +210,10 @@ export default function QuestionBank({ selectedModule, onBack }) {
             >
               <i className="fa fa-plus me-2"></i>Add New Question
             </Button>
-            <Button variant="outline-secondary" disabled={selectedQuestionIds.length > 0}>
+            <Button
+              variant="outline-secondary"
+              disabled={selectedQuestionIds.length > 0}
+            >
               <i className="fa fa-upload me-2"></i>Upload from CSV
             </Button>
           </div>
@@ -213,7 +240,10 @@ export default function QuestionBank({ selectedModule, onBack }) {
             <th style={{ width: "40px" }}>
               <Form.Check
                 type="checkbox"
-                checked={selectedQuestionIds.length === questions.length && questions.length > 0}
+                checked={
+                  selectedQuestionIds.length === questions.length &&
+                  questions.length > 0
+                }
                 onChange={toggleSelectAll}
               />
             </th>
@@ -263,15 +293,25 @@ export default function QuestionBank({ selectedModule, onBack }) {
                               src={`http://localhost:5000${q.imageUrl}`}
                               className="img-fluid rounded mb-3"
                               alt="Question"
-                              style={{ maxHeight: "200px", width: "300px", objectFit: "cover" }}
+                              style={{
+                                maxHeight: "200px",
+                                width: "300px",
+                                objectFit: "cover",
+                              }}
                             />
-                          ) : "No image"}
+                          ) : (
+                            "No image"
+                          )}
                           <h6>Options:</h6>
                           <ul>
                             {q.options.map((opt, idx) => (
                               <li
                                 key={idx}
-                                className={q.correctOptionIndex === idx ? "fw-bold text-success" : ""}
+                                className={
+                                  q.correctOptionIndex === idx
+                                    ? "fw-bold text-success"
+                                    : ""
+                                }
                               >
                                 {opt}
                               </li>
@@ -289,7 +329,12 @@ export default function QuestionBank({ selectedModule, onBack }) {
       </Table>
 
       {/* Add Question Modal */}
-      <Modal show={showModal} onHide={() => setShowModal(false)} centered size="lg">
+      <Modal
+        show={showModal}
+        onHide={() => setShowModal(false)}
+        centered
+        size="lg"
+      >
         <Modal.Header closeButton className="bg-primary text-white">
           <Modal.Title>Add New Question</Modal.Title>
         </Modal.Header>
@@ -297,53 +342,66 @@ export default function QuestionBank({ selectedModule, onBack }) {
           <Form>
             {/* Question Details */}
             <Form.Group className="mb-3">
-              <Form.Label><strong>Question Text</strong></Form.Label>
+              <Form.Label>
+                <strong>Question Text</strong>
+              </Form.Label>
               <Form.Control
                 as="textarea"
                 rows={3}
                 placeholder="Enter the question here..."
                 value={newQuestion.questionText}
-                onChange={(e) => setNewQuestion({ ...newQuestion, questionText: e.target.value })}
+                onChange={(e) =>
+                  setNewQuestion({
+                    ...newQuestion,
+                    questionText: e.target.value,
+                  })
+                }
               />
             </Form.Group>
 
             <Form.Group className="mb-3">
-  <Form.Label><strong>Attach Image (optional)</strong></Form.Label>
-  <div className="d-flex align-items-center gap-3">
-    {/* Hidden file input */}
-    <input
-      type="file"
-      accept="image/*"
-      id="imageUpload"
-      style={{ display: "none" }}
-      onChange={(e) => {
-        const file = e.target.files[0];
-        if (file) {
-          setNewQuestion({ ...newQuestion, imageFile: file });
-          setPreview(URL.createObjectURL(file)); // preview state
-        }
-      }}
-    />
+              <Form.Label>
+                <strong>Attach Image (optional)</strong>
+              </Form.Label>
+              <div className="d-flex align-items-center gap-3">
+                {/* Hidden file input */}
+                <input
+                  type="file"
+                  accept="image/*"
+                  id="imageUpload"
+                  style={{ display: "none" }}
+                  onChange={(e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                      setNewQuestion({ ...newQuestion, imageFile: file });
+                      setPreview(URL.createObjectURL(file)); // preview state
+                    }
+                  }}
+                />
 
-    {/* Upload button */}
-    <Button
-      variant="outline-primary"
-      onClick={() => document.getElementById("imageUpload").click()}
-    >
-      <i className="bi bi-upload"></i> Upload
-    </Button>
+                {/* Upload button */}
+                <Button
+                  variant="outline-primary"
+                  onClick={() => document.getElementById("imageUpload").click()}
+                >
+                  <i className="bi bi-upload"></i> Upload
+                </Button>
 
-    {/* Show preview if available */}
-    {preview && (
-      <img
-        src={preview}
-        alt="Preview"
-        style={{ width: "80px", height: "80px", objectFit: "cover", borderRadius: "6px" }}
-      />
-    )}
-  </div>
-</Form.Group>
-
+                {/* Show preview if available */}
+                {preview && (
+                  <img
+                    src={preview}
+                    alt="Preview"
+                    style={{
+                      width: "80px",
+                      height: "80px",
+                      objectFit: "cover",
+                      borderRadius: "6px",
+                    }}
+                  />
+                )}
+              </div>
+            </Form.Group>
 
             {/* Options */}
             <h6 className="mt-4">Options</h6>
@@ -367,7 +425,9 @@ export default function QuestionBank({ selectedModule, onBack }) {
                       />
                     }
                     checked={newQuestion.answer === opt}
-                    onChange={() => setNewQuestion({ ...newQuestion, answer: opt })}
+                    onChange={() =>
+                      setNewQuestion({ ...newQuestion, answer: opt })
+                    }
                   />
                 </Col>
               ))}
@@ -375,12 +435,19 @@ export default function QuestionBank({ selectedModule, onBack }) {
 
             {/* Marks */}
             <Form.Group className="mb-3 mt-3">
-              <Form.Label><strong>Marks</strong></Form.Label>
+              <Form.Label>
+                <strong>Marks</strong>
+              </Form.Label>
               <Form.Control
                 type="number"
                 min={1}
                 value={newQuestion.marks}
-                onChange={(e) => setNewQuestion({ ...newQuestion, marks: Number(e.target.value) })}
+                onChange={(e) =>
+                  setNewQuestion({
+                    ...newQuestion,
+                    marks: Number(e.target.value),
+                  })
+                }
               />
             </Form.Group>
           </Form>
@@ -397,7 +464,11 @@ export default function QuestionBank({ selectedModule, onBack }) {
             disabled={isSaving}
           >
             {isSaving ? (
-              <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+              <span
+                className="spinner-border spinner-border-sm"
+                role="status"
+                aria-hidden="true"
+              ></span>
             ) : (
               "Save Question"
             )}
@@ -408,7 +479,15 @@ export default function QuestionBank({ selectedModule, onBack }) {
       {/* Duplicate Warning Modal */}
       <Modal
         show={duplicateInfo.show}
-        onHide={() => setDuplicateInfo({ show: false, existing: null, attempted: null, questionNumber: null, message: null })}
+        onHide={() =>
+          setDuplicateInfo({
+            show: false,
+            existing: null,
+            attempted: null,
+            questionNumber: null,
+            message: null,
+          })
+        }
         centered
       >
         <Modal.Header closeButton className="bg-danger text-white">
@@ -420,17 +499,30 @@ export default function QuestionBank({ selectedModule, onBack }) {
           ) : (
             <>
               <p>
-                ❌ This question already exists in your bank as <strong>Question {duplicateInfo.questionNumber}</strong>.
+                ❌ This question already exists in your bank as{" "}
+                <strong>Question {duplicateInfo.questionNumber}</strong>.
               </p>
-              <p><strong>Existing:</strong> {duplicateInfo.existing}</p>
-              <p><strong>Your Attempt:</strong> {duplicateInfo.attempted}</p>
+              <p>
+                <strong>Existing:</strong> {duplicateInfo.existing}
+              </p>
+              <p>
+                <strong>Your Attempt:</strong> {duplicateInfo.attempted}
+              </p>
             </>
           )}
         </Modal.Body>
         <Modal.Footer>
           <Button
             variant="secondary"
-            onClick={() => setDuplicateInfo({ show: false, existing: null, attempted: null, questionNumber: null, message: null })}
+            onClick={() =>
+              setDuplicateInfo({
+                show: false,
+                existing: null,
+                attempted: null,
+                questionNumber: null,
+                message: null,
+              })
+            }
           >
             Okay, Got it
           </Button>
