@@ -8,6 +8,7 @@ export default function QuestionBank({ selectedModule, onBack }) {
   const [questions, setQuestions] = useState([]);
   const [selectedQuestionIds, setSelectedQuestionIds] = useState([]);
   const [preview, setPreview] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const [newQuestion, setNewQuestion] = useState({
     questionText: "",
@@ -86,6 +87,7 @@ export default function QuestionBank({ selectedModule, onBack }) {
     }
 
     try {
+      setIsSaving(true); 
       const formData = new FormData();
       formData.append("questionText", newQuestion.questionText);
       formData.append("moduleId", selectedModule._id);
@@ -103,12 +105,20 @@ export default function QuestionBank({ selectedModule, onBack }) {
       const savedQuestion = await res.json();
       setQuestions(prev => [...prev, savedQuestion]);
 
-      setShowModal(false);
-      setNewQuestion({ questionText: "", imageFile: null, options: ["", "", "", ""], answer: "", marks: 1, paperId: "" });
+      setNewQuestion({
+        questionText: "",
+        imageFile: null,
+        options: ["", "", "", ""],
+        answer: "",
+        marks: 1,
+        paperId: "",
+      });
       setPreview(null);
     } catch (err) {
       console.error("Failed to save question:", err);
-    }
+    } finally {
+      setIsSaving(false); 
+    }     
   };
 
   const toggleSelectQuestion = (questionId) => {
@@ -380,9 +390,18 @@ export default function QuestionBank({ selectedModule, onBack }) {
           <Button variant="secondary" onClick={() => setShowModal(false)}>
             Cancel
           </Button>
-          <Button variant="primary" onClick={handleAddQuestion}>
-            Save Question
-          </Button>
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={handleAddQuestion}
+            disabled={isSaving}
+          >
+            {isSaving ? (
+              <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            ) : (
+              "Save Question"
+            )}
+          </button>
         </Modal.Footer>
       </Modal>
 
