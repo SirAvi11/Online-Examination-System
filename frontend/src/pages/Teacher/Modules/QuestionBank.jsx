@@ -17,7 +17,15 @@ export default function QuestionBank({ selectedModule, onBack }) {
     marks: 1,
     paperId: null
   });
-  const [duplicateInfo, setDuplicateInfo] = useState({ show: false, questionNumber: null });
+
+  // ✅ duplicate modal state (better naming)
+  const [duplicateInfo, setDuplicateInfo] = useState({
+    show: false,
+    existing: null,
+    attempted: null,
+    questionNumber: null,
+    message: null
+  });
 
   // Fetch questions by moduleId on mount
   useEffect(() => {
@@ -33,35 +41,48 @@ export default function QuestionBank({ selectedModule, onBack }) {
     fetchQuestions();
   }, [selectedModule._id]);
 
-  // Utility function to normalize question text
+  // Normalize question text
   const normalizeText = (text) => {
     return text
       .toLowerCase()
       .trim()
       .replace(/\s+/g, " ")        // collapse multiple spaces
-      .replace(/[?!.]+$/, "");     // remove ending punctuation like ?, !, .
+      .replace(/[?!.]+$/, "");     // remove ending punctuation
   };
 
   // Add new question
   const handleAddQuestion = async () => {
     if (!newQuestion.questionText.trim() || !newQuestion.answer) {
-      return setDuplicateInfo({ show: true, questionNumber: "Please provide a valid question and answer." });
+      return setDuplicateInfo({
+        show: true,
+        message: "Please provide a valid question and answer."
+      });
     }
 
-    // ✅ Normalize both texts before comparison
+    // Normalize new text
     const newNormalized = normalizeText(newQuestion.questionText);
 
+    // Check duplicate
     const duplicateIndex = questions.findIndex(
       (q) => normalizeText(q.questionText) === newNormalized
     );
 
     if (duplicateIndex !== -1) {
-      return setDuplicateInfo({ show: true, questionNumber: duplicateIndex + 1 });
+      return setDuplicateInfo({
+        show: true,
+        questionNumber: duplicateIndex + 1,
+        existing: questions[duplicateIndex].questionText,
+        attempted: newQuestion.questionText
+      });
     }
 
+    // Check answer validity
     const correctOptionIndex = newQuestion.options.findIndex(opt => opt === newQuestion.answer);
     if (correctOptionIndex === -1) {
-      return setDuplicateInfo({ show: true, questionNumber: "Correct answer must match one of the options." });
+      return setDuplicateInfo({
+        show: true,
+        message: "Correct answer must match one of the options."
+      });
     }
 
     try {
@@ -151,7 +172,7 @@ export default function QuestionBank({ selectedModule, onBack }) {
             <Button
               variant="outline-secondary"
               onClick={() => setShowModal(true)}
-              disabled={selectedQuestionIds.length > 0} // ✅ disable when bulk delete active
+              disabled={selectedQuestionIds.length > 0}
             >
               <i className="fa fa-plus me-2"></i>Add New Question
             </Button>
@@ -161,7 +182,7 @@ export default function QuestionBank({ selectedModule, onBack }) {
           </div>
         </div>
 
-        {/* ✅ Overlay to replace header */}
+        {/* Overlay for bulk delete */}
         {selectedQuestionIds.length > 0 && (
           <div className="overlay show">
             <Button variant="danger" onClick={handleDeleteSelected}>
@@ -175,8 +196,8 @@ export default function QuestionBank({ selectedModule, onBack }) {
         )}
       </div>
 
-      {/* Table + Expandable Details */}
-      <Table striped bordered hover responsiv>
+      {/* Table */}
+      <Table striped bordered hover responsive>
         <thead className="table-light">
           <tr>
             <th style={{ width: "40px" }}>
@@ -196,7 +217,7 @@ export default function QuestionBank({ selectedModule, onBack }) {
           {questions.map((q, i) => (
             <React.Fragment key={q._id}>
               <tr>
-                <td style={{ width: "40px" }}>
+                <td>
                   <Form.Check
                     type="checkbox"
                     checked={selectedQuestionIds.includes(q._id)}
@@ -217,7 +238,7 @@ export default function QuestionBank({ selectedModule, onBack }) {
                 </td>
               </tr>
               <tr>
-                <td colSpan="4" className="p-0">
+                <td colSpan="5" className="p-0">
                   <Collapse in={expandedRow === i}>
                     <div className="p-3 bg-light">
                       <Card className="border-0 shadow-sm">
@@ -227,7 +248,14 @@ export default function QuestionBank({ selectedModule, onBack }) {
                             {q.image && <Badge bg="secondary">Has Image</Badge>}
                           </div>
                           <p className="mb-3">{q.questionText}</p>
-                          {q.imageUrl ? <img src={`http://localhost:5000${q.imageUrl}`} className="img-fluid rounded mb-3" alt="Question" style={{ maxHeight: "200px", width:"300px", objectFit: "cover" }} /> : "No image"}
+                          {q.imageUrl ? (
+                            <img
+                              src={`http://localhost:5000${q.imageUrl}`}
+                              className="img-fluid rounded mb-3"
+                              alt="Question"
+                              style={{ maxHeight: "200px", width: "300px", objectFit: "cover" }}
+                            />
+                          ) : "No image"}
                           <h6>Options:</h6>
                           <ul>
                             {q.options.map((opt, idx) => (
@@ -359,22 +387,32 @@ export default function QuestionBank({ selectedModule, onBack }) {
       </Modal>
 
       {/* Duplicate Warning Modal */}
-      <Modal show={duplicateInfo.show} onHide={() => setDuplicateInfo({ show: false, questionNumber: null })} centered>
+      <Modal
+        show={duplicateInfo.show}
+        onHide={() => setDuplicateInfo({ show: false, existing: null, attempted: null, questionNumber: null, message: null })}
+        centered
+      >
         <Modal.Header closeButton className="bg-danger text-white">
           <Modal.Title>Duplicate Question</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          {typeof duplicateInfo.questionNumber === "number" ? (
-            <p>
-              ❌ This question already exists in your bank as <strong>Question {duplicateInfo.questionNumber}</strong>.  
-              Duplicate questions are not allowed.
-            </p>
+          {duplicateInfo.message ? (
+            <p>⚠️ {duplicateInfo.message}</p>
           ) : (
-            <p>⚠️ {duplicateInfo.questionNumber}</p>
+            <>
+              <p>
+                ❌ This question already exists in your bank as <strong>Question {duplicateInfo.questionNumber}</strong>.
+              </p>
+              <p><strong>Existing:</strong> {duplicateInfo.existing}</p>
+              <p><strong>Your Attempt:</strong> {duplicateInfo.attempted}</p>
+            </>
           )}
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setDuplicateInfo({ show: false, questionNumber: null })}>
+          <Button
+            variant="secondary"
+            onClick={() => setDuplicateInfo({ show: false, existing: null, attempted: null, questionNumber: null, message: null })}
+          >
             Okay, Got it
           </Button>
         </Modal.Footer>
