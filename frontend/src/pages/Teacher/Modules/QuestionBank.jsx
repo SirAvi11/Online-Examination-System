@@ -17,7 +17,7 @@ export default function QuestionBank({ selectedModule, onBack }) {
     marks: 1,
     paperId: null
   });
-
+  const [duplicateInfo, setDuplicateInfo] = useState({ show: false, questionNumber: null });
 
   // Fetch questions by moduleId on mount
   useEffect(() => {
@@ -33,12 +33,36 @@ export default function QuestionBank({ selectedModule, onBack }) {
     fetchQuestions();
   }, [selectedModule._id]);
 
+  // Utility function to normalize question text
+  const normalizeText = (text) => {
+    return text
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, " ")        // collapse multiple spaces
+      .replace(/[?!.]+$/, "");     // remove ending punctuation like ?, !, .
+  };
+
   // Add new question
   const handleAddQuestion = async () => {
-    if (!newQuestion.questionText.trim() || !newQuestion.answer) return;
+    if (!newQuestion.questionText.trim() || !newQuestion.answer) {
+      return setDuplicateInfo({ show: true, questionNumber: "Please provide a valid question and answer." });
+    }
+
+    // ✅ Normalize both texts before comparison
+    const newNormalized = normalizeText(newQuestion.questionText);
+
+    const duplicateIndex = questions.findIndex(
+      (q) => normalizeText(q.questionText) === newNormalized
+    );
+
+    if (duplicateIndex !== -1) {
+      return setDuplicateInfo({ show: true, questionNumber: duplicateIndex + 1 });
+    }
 
     const correctOptionIndex = newQuestion.options.findIndex(opt => opt === newQuestion.answer);
-    if (correctOptionIndex === -1) return alert("Correct answer must match one of the options");
+    if (correctOptionIndex === -1) {
+      return setDuplicateInfo({ show: true, questionNumber: "Correct answer must match one of the options." });
+    }
 
     try {
       const formData = new FormData();
@@ -60,12 +84,11 @@ export default function QuestionBank({ selectedModule, onBack }) {
 
       setShowModal(false);
       setNewQuestion({ questionText: "", imageFile: null, options: ["", "", "", ""], answer: "", marks: 1, paperId: "" });
+      setPreview(null);
     } catch (err) {
       console.error("Failed to save question:", err);
     }
   };
-
-
 
   const toggleSelectQuestion = (questionId) => {
     setSelectedQuestionIds(prev =>
@@ -151,7 +174,6 @@ export default function QuestionBank({ selectedModule, onBack }) {
           </div>
         )}
       </div>
-
 
       {/* Table + Expandable Details */}
       <Table striped bordered hover responsiv>
@@ -332,6 +354,28 @@ export default function QuestionBank({ selectedModule, onBack }) {
           </Button>
           <Button variant="primary" onClick={handleAddQuestion}>
             Save Question
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Duplicate Warning Modal */}
+      <Modal show={duplicateInfo.show} onHide={() => setDuplicateInfo({ show: false, questionNumber: null })} centered>
+        <Modal.Header closeButton className="bg-danger text-white">
+          <Modal.Title>Duplicate Question</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {typeof duplicateInfo.questionNumber === "number" ? (
+            <p>
+              ❌ This question already exists in your bank as <strong>Question {duplicateInfo.questionNumber}</strong>.  
+              Duplicate questions are not allowed.
+            </p>
+          ) : (
+            <p>⚠️ {duplicateInfo.questionNumber}</p>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setDuplicateInfo({ show: false, questionNumber: null })}>
+            Okay, Got it
           </Button>
         </Modal.Footer>
       </Modal>
