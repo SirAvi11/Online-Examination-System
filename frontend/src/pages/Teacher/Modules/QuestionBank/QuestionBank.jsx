@@ -5,7 +5,8 @@ import AddQuestionModal from './AddQuestionModal';
 import DuplicateWarningModal from './DuplicateWarningModal';
 import SuccessNotification from './SuccessNotification'; // Add this import
 import useQuestion from './hooks/useQuestion';
-import { Button } from "react-bootstrap";
+import ArchiveButton from './ArchieveButton';
+import { AccordionHeader, Button } from "react-bootstrap";
 
 export default function QuestionBank({ selectedModule, onBack }) {
   const [expandedRow, setExpandedRow] = useState(null);
@@ -98,19 +99,13 @@ export default function QuestionBank({ selectedModule, onBack }) {
             </h6>
           </div>
 
-          
+          {console.log("selectedQuestionIds",selectedQuestionIds)}
 
           <div className="d-flex gap-2">
             {/* Toggle Button (shows only when questions are selected) */}
-            {selectedQuestionIds.length > 0 && (
-              <Button
-                variant="outline-secondary"
-                onClick={() => console.log("Hidden button clicked")}
-              >
-                <i className="fa fa-cog me-2"></i>Hidden Action
-              </Button>
+            {(selectedQuestionIds.length > 0 || true) && (
+              <ArchiveButton selectedQuestionIds ={selectedQuestionIds} />
             )}
-
             <Button
               variant="outline-secondary"
               onClick={() => setShowModal(true)}

@@ -67,3 +67,31 @@
   background-color: rgba(0, 0, 0, 0.05);
 }
 
+.archive-btn {
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s ease;
+}
+
+/* visible on hover OR when active */
+.archive-btn:hover,
+.archive-btn.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* override Bootstrap color scheme on hover */
+.archive-btn:hover {
+  background-color: transparent;   /* keep outline */
+  border-color: #6c757d;           /* Bootstrap secondary border */
+  color: #6c757d;                  /* Bootstrap secondary text */
+}
+
+/* Always show when questions are selected */
+.archive-btn.show {
+  display: inline-block !important;
+  opacity: 1 !important;
+  transform: scale(1);
+}
+
+
