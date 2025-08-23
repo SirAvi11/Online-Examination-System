@@ -1,5 +1,6 @@
 import {
-  Modal
+  Modal,
+  Button
 } from "react-bootstrap";
 
 const DuplicateWarningModal = ({ duplicateInfo, onHide }) => {
@@ -27,10 +28,10 @@ const DuplicateWarningModal = ({ duplicateInfo, onHide }) => {
           )}
         </Modal.Body>
         <Modal.Footer>
-          {/* <Button
+          <Button
             variant="secondary"
             onClick={() =>
-              setDuplicateInfo({
+              onHide({
                 show: false,
                 existing: null,
                 attempted: null,
@@ -40,7 +41,7 @@ const DuplicateWarningModal = ({ duplicateInfo, onHide }) => {
             }
           >
             Okay, Got it
-          </Button> */}
+          </Button>
         </Modal.Footer>
     </Modal>
   );
