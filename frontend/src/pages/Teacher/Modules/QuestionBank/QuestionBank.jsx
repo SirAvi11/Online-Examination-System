@@ -98,7 +98,19 @@ export default function QuestionBank({ selectedModule, onBack }) {
             </h6>
           </div>
 
+          
+
           <div className="d-flex gap-2">
+            {/* Toggle Button (shows only when questions are selected) */}
+            {selectedQuestionIds.length > 0 && (
+              <Button
+                variant="outline-secondary"
+                onClick={() => console.log("Hidden button clicked")}
+              >
+                <i className="fa fa-cog me-2"></i>Hidden Action
+              </Button>
+            )}
+
             <Button
               variant="outline-secondary"
               onClick={() => setShowModal(true)}
@@ -106,6 +118,7 @@ export default function QuestionBank({ selectedModule, onBack }) {
             >
               <i className="fa fa-plus me-2"></i>Add New Question
             </Button>
+
             <Button
               variant="outline-secondary"
               disabled={selectedQuestionIds.length > 0}
@@ -116,7 +129,7 @@ export default function QuestionBank({ selectedModule, onBack }) {
         </div>
 
         {selectedQuestionIds.length > 0 && (
-          <div className="overlay show">
+          <div className="overlay">
             <Button variant="danger" onClick={handleDeleteSelected}>
               <i className="fa fa-trash" /> Delete Selected
             </Button>
