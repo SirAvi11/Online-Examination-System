@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Modal, Button, Table, Form } from "react-bootstrap";
 import "./ModulesView.css";
-import QuestionBank from "./QuestionBank";
+import QuestionBank from "./QuestionBank/QuestionBank";
 
 export default function ModulesView({ teacherId }) {
   const [modules, setModules] = useState([]);
