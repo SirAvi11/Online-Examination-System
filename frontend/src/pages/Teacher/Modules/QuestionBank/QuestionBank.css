@@ -74,7 +74,6 @@
 }
 
 /* visible on hover OR when active */
-.archive-btn:hover,
 .archive-btn.active {
   opacity: 1;
   pointer-events: auto;
@@ -82,9 +81,7 @@
 
 /* override Bootstrap color scheme on hover */
 .archive-btn:hover {
-  background-color: transparent;   /* keep outline */
-  border-color: #6c757d;           /* Bootstrap secondary border */
-  color: #6c757d;                  /* Bootstrap secondary text */
+  display: none !important;
 }
 
 /* Always show when questions are selected */

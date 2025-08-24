@@ -108,17 +108,24 @@ export default function QuestionBank({ selectedModule, onBack }) {
             )}
             <Button
               variant="outline-secondary"
+              disabled={selectedQuestionIds.length > 0}
+            >
+              <i className="fa fa-cog me-2"></i>Filter
+            </Button>
+            
+            <Button
+              variant="outline-secondary"
               onClick={() => setShowModal(true)}
               disabled={selectedQuestionIds.length > 0}
             >
-              <i className="fa fa-plus me-2"></i>Add New Question
+              <i className="fa fa-plus me-2"></i>New
             </Button>
 
             <Button
               variant="outline-secondary"
               disabled={selectedQuestionIds.length > 0}
             >
-              <i className="fa fa-upload me-2"></i>Upload from CSV
+              <i className="fa fa-upload me-2"></i>Upload
             </Button>
           </div>
         </div>

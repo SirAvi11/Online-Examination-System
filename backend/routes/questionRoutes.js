@@ -1,15 +1,21 @@
+// routes/questionRoutes.js
 const express = require("express");
-const upload = require("../middleware/uploadMiddleware");
 const router = express.Router();
 const {
   getQuestions,
   createQuestion,
   bulkDeleteQuestions,
+  toggleArchiveQuestions,
+  getArchivedQuestions
 } = require("../controllers/questionController.js");
 
-// Routes
-router.get("/", getQuestions);
-router.post("/", upload.single("image"), createQuestion);
-router.delete("/bulk-delete", bulkDeleteQuestions);
+// Basic
+router.get("/", getQuestions); // ?moduleId=xxx
+router.post("/", createQuestion);
+router.delete("/bulk", bulkDeleteQuestions);
+
+// Archive management
+router.put("/archive-toggle", toggleArchiveQuestions);
+router.get("/archived", getArchivedQuestions);
 
 module.exports = router;
