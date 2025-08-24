@@ -7,6 +7,7 @@ import SuccessNotification from './SuccessNotification'; // Add this import
 import useQuestion from './hooks/useQuestion';
 import ArchiveButton from './ArchieveButton';
 import { AccordionHeader, Button } from "react-bootstrap";
+import './QuestionBank.css';
 
 export default function QuestionBank({ selectedModule, onBack }) {
   const [expandedRow, setExpandedRow] = useState(null);
@@ -112,7 +113,7 @@ export default function QuestionBank({ selectedModule, onBack }) {
             >
               <i className="fa fa-cog me-2"></i>Filter
             </Button>
-            
+
             <Button
               variant="outline-secondary"
               onClick={() => setShowModal(true)}
