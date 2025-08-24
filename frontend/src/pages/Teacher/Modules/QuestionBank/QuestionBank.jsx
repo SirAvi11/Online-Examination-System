@@ -21,29 +21,12 @@ export default function QuestionBank({ selectedModule, onBack }) {
     isSaving,
     duplicateInfo,  
     successInfo,
+    toggleArchieveQuestions,
     addQuestion, 
     deleteQuestions,
     resetDuplicateInfo, 
     resetSuccessInfo
   } = useQuestion(selectedModule?._id);
-
-  console.log("QuestionBank successInfo:", successInfo);
-  {successInfo.show && (
-  <div style={{
-    position: 'fixed',
-    top: '20px',
-    left: '50%',
-    transform: 'translateX(-50%)',
-    zIndex: 9999,
-    backgroundColor: 'green',
-    color: 'white',
-    padding: '10px 20px',
-    borderRadius: '4px'
-  }}>
-    TEST: Question #{successInfo.questionNumber} added successfully.
-  </div>
-)}
-
   
   const toggleSelectQuestion = (questionId) => {
     setSelectedQuestionIds(prev =>
@@ -105,7 +88,12 @@ export default function QuestionBank({ selectedModule, onBack }) {
           <div className="d-flex gap-2">
             {/* Toggle Button (shows only when questions are selected) */}
             {(selectedQuestionIds.length > 0 || true) && (
-              <ArchiveButton selectedQuestionIds ={selectedQuestionIds} />
+              <ArchiveButton 
+                selectedQuestionIds ={selectedQuestionIds} 
+                toggleArchiveQuestions={toggleArchieveQuestions}
+                setSelectedQuestionIds = {setSelectedQuestionIds}
+ 
+              />
             )}
             <Button
               variant="outline-secondary"

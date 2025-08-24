@@ -171,6 +171,34 @@ const useQuestion = (moduleId) => {
     }
   };
 
+  //Toggle Archieved Questions
+
+  const toggleArchieveQuestions = async(questionIds, archive) =>{
+    try {
+      const res = await fetch(
+        "http://localhost:5000/api/questions/archive-toggle",
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ questionIds, archive }),
+        }
+      );
+
+      if (res.ok) {
+        setQuestions((prev) =>
+          prev.filter((q) => !questionIds.includes(q._id))
+        );
+        return true;
+      } else {
+        const error = await res.json();
+        throw new Error(error.message || "Error storing questions");
+      }
+    } catch (err) {
+      setError(err.message);
+      return false;
+    }
+  }
+
   // Reset duplicate info
   const resetDuplicateInfo = () => {
     setDuplicateInfo({
@@ -198,6 +226,7 @@ const useQuestion = (moduleId) => {
     isSaving,
     duplicateInfo,
     successInfo,
+    toggleArchieveQuestions,
     setQuestions,
     addQuestion,
     deleteQuestions,
