@@ -27,22 +27,13 @@ export default function ModulesView({ teacherId }) {
     }
   };
 
-  const getRandomColor = () => {
-    const letters = '0123456789ABCDEF';
-    let color = '#';
-    for (let i = 0; i < 6; i++) {
-      color += letters[Math.floor(Math.random() * 16)];
-    }
-    return color;
-  };
-
   const handleSaveModule = async () => {
     if (!newModule.name.trim()) return;
     try {
       const res = await fetch("http://localhost:5000/api/modules", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...newModule, teacherId, color: getRandomColor() })
+        body: JSON.stringify({ ...newModule, teacherId })
       });
       const savedModule = await res.json();
       setModules(prev => [savedModule, ...prev]);
@@ -74,11 +65,9 @@ export default function ModulesView({ teacherId }) {
     const key = `${moduleId}-${field}`;
     const newVal = (editingValues[key] ?? "").trim();
     if (field === "name" && newVal === "") return;
+    
     const updatedModule = { [field]: newVal };
-    if (field === "name") {
-      const colorKey = `${moduleId}-color`;
-      updatedModule.color = editingValues[colorKey] ?? modules.find(m => m._id === moduleId)?.color;
-    }
+    
     try {
       const res = await fetch(`http://localhost:5000/api/modules/${moduleId}`, {
         method: "PUT",
@@ -88,8 +77,18 @@ export default function ModulesView({ teacherId }) {
       const data = await res.json();
       setModules(prev => prev.map(m => m._id === moduleId ? data : m));
       // Clear editing states
-      setEditing(prev => { const copy = { ...prev }; delete copy[`${moduleId}-name`]; delete copy[`${moduleId}-description`]; delete copy[`${moduleId}-color`]; return copy; });
-      setEditingValues(prev => { const copy = { ...prev }; delete copy[`${moduleId}-name`]; delete copy[`${moduleId}-description`]; delete copy[`${moduleId}-color`]; return copy; });
+      setEditing(prev => { 
+        const copy = { ...prev }; 
+        delete copy[`${moduleId}-name`]; 
+        delete copy[`${moduleId}-description`]; 
+        return copy; 
+      });
+      setEditingValues(prev => { 
+        const copy = { ...prev }; 
+        delete copy[`${moduleId}-name`]; 
+        delete copy[`${moduleId}-description`]; 
+        return copy; 
+      });
     } catch (err) {
       console.error("Failed to update module:", err);
     }
@@ -154,8 +153,6 @@ export default function ModulesView({ teacherId }) {
                 </button>
               </div>
             )}
-
-
           </div>
 
           <Table striped bordered hover responsive>
@@ -184,7 +181,7 @@ export default function ModulesView({ teacherId }) {
                 const isSelected = selectedModuleIds.includes(module._id);
 
                 return (
-                  <tr key={module._id} style={{ backgroundColor: module.color || "#fff" }}>
+                  <tr key={module._id}>
                     <td>
                       <Form.Check
                         type="checkbox"
@@ -194,17 +191,6 @@ export default function ModulesView({ teacherId }) {
                     </td>
                     <td className="editable-cell">
                       <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                        {isEditingName && (
-                          <input
-                            type="color"
-                            value={editingValues[`${module._id}-color`] ?? module.color ?? "#000000"}
-                            onChange={(e) => changeEditingValue(module._id, "color", e.target.value)}
-                            style={{ width: "24px", height: "24px", border: "none", padding: 0 }}
-                          />
-                        )}
-                        {!isEditingName && (
-                          <span style={{ display: "inline-block", width: "12px", height: "24px", borderRadius: "6px", backgroundColor: module.color || "#000000" }} />
-                        )}
                         {isEditingName ? (
                           <Form.Control
                             type="text"
@@ -214,7 +200,7 @@ export default function ModulesView({ teacherId }) {
                             autoFocus
                           />
                         ) : (
-                          <strong>{module.name}</strong>
+                          module.name
                         )}
                         <Button
                           variant="link"
