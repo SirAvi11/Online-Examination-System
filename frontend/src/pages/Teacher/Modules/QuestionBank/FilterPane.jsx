@@ -1,18 +1,24 @@
-import React, { useState } from 'react';
-import { Modal, Button, Form, InputGroup } from 'react-bootstrap';
+// FilterPane.js
+import React, { useState, useRef } from 'react';
+import useClickOutside from './hooks/useClickOutside';
+import { Form, InputGroup, Button, ButtonGroup } from 'react-bootstrap';
 
-const FilterModal = ({ show, onHide, onApply, questions }) => {
+const FilterPane = ({ onApply, onClose, questions }) => {
   const [searchText, setSearchText] = useState('');
   const [minMarks, setMinMarks] = useState('');
   const [maxMarks, setMaxMarks] = useState('');
-  const [showArchived, setShowArchived] = useState(false);
+  const filterPaneRef = useRef();
+  const [questionStatus, setQuestionStatus] = useState('active'); // 'active' or 'archived'
+
+  useClickOutside(filterPaneRef, onClose);
+
 
   const handleApply = () => {
     const filters = {
       searchText,
       minMarks: minMarks ? parseInt(minMarks) : null,
       maxMarks: maxMarks ? parseInt(maxMarks) : null,
-      showArchived
+      questionStatus // Add this instead of showArchived
     };
     onApply(filters);
   };
@@ -22,18 +28,15 @@ const FilterModal = ({ show, onHide, onApply, questions }) => {
     setSearchText('');
     setMinMarks('');
     setMaxMarks('');
-    setShowArchived(false);
-    onHide();
+    setQuestionStatus('active');
+    onClose();
   };
 
   return (
-    <Modal show={show} onHide={handleCancel} centered>
-      <Modal.Header closeButton>
-        <Modal.Title>Filter Questions</Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
+    <div className="filter-pane" ref={filterPaneRef}>
+      <div className="filter-pane-content">
         {/* Search Section */}
-        <div className="mb-4">
+        <div className="mb-3">
           <h6 className="mb-2 fw-bold">Search</h6>
           <Form.Group>
             <Form.Control
@@ -71,27 +74,40 @@ const FilterModal = ({ show, onHide, onApply, questions }) => {
             </InputGroup>
           </Form.Group>
 
-          {/* Archived Filter */}
+          {/* Question Status Filter - Updated */}
           <Form.Group className="mb-3">
-            <Form.Check
-              type="checkbox"
-              label="Show archived questions"
-              checked={showArchived}
-              onChange={(e) => setShowArchived(e.target.checked)}
-            />
+            <Form.Label>Question Status</Form.Label>
+            <div>
+              <ButtonGroup>
+                <Button
+                  variant={questionStatus === 'active' ? 'primary' : 'outline-primary'}
+                  onClick={() => setQuestionStatus('active')}
+                >
+                  Active
+                </Button>
+                <Button
+                  variant={questionStatus === 'archived' ? 'primary' : 'outline-primary'}
+                  onClick={() => setQuestionStatus('archived')}
+                >
+                  Archived
+                </Button>
+              </ButtonGroup>
+            </div>
           </Form.Group>
         </div>
-      </Modal.Body>
-      <Modal.Footer>
-        <Button variant="outline-secondary" onClick={handleCancel}>
-          Cancel
-        </Button>
-        <Button variant="primary" onClick={handleApply}>
-          Apply Filters
-        </Button>
-      </Modal.Footer>
-    </Modal>
+
+        {/* Action Buttons */}
+        <div className="d-flex gap-2 justify-content-end">
+          <Button variant="outline-secondary" size="sm" onClick={handleCancel}>
+            Cancel
+          </Button>
+          <Button variant="primary" size="sm" onClick={handleApply}>
+            Apply
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 };
 
-export default FilterModal;
+export default FilterPane;

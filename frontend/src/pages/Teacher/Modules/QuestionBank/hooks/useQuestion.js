@@ -183,16 +183,6 @@ const useQuestion = (moduleId) => {
           body: JSON.stringify({ questionIds, archive }),
         }
       );
-
-      if (res.ok) {
-        setQuestions((prev) =>
-          prev.filter((q) => !questionIds.includes(q._id))
-        );
-        return true;
-      } else {
-        const error = await res.json();
-        throw new Error(error.message || "Error storing questions");
-      }
     } catch (err) {
       setError(err.message);
       return false;

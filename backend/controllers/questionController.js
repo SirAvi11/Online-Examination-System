@@ -7,7 +7,7 @@ const getQuestions = async (req, res) => {
   if (!moduleId) return res.status(400).json({ message: "moduleId is required" });
 
   try {
-    const questions = await Question.find({ moduleId, isArchived: false }); // default only active
+    const questions = await Question.find({ moduleId });
     res.json(questions);
   } catch (err) {
     console.error(err);
