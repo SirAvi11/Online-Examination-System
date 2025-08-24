@@ -14,19 +14,41 @@ const getQuestions = async (req, res) => {
     res.status(500).json({ message: "Server error fetching questions" });
   }
 };
-
 // POST new question
 const createQuestion = async (req, res) => {
   try {
+    console.log("Full request body:", req.body);
+    console.log("Request file:", req.file);
+
     const { paperId, moduleId, questionText, options, correctOptionIndex, marks } = req.body;
+
+    // Check if options is provided
+    if (!options) {
+      return res.status(400).json({ error: "Options field is required" });
+    }
+
+    // Parse options safely
+    let parsedOptions;
+    try {
+      parsedOptions = JSON.parse(options);
+    } catch (parseError) {
+      console.error("Error parsing options:", parseError);
+      return res.status(400).json({ error: "Invalid options format. Must be valid JSON." });
+    }
+
+    // Validate that parsedOptions is an array
+    if (!Array.isArray(parsedOptions)) {
+      return res.status(400).json({ error: "Options must be an array" });
+    }
 
     const question = new Question({
       paperId: paperId || null,
       moduleId,
       questionText,
-      options: JSON.parse(options), // comes as stringified array in FormData
-      correctOptionIndex,
-      marks,
+      options: parsedOptions,
+      correctOptionIndex: parseInt(correctOptionIndex) || 0,
+      marks: parseInt(marks) || 1,
+      isArchived: false,
       imageUrl: req.file ? `/uploads/questions/${req.file.filename}` : null
     });
 
@@ -34,6 +56,12 @@ const createQuestion = async (req, res) => {
     res.json(saved);
   } catch (err) {
     console.error("Error saving question:", err);
+    
+    // Handle specific error types
+    if (err.name === 'ValidationError') {
+      return res.status(400).json({ error: err.message });
+    }
+    
     res.status(500).json({ error: "Failed to save question" });
   }
 };

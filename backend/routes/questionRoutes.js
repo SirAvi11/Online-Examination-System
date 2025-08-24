@@ -8,10 +8,11 @@ const {
   toggleArchiveQuestions,
   getArchivedQuestions
 } = require("../controllers/questionController.js");
+const upload = require("../middleware/uploadMiddleware.js"); 
 
 // Basic
 router.get("/", getQuestions); // ?moduleId=xxx
-router.post("/", createQuestion);
+router.post("/", upload.single('image'), createQuestion); // Add multer middleware here
 router.delete("/bulk", bulkDeleteQuestions);
 
 // Archive management

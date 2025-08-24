@@ -104,6 +104,7 @@ const useQuestion = (moduleId) => {
       
       if (newQuestionData.paperId) formData.append("paperId", newQuestionData.paperId);
       if (newQuestionData.imageFile) formData.append("image", newQuestionData.imageFile);
+      
 
       const res = await fetch("http://localhost:5000/api/questions", {
         method: "POST",
