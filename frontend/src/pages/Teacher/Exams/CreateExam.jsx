@@ -97,7 +97,7 @@ const CreateExam = ({ onBack }) => {
         ...examData,
         totalMarks,
         totalQuestions,
-        questions: examData.selectedQuestions.map(q => ({
+        selectedQuestions: examData.selectedQuestions.map(q => ({
           type: "existing",
           questionRef: q._id
         }))
@@ -267,25 +267,11 @@ const CreateExam = ({ onBack }) => {
                 <i className="fa fa-info-circle me-2"></i>
                 Select questions from your question bank. The exam will automatically calculate total marks based on selected questions.
               </div>
-              <QuestionSelector onChange={handleQuestionsChange} modules={modules} />
-              
-              {examData.selectedQuestions.length > 0 && (
-                <div className="mt-4">
-                  <h6>Selected Questions Summary</h6>
-                  <ul className="list-group">
-                    <li className="list-group-item d-flex justify-content-between align-items-center">
-                      Total Questions
-                      <span className="badge bg-primary rounded-pill">{examData.selectedQuestions.length}</span>
-                    </li>
-                    <li className="list-group-item d-flex justify-content-between align-items-center">
-                      Total Marks
-                      <span className="badge bg-success rounded-pill">
-                        {examData.selectedQuestions.reduce((sum, q) => sum + q.marks, 0)}
-                      </span>
-                    </li>
-                  </ul>
-                </div>
-              )}
+              <QuestionSelector 
+                onChange={handleQuestionsChange} 
+                modules={modules} 
+                examQuestions={examData?.selectedQuestions}
+              />
             </div>
           )}
 

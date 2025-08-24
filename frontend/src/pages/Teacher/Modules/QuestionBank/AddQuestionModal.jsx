@@ -1,4 +1,3 @@
-// AddQuestionModal.js
 import { useState, useEffect } from "react";
 import {
   Button,
@@ -6,12 +5,11 @@ import {
   Form,
   Row,
   Col,
-  Card,
   Badge,
   InputGroup
 } from "react-bootstrap";
 
-const AddQuestionModal = ({ show, onHide, onSave, moduleId, isSaving, successInfo }) => {
+const AddQuestionModal = ({ show, onHide, onSave, isSaving, successInfo, modules}) => {
   const [newQuestion, setNewQuestion] = useState({
     questionText: "",
     imageFile: null,
@@ -19,6 +17,7 @@ const AddQuestionModal = ({ show, onHide, onSave, moduleId, isSaving, successInf
     answer: "",
     marks: 1,
     paperId: null,
+    moduleId: null
   });
   const [preview, setPreview] = useState(null);
   const [activeTab, setActiveTab] = useState("question");
@@ -142,6 +141,45 @@ const AddQuestionModal = ({ show, onHide, onSave, moduleId, isSaving, successInf
               <i className="bi bi-question-circle me-2"></i>
               Question Details
             </h6>
+            {/* Module Selection - Optional */}
+            {modules?.length > 0 && (
+            <Form.Group className="mb-4">
+              <Form.Label className="fw-semibold">Module (Optional)</Form.Label>
+              <Form.Select
+                value={newQuestion.moduleId || ""}
+                onChange={(e) =>
+                  setNewQuestion({ ...newQuestion, moduleId: e.target.value })
+                }
+                className="focus-ring"
+              >
+                <option value="">None</option>
+                {modules.map((module) => (
+                  <option key={module._id} value={module._id}>
+                    {module.name}
+                  </option>
+                ))}
+              </Form.Select>
+              
+              {/* Warning message when no module is selected */}
+              {!newQuestion.moduleId && (
+                <Form.Text className="text-warning">
+                  <i className="fa fa-exclamation-triangle me-1"></i>
+                  This question will not be saved under any module
+                </Form.Text>
+              )}
+              
+              {/* Info message when a module is selected */}
+              {newQuestion.moduleId && (
+                <Form.Text className="text-info">
+                  <i className="fa fa-info-circle me-1"></i>
+                  This question will be saved under{" "}
+                  <strong>
+                    {modules.find(m => m._id === newQuestion.moduleId)?.name}
+                  </strong>
+                </Form.Text>
+              )}
+            </Form.Group>
+          )}
             <Form.Group className="mb-4">
               <Form.Label className="fw-semibold d-flex justify-content-between align-items-center">
                 <span>Question Text</span>

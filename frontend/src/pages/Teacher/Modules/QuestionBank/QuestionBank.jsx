@@ -242,7 +242,6 @@ export default function QuestionBank({ selectedModule, onBack }) {
         show={showModal}
         onHide={() => setShowModal(false)}
         onSave={handleAddQuestion}
-        moduleId={selectedModule._id}
         isSaving={isSaving}
         successInfo={successInfo}
       />

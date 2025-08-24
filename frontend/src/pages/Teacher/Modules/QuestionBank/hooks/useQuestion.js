@@ -97,7 +97,7 @@ const useQuestion = (moduleId) => {
       setIsSaving(true);
       const formData = new FormData();
       formData.append("questionText", newQuestionData.questionText);
-      formData.append("moduleId", moduleId);
+      formData.append("moduleId", moduleId || newQuestionData.moduleId);
       formData.append("marks", newQuestionData.marks);
       formData.append("correctOptionIndex", correctOptionIndex);
       formData.append("options", JSON.stringify(newQuestionData.options));

@@ -1,37 +1,54 @@
 import { useState } from "react";
+import { Button} from "react-bootstrap";
 import "./QuestionSelector.css";
+import AddQuestionModal from "../Modules/QuestionBank/AddQuestionModal";
+import useQuestion from '../Modules/QuestionBank/hooks/useQuestion';
 
-const QuestionSelector = ({ modules, onChange }) => {
+const QuestionSelector = ({ modules, examQuestions, onChange }) => {
   const [selectedModule, setSelectedModule] = useState(null);
   const [availableQuestions, setAvailableQuestions] = useState([]);
-  const [examQuestions, setExamQuestions] = useState([]);
   const [selectedAvailable, setSelectedAvailable] = useState([]);
   const [selectedExam, setSelectedExam] = useState([]);
+  const [showModal, setShowModal] = useState(false);
 
+  const {isSaving, successInfo, addQuestion} = useQuestion("");
+  
   const handleModuleChange = async (moduleId) => {
-  setSelectedModule(moduleId);
-  try {
-    const res = await fetch(`/api/modules/${moduleId}/questions`);
-    const data = await res.json();
+    setSelectedModule(moduleId);
+    try {
+      const res = await fetch(`/api/modules/${moduleId}/questions`);
+      const data = await res.json();
 
-    if (res.ok) {
-      // filter out questions that are already in examQuestions
-      const filteredQuestions = data.filter(
-        (q) => !examQuestions.some((eq) => eq._id === q._id)
-      );
-      setAvailableQuestions(filteredQuestions);
-    } else {
+      if (res.ok) {
+        // Filter out questions that are already in examQuestions AND are not archived
+        // Using !q.isArchived will handle both false and undefined values
+        const filteredQuestions = data.filter(
+          (q) => !examQuestions.some((eq) => eq._id === q._id) && !q.isArchived
+        );
+        setAvailableQuestions(filteredQuestions);
+      } else {
+        setAvailableQuestions([]);
+      }
+    } catch (err) {
+      console.error("Error fetching questions:", err);
       setAvailableQuestions([]);
     }
-  } catch (err) {
-    console.error("Error fetching questions:", err);
-    setAvailableQuestions([]);
-  }
-};
+  };
 
+  const handleAddQuestion = async (questionData) => {
+    const savedQuestion = await addQuestion(questionData);
+    
+    if (savedQuestion) {
+      // Add the newly saved question to exam questions
+      onChange([...examQuestions, questionData]);
+      return savedQuestion;
+    }
+    
+    return null;
+  };
 
   const moveToExam = () => {
-    setExamQuestions([...examQuestions, ...selectedAvailable]);
+    onChange([...examQuestions, ...selectedAvailable]);
     setAvailableQuestions(
       availableQuestions.filter((q) => !selectedAvailable.includes(q))
     );
@@ -40,7 +57,7 @@ const QuestionSelector = ({ modules, onChange }) => {
 
   const moveToAvailable = () => {
     setAvailableQuestions([...availableQuestions, ...selectedExam]);
-    setExamQuestions(examQuestions.filter((q) => !selectedExam.includes(q)));
+    onChange(examQuestions.filter((q) => !selectedExam.includes(q)));
     setSelectedExam([]);
   };
 
@@ -63,7 +80,7 @@ const QuestionSelector = ({ modules, onChange }) => {
         {/* Available List */}
         <div className="list">
           <div className="questions-fixed">
-            <h4 className="listbox-title">Available Questions</h4>
+            <h4 className="listbox-title">Available Questions ({availableQuestions.length})</h4>
             {/* Header Row */}
             <div className="list-header">
               <label className="question select-all">
@@ -81,7 +98,7 @@ const QuestionSelector = ({ modules, onChange }) => {
                     }
                   }}
                 />
-                Select All
+                Select All ({selectedAvailable.length})
               </label>
               <span className="marks-label">Marks</span>
             </div>
@@ -124,7 +141,18 @@ const QuestionSelector = ({ modules, onChange }) => {
         {/* Exam List */}
         <div className="list">
           <div className="questions-fixed">
-            <h4 className="listbox-title">Exam Questions</h4>
+            <span className="listbox-header d-flex justify-content-between align-items-center">
+              <h4 className="listbox-title mb-3 flex-grow-1 text-center ms-1">Exam Questions ({examQuestions.length})</h4>
+              <Button 
+                variant="outline-secondary" 
+                size="sm"
+                className="p-1 me-1" // Added ms-2 for margin on the left side
+                onClick={() => setShowModal(true)}
+                title="Add new question"
+              >
+                <i className="fa fa-plus"></i>
+              </Button>
+            </span>
             {/* Header Row */}
             <div className="list-header">
               <label className="question select-all">
@@ -142,9 +170,13 @@ const QuestionSelector = ({ modules, onChange }) => {
                     }
                   }}
                 />
-                Select All
+                Select All ({selectedExam.length})
               </label>
-              <span className="marks-label">Marks</span>
+              <span className="marks-label">
+                Marks (
+                  {examQuestions.reduce((total, question) => total + (question.marks || 0), 0)}
+                )
+              </span>
             </div>
           </div>
           <div className="questions-scroll">
@@ -172,6 +204,16 @@ const QuestionSelector = ({ modules, onChange }) => {
           </div>
         </div>
       </div>
+
+      {/* Modals */}
+      <AddQuestionModal
+        show={showModal}
+        onHide={() => setShowModal(false)}
+        onSave={handleAddQuestion}
+        isSaving={isSaving}
+        successInfo={successInfo}
+        modules={modules}
+      />
     </div>
   );
 };
