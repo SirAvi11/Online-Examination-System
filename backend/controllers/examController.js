@@ -9,7 +9,51 @@ const getExamsByTeacher = async (req, res) => {
       .populate('questions.questionRef')
       .sort({ startTime: 1 });
 
-    res.status(200).json(exams);
+    // Manually update status for each exam to ensure it's current
+    const now = new Date();
+    const updatedExams = exams.map(exam => {
+      // Create a plain object to avoid mongoose document issues
+      const examObj = exam.toObject();
+      
+      if (now < exam.startTime) {
+        examObj.status = "Upcoming";
+      } else if (now >= exam.startTime && now <= exam.endTime) {
+        examObj.status = "In Progress";
+      } else if (now > exam.endTime) {
+        examObj.status = "Completed";
+      }
+      
+      return examObj;
+    });
+
+    // Define the sorting order for statuses
+    const statusOrder = {
+      "In Progress": 1,
+      "Upcoming": 2,
+      "Completed": 3,
+      "Canceled": 4
+    };
+
+    // Sort exams by status priority and then by start time
+    const sortedExams = updatedExams.sort((a, b) => {
+      // First, sort by status priority
+      const statusComparison = statusOrder[a.status] - statusOrder[b.status];
+      
+      if (statusComparison !== 0) {
+        return statusComparison;
+      }
+      
+      // If same status, sort by start time
+      // For "In Progress" and "Upcoming", sort ascending (earliest first)
+      // For "Completed" and "Canceled", sort descending (most recent first)
+      if (a.status === "In Progress" || a.status === "Upcoming") {
+        return new Date(a.startTime) - new Date(b.startTime);
+      } else {
+        return new Date(b.startTime) - new Date(a.startTime);
+      }
+    });
+
+    res.status(200).json(sortedExams);
   } catch (err) {
     console.error("❌ Error fetching exams:", err.message);
     res.status(500).json({ error: "Server error while fetching exams" });
@@ -27,6 +71,23 @@ const createExam = async (req, res) => {
     if (!title || !startTime || !endTime || !duration) {
       return res.status(400).json({ 
         error: "Title, start time, end time, and duration are required" 
+      });
+    }
+
+    // Validate dates
+    const startDate = new Date(startTime);
+    const endDate = new Date(endTime);
+    const now = new Date();
+
+    if (startDate >= endDate) {
+      return res.status(400).json({ 
+        error: "End time must be after start time" 
+      });
+    }
+
+    if (endDate <= now) {
+      return res.status(400).json({ 
+        error: "End time must be in the future" 
       });
     }
 
@@ -64,6 +125,15 @@ const createExam = async (req, res) => {
     // Generate unique exam code if not provided
     const examCode = req.body.examCode || generateExamCode();
 
+    // Determine initial status based on current time
+    let status = "Upcoming";
+    const nowTime = new Date();
+    if (nowTime >= startDate && nowTime <= endDate) {
+      status = "In Progress";
+    } else if (nowTime > endDate) {
+      status = "Completed";
+    }
+
     // Create exam object
     const examData = {
       ...req.body,
@@ -71,6 +141,7 @@ const createExam = async (req, res) => {
       totalMarks,
       totalQuestions,
       examCode,
+      status, // Add the status field
     };
 
     // Save exam to database
@@ -107,9 +178,114 @@ const createExam = async (req, res) => {
   }
 };
 
+// GET single exam by ID
+const getExamById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const teacherId = req.user.userId;
+
+    const exam = await Exam.findOne({ _id: id, createdBy: teacherId })
+      .populate('questions.questionRef')
+      .populate('createdBy', 'name email');
+
+    if (!exam) {
+      return res.status(404).json({ error: "Exam not found" });
+    }
+
+    // Update status in real-time
+    const now = new Date();
+    if (now < exam.startTime) {
+      exam.status = "Upcoming";
+    } else if (now >= exam.startTime && now <= exam.endTime) {
+      exam.status = "In Progress";
+    } else if (now > exam.endTime) {
+      exam.status = "Completed";
+    }
+
+    // Save the updated status if it changed
+    if (exam.isModified('status')) {
+      await exam.save();
+    }
+
+    res.status(200).json(exam);
+  } catch (err) {
+    console.error("❌ Error fetching exam:", err.message);
+    res.status(500).json({ error: "Server error while fetching exam" });
+  }
+};
+
+// UPDATE exam
+const updateExam = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const teacherId = req.user.userId;
+    const updateData = { ...req.body };
+
+    // Find the exam first
+    const exam = await Exam.findOne({ _id: id, createdBy: teacherId });
+    if (!exam) {
+      return res.status(404).json({ error: "Exam not found" });
+    }
+
+    // If dates are being updated, recalculate status
+    if (updateData.startTime || updateData.endTime) {
+      const startTime = updateData.startTime ? new Date(updateData.startTime) : exam.startTime;
+      const endTime = updateData.endTime ? new Date(updateData.endTime) : exam.endTime;
+      const now = new Date();
+
+      if (now < startTime) {
+        updateData.status = "Upcoming";
+      } else if (now >= startTime && now <= endTime) {
+        updateData.status = "In Progress";
+      } else if (now > endTime) {
+        updateData.status = "Completed";
+      }
+    }
+
+    const updatedExam = await Exam.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true, runValidators: true }
+    ).populate('questions.questionRef');
+
+    res.status(200).json({
+      message: "Exam updated successfully",
+      exam: updatedExam
+    });
+  } catch (err) {
+    console.error("❌ Error updating exam:", err.message);
+    res.status(500).json({ error: "Server error while updating exam" });
+  }
+};
+
+// DELETE exam
+const deleteExam = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const teacherId = req.user.userId;
+
+    const exam = await Exam.findOneAndDelete({ _id: id, createdBy: teacherId });
+    
+    if (!exam) {
+      return res.status(404).json({ error: "Exam not found" });
+    }
+
+    res.status(200).json({ message: "Exam deleted successfully" });
+  } catch (err) {
+    console.error("❌ Error deleting exam:", err.message);
+    res.status(500).json({ error: "Server error while deleting exam" });
+  }
+};
+
 // Helper function to generate unique exam code
 const generateExamCode = () => {
   return Math.random().toString(36).substring(2, 8).toUpperCase();
 };
 
-module.exports = { getExamsByTeacher, createExam };
+module.exports = { 
+  getExamsByTeacher, 
+  createExam, 
+  getExamById, 
+  updateExam, 
+  deleteExam 
+};

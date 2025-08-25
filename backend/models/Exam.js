@@ -52,7 +52,68 @@ const examSchema = new mongoose.Schema({
   maxAttempts: { type: Number, default: 1 },
   tabSwitchLimit: { type: Number, default: 3 },
 
+  // Exam Status
+  status: {
+    type: String,
+    enum: ["Upcoming", "In Progress", "Completed", "Canceled"],
+    default: "Upcoming"
+  },
+
   createdAt: { type: Date, default: Date.now },
 });
+
+// Add a pre-save middleware to automatically update status based on current time
+examSchema.pre('save', function(next) {
+  const now = new Date();
+  
+  if (now < this.startTime) {
+    this.status = "Upcoming";
+  } else if (now >= this.startTime && now <= this.endTime) {
+    this.status = "In Progress";
+  } else if (now > this.endTime) {
+    this.status = "Completed";
+  }
+  
+  next();
+});
+
+// Add a static method to update status for all exams (useful for batch updates)
+examSchema.statics.updateAllStatuses = async function() {
+  const now = new Date();
+  const exams = await this.find();
+  
+  for (const exam of exams) {
+    if (now < exam.startTime) {
+      exam.status = "Upcoming";
+    } else if (now >= exam.startTime && now <= exam.endTime) {
+      exam.status = "In Progress";
+    } else if (now > exam.endTime) {
+      exam.status = "Completed";
+    }
+    await exam.save();
+  }
+};
+
+// Add a virtual for checking if exam is active
+examSchema.virtual('isActive').get(function() {
+  const now = new Date();
+  return now >= this.startTime && now <= this.endTime;
+});
+
+// Add a virtual for checking if exam is upcoming
+examSchema.virtual('isUpcoming').get(function() {
+  const now = new Date();
+  return now < this.startTime;
+});
+
+// Add a virtual for checking if exam is completed
+examSchema.virtual('isCompleted').get(function() {
+  const now = new Date();
+  return now > this.endTime;
+});
+
+// Ensure virtual fields are serialized
+examSchema.set('toJSON', { virtuals: true });
+examSchema.set('toObject', { virtuals: true });
 
 module.exports = mongoose.model("Exam", examSchema);

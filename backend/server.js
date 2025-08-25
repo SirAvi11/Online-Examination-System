@@ -8,6 +8,8 @@ const teacherRoutes = require('./routes/teacherRoutes');
 const moduleRoutes = require('./routes/moduleRoutes.js');
 const questionRoutes = require("./routes/questionRoutes.js");
 const examRoutes = require('./routes/examRoutes.js');
+const cron = require('node-cron');
+const Exam = require('./models/Exam');
 
 
 
@@ -16,6 +18,16 @@ connectDB();
 
 const app = express();
 app.use(express.json());
+
+// Start cron job after successful DB connection
+cron.schedule('* * * * *', async () => {
+  try {
+    await Exam.updateAllStatuses();
+    console.log('Exam statuses updated at', new Date().toISOString());
+  } catch (error) {
+    console.error('Error updating exam statuses:', error);
+  }
+});
 
 // CORS Configuration
 const corsOptions = {
