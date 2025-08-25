@@ -38,7 +38,7 @@ const useQuestion = (moduleId) => {
         `http://localhost:5000/api/questions?moduleId=${moduleId}`,
         {
           headers: {
-            'x-Auth-token': token
+            'x-auth-token': token
           }
         }
       );

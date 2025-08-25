@@ -3,11 +3,13 @@ import ExamStatusCard from '../../../components/Exam/ExamStatusCard';
 import ExamDetailsModal from './ExamDetailsModal';
 import './ManageExam.css';
 
-const ManageExam = ({ onCreate }) => {
+const ManageExam = ({ onCreate, onEdit }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 14;
+
+  const[data, setData] = useState([]);
 
   const [exams, setExams] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -38,6 +40,7 @@ const ManageExam = ({ onCreate }) => {
         }
 
         const data = await response.json();
+        setData(data);
 
         // Map backend exam docs into frontend format
         const mappedExams = data.map(exam => {
@@ -96,7 +99,20 @@ const ManageExam = ({ onCreate }) => {
   const handleCardClick = (examId) => {
     const exam = exams.find(e => e.id === examId);
     setSelectedExam(exam);
-    setShowModal(true);
+
+    const rawExamData = data.find(e => e._id === examId);
+    // Check if exam status is "Upcoming" - allow editing
+    const now = new Date();
+    const startTime = new Date(rawExamData.startTime);
+    const timeUntilStart = startTime - now;
+    const tenMinutesInMs = 10 * 60 * 1000;
+
+    if (rawExamData.status === "Upcoming" && timeUntilStart > tenMinutesInMs) {
+        onEdit(rawExamData);
+    } else {
+        // For "In Progress", "Completed", or "Canceled" exams, show modal
+        setShowModal(true);
+    }
   };
 
   // Filtering

@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import QuestionSelector from "./QuestionSelector";
 
-const CreateExam = ({ onBack }) => {
+const ExamForm = ({ onBack, examToEdit = null }) => {
+  const isEditMode = !!examToEdit;
+  
   const [examData, setExamData] = useState({
     title: "",
     description: "",
@@ -44,6 +46,26 @@ const CreateExam = ({ onBack }) => {
 
     fetchModules();
   }, []);
+
+  // Load exam data if in edit mode
+  useEffect(() => {
+    if (examToEdit) {
+      setExamData({
+        title: examToEdit.title || "",
+        description: examToEdit.description || "",
+        duration: examToEdit.duration || 60,
+        totalMarks: examToEdit.totalMarks || 100,
+        startTime: examToEdit.startTime ? new Date(examToEdit.startTime).toISOString().slice(0, 16) : "",
+        endTime: examToEdit.endTime ? new Date(examToEdit.endTime).toISOString().slice(0, 16) : "",
+        maxAttempts: examToEdit.maxAttempts || 1,
+        tabSwitchLimit: examToEdit.tabSwitchLimit || 3,
+        examCode: examToEdit.examCode || "",
+        selectedQuestions: examToEdit.questions 
+          ? examToEdit.questions.filter(q => q.type === "existing").map(q => q.questionRef)
+          : [],
+      });
+    }
+  }, [examToEdit]);
 
   const validateForm = () => {
     const errors = {};
@@ -111,7 +133,7 @@ const CreateExam = ({ onBack }) => {
         endTime: examData.endTime,
         maxAttempts: parseInt(examData.maxAttempts),
         tabSwitchLimit: parseInt(examData.tabSwitchLimit),
-        examCode: examData.examCode || undefined, // Send undefined if empty, backend will generate
+        examCode: examData.examCode || undefined,
         totalMarks,
         totalQuestions,
         questions: examData.selectedQuestions.map(q => ({
@@ -120,10 +142,16 @@ const CreateExam = ({ onBack }) => {
         }))
       };
       
-      console.log("Exam Created:", examPayload);
+      console.log(isEditMode ? "Exam Updated:" : "Exam Created:", examPayload);
       
-      const res = await fetch("http://localhost:5000/api/exams", {
-        method: "POST",
+      const url = isEditMode 
+        ? `http://localhost:5000/api/exams/${examToEdit._id}`
+        : "http://localhost:5000/api/exams";
+      
+      const method = isEditMode ? "PUT" : "POST";
+      
+      const res = await fetch(url, {
+        method: method,
         headers: { 
           "Content-Type": "application/json",
           "x-auth-token": localStorage.getItem("token")
@@ -134,33 +162,34 @@ const CreateExam = ({ onBack }) => {
       const responseData = await res.json();
       
       if (!res.ok) {
-        throw new Error(responseData.error || "Failed to create exam");
+        throw new Error(responseData.error || `Failed to ${isEditMode ? 'update' : 'create'} exam`);
       }
       
-      console.log("Exam saved:", responseData);
-      setSuccessMessage("Exam created successfully!");
+      console.log(isEditMode ? "Exam updated:" : "Exam saved:", responseData);
+      setSuccessMessage(`Exam ${isEditMode ? 'updated' : 'created'} successfully!`);
       setTimeout(() => {
-        // Optionally redirect or reset
         onBack(); // Go back to previous page
       }, 2000);
       
-      // Reset form or redirect
-      setExamData({
-        title: "",
-        description: "",
-        duration: 60,
-        totalMarks: 100,
-        startTime: "",
-        endTime: "",
-        maxAttempts: 1,
-        tabSwitchLimit: 3,
-        examCode: "",
-        selectedQuestions: [],
-      });
+      // Reset form if not in edit mode
+      if (!isEditMode) {
+        setExamData({
+          title: "",
+          description: "",
+          duration: 60,
+          totalMarks: 100,
+          startTime: "",
+          endTime: "",
+          maxAttempts: 1,
+          tabSwitchLimit: 3,
+          examCode: "",
+          selectedQuestions: [],
+        });
+      }
       
     } catch (err) {
-      console.error("Error creating exam:", err);
-      alert(err.message || "Failed to create exam. Please try again.");
+      console.error(`Error ${isEditMode ? 'updating' : 'creating'} exam:`, err);
+      alert(err.message || `Failed to ${isEditMode ? 'update' : 'create'} exam. Please try again.`);
     }
   };
 
@@ -176,7 +205,7 @@ const CreateExam = ({ onBack }) => {
         <button className="btn btn-outline-secondary me-3" onClick={onBack}>
           <i className="fa fa-arrow-left me-2" style={{ cursor: "pointer", fontSize: "1.2rem" }}></i>
         </button>
-        <h1 className="h3 fw-bold m-0">Create Exam</h1>
+        <h1 className="h3 fw-bold m-0">{isEditMode ? "Edit Exam" : "Create Exam"}</h1>
       </div>
 
       {loading && <div className="text-center py-5"><div className="spinner-border" role="status"></div></div>}
@@ -271,7 +300,11 @@ const CreateExam = ({ onBack }) => {
                     onChange={handleChange}
                     min="1"
                     required
+                    readOnly={isEditMode} // Total marks is calculated from questions in edit mode
                   />
+                  {isEditMode && (
+                    <div className="form-text">Total marks is calculated from selected questions</div>
+                  )}
                   {validationErrors.totalMarks && <div className="invalid-feedback">{validationErrors.totalMarks}</div>}
                 </div>
 
@@ -371,16 +404,24 @@ const CreateExam = ({ onBack }) => {
                       value={examData.examCode}
                       onChange={handleChange}
                       placeholder="Unique exam code"
+                      readOnly={isEditMode} // Exam code should not be changed in edit mode
                     />
-                    <button 
-                      type="button" 
-                      className="btn btn-outline-secondary" 
-                      onClick={generateExamCode}
-                    >
-                      Generate
-                    </button>
+                    {!isEditMode && (
+                      <button 
+                        type="button" 
+                        className="btn btn-outline-secondary" 
+                        onClick={generateExamCode}
+                      >
+                        Generate
+                      </button>
+                    )}
                   </div>
-                  <div className="form-text">Unique code for students to join the exam (auto-generated if empty)</div>
+                  <div className="form-text">
+                    {isEditMode 
+                      ? "Exam code cannot be changed after creation" 
+                      : "Unique code for students to join the exam (auto-generated if empty)"
+                    }
+                  </div>
                 </div>
               </div>
             </div>
@@ -430,7 +471,8 @@ const CreateExam = ({ onBack }) => {
               )}
               {activeTab === "settings" && (
                 <button type="submit" className="btn btn-success">
-                  <i className="fa fa-check me-2"></i>Create Exam
+                  <i className="fa fa-check me-2"></i>
+                  {isEditMode ? "Update Exam" : "Create Exam"}
                 </button>
               )}
             </div>
@@ -441,4 +483,4 @@ const CreateExam = ({ onBack }) => {
   );
 };
 
-export default CreateExam;
+export default ExamForm;
