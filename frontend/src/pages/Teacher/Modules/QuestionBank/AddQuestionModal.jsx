@@ -32,6 +32,7 @@ const AddQuestionModal = ({ show, onHide, onSave, isSaving, successInfo, modules
         answer: "",
         marks: 1,
         paperId: null,
+        moduleId:null
       });
       setPreview(null);
       setActiveTab("question");
@@ -152,7 +153,7 @@ const AddQuestionModal = ({ show, onHide, onSave, isSaving, successInfo, modules
                 }
                 className="focus-ring"
               >
-                <option value="">None</option>
+                <option value=" ">None</option>
                 {modules.map((module) => (
                   <option key={module._id} value={module._id}>
                     {module.name}

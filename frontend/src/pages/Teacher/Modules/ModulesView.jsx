@@ -12,6 +12,11 @@ export default function ModulesView({ teacherId }) {
   const [editingValues, setEditingValues] = useState({});
   const [selectedModuleIds, setSelectedModuleIds] = useState([]);
 
+  // Get token from localStorage
+  const getToken = () => {
+    return localStorage.getItem('token');
+  };
+
   useEffect(() => {
     if (!teacherId) return;
     fetchModules();
@@ -19,28 +24,46 @@ export default function ModulesView({ teacherId }) {
 
   const fetchModules = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/modules?teacherId=${teacherId}`);
+      const token = getToken();
+      const res = await fetch(`http://localhost:5000/api/modules`, {
+        headers: {
+          'x-auth-token': token
+        }
+      });
+      if (!res.ok) throw new Error('Failed to fetch modules');
       const data = await res.json();
       setModules(data.sort((a, b) => new Date(b.date) - new Date(a.date)));
     } catch (err) {
       console.error("Error fetching modules:", err);
+      alert("Failed to fetch modules. Please check your authentication.");
     }
   };
 
   const handleSaveModule = async () => {
     if (!newModule.name.trim()) return;
     try {
+      const token = getToken();
       const res = await fetch("http://localhost:5000/api/modules", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          'x-auth-token': token
+        },
         body: JSON.stringify({ ...newModule, teacherId })
       });
+      
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Failed to save module');
+      }
+      
       const savedModule = await res.json();
       setModules(prev => [savedModule, ...prev]);
       setNewModule({ name: "", description: "" });
       setShowModal(false);
     } catch (err) {
       console.error("Failed to save module:", err);
+      alert(err.message || "Failed to save module");
     }
   };
 
@@ -69,11 +92,21 @@ export default function ModulesView({ teacherId }) {
     const updatedModule = { [field]: newVal };
     
     try {
+      const token = getToken();
       const res = await fetch(`http://localhost:5000/api/modules/${moduleId}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          'x-auth-token': token
+        },
         body: JSON.stringify(updatedModule)
       });
+      
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Failed to update module');
+      }
+      
       const data = await res.json();
       setModules(prev => prev.map(m => m._id === moduleId ? data : m));
       // Clear editing states
@@ -91,6 +124,7 @@ export default function ModulesView({ teacherId }) {
       });
     } catch (err) {
       console.error("Failed to update module:", err);
+      alert(err.message || "Failed to update module");
     }
   };
 
@@ -118,15 +152,26 @@ export default function ModulesView({ teacherId }) {
     if (!window.confirm(`Are you sure you want to delete ${selectedModuleIds.length} module(s)?`)) return;
 
     try {
-      await fetch("http://localhost:5000/api/modules", {
+      const token = getToken();
+      const res = await fetch("http://localhost:5000/api/modules", {
         method: "DELETE",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          'x-auth-token': token
+        },
         body: JSON.stringify({ ids: selectedModuleIds })
       });
+      
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Failed to delete modules');
+      }
+      
       setModules(prev => prev.filter(m => !selectedModuleIds.includes(m._id)));
       setSelectedModuleIds([]);
     } catch (err) {
       console.error("Failed to delete modules:", err);
+      alert(err.message || "Failed to delete modules");
     }
   };
 

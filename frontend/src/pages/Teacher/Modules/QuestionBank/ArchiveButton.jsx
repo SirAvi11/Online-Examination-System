@@ -2,12 +2,12 @@ import React, { useRef } from "react";
 import { Button } from "react-bootstrap";
 import useQuestion from "./hooks/useQuestion";
 
-const ArchiveButton = ({ selectedQuestionIds, toggleArchiveQuestions, setSelectedQuestionIds }) => {
+const ArchiveButton = ({ selectedQuestionIds, toggleArchiveQuestions, setSelectedQuestionIds, state }) => {
 
   const buttonRef = useRef();
 
   const handleArchiveClick = () =>{
-    toggleArchiveQuestions(selectedQuestionIds, true);
+    toggleArchiveQuestions(selectedQuestionIds, !state);
     setSelectedQuestionIds([]);
   }
 
@@ -18,7 +18,7 @@ const ArchiveButton = ({ selectedQuestionIds, toggleArchiveQuestions, setSelecte
       onClick={handleArchiveClick}
     >
       <i className="fa fa-folder me-2"></i>
-      Archive
+      {state ? "Unarchive" : "Archive"}
     </Button>
   );
 };

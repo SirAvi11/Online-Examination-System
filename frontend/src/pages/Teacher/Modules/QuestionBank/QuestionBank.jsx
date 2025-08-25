@@ -6,7 +6,7 @@ import DuplicateWarningModal from './DuplicateWarningModal';
 import SuccessNotification from './SuccessNotification';
 import FilterPane from './FilterPane';
 import useQuestion from './hooks/useQuestion';
-import ArchiveButton from './ArchieveButton';
+import ArchiveButton from './ArchiveButton';
 import { Button } from "react-bootstrap";
 import './QuestionBank.css';
 
@@ -16,6 +16,7 @@ export default function QuestionBank({ selectedModule, onBack }) {
   const [showModal, setShowModal] = useState(false);
   const [showFilterPane, setShowFilterPane] = useState(false); 
   const [filters, setFilters] = useState({});
+  const [archiveState, setArchiveState] = useState(false);
   const filterButtonRef = useRef(null);
 
   const { 
@@ -25,7 +26,7 @@ export default function QuestionBank({ selectedModule, onBack }) {
     isSaving,
     duplicateInfo,  
     successInfo,
-    toggleArchieveQuestions,
+    toggleArchiveQuestions,
     addQuestion, 
     deleteQuestions,
     resetDuplicateInfo, 
@@ -98,11 +99,13 @@ export default function QuestionBank({ selectedModule, onBack }) {
   // Handle applying filters
   const handleApplyFilters = (newFilters) => {
     setFilters(newFilters);
+    setArchiveState(newFilters.questionStatus == 'active' ? false : true)
     setShowFilterPane(false);
   };
 
   // Handle clearing filters
   const handleClearFilters = () => {
+    setArchiveState(false)
     setFilters({});
   };
 
@@ -137,8 +140,9 @@ export default function QuestionBank({ selectedModule, onBack }) {
             {/* Toggle Button (shows only when questions are selected) */}
             {(selectedQuestionIds.length > 0 || true) && (
               <ArchiveButton 
+                state={archiveState}
                 selectedQuestionIds={selectedQuestionIds} 
-                toggleArchiveQuestions={toggleArchieveQuestions}
+                toggleArchiveQuestions={toggleArchiveQuestions}
                 setSelectedQuestionIds={setSelectedQuestionIds}
               />
             )}

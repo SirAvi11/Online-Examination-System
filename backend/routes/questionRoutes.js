@@ -10,6 +10,7 @@ const {
 } = require("../controllers/questionController.js");
 const upload = require("../middleware/uploadMiddleware.js"); 
 
+
 // Basic
 router.get("/", getQuestions); // ?moduleId=xxx
 router.post("/", upload.single('image'), createQuestion); // Add multer middleware here

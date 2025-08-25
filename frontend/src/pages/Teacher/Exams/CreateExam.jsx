@@ -20,11 +20,17 @@ const CreateExam = ({ onBack }) => {
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("details"); // "details", "questions", "settings"
   const [validationErrors, setValidationErrors] = useState({});
+  const [successMessage, setSuccessMessage] = useState("");
 
   useEffect(() => {
     const fetchModules = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/modules");
+        const token = localStorage.getItem("token");
+        const res = await fetch("http://localhost:5000/api/modules", {
+          headers: {
+            "x-auth-token": token
+          }
+        });
         if (!res.ok) throw new Error("Failed to fetch modules");
         const data = await res.json();
         setModules(data);
@@ -44,7 +50,6 @@ const CreateExam = ({ onBack }) => {
     
     if (!examData.title.trim()) errors.title = "Exam title is required";
     if (examData.duration < 1) errors.duration = "Duration must be at least 1 minute";
-    if (examData.totalMarks < 1) errors.totalMarks = "Total marks must be at least 1";
     if (!examData.startTime) errors.startTime = "Start time is required";
     if (!examData.endTime) errors.endTime = "End time is required";
     if (new Date(examData.startTime) >= new Date(examData.endTime)) {
@@ -52,6 +57,11 @@ const CreateExam = ({ onBack }) => {
     }
     if (examData.maxAttempts < 1) errors.maxAttempts = "Max attempts must be at least 1";
     if (examData.tabSwitchLimit < 0) errors.tabSwitchLimit = "Tab switch limit cannot be negative";
+    
+    // Validate that at least one question is selected
+    if (examData.selectedQuestions.length === 0) {
+      errors.questions = "At least one question is required";
+    }
     
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
@@ -94,10 +104,17 @@ const CreateExam = ({ onBack }) => {
       const totalQuestions = examData.selectedQuestions.length;
       
       const examPayload = {
-        ...examData,
+        title: examData.title,
+        description: examData.description,
+        duration: parseInt(examData.duration),
+        startTime: examData.startTime,
+        endTime: examData.endTime,
+        maxAttempts: parseInt(examData.maxAttempts),
+        tabSwitchLimit: parseInt(examData.tabSwitchLimit),
+        examCode: examData.examCode || undefined, // Send undefined if empty, backend will generate
         totalMarks,
         totalQuestions,
-        selectedQuestions: examData.selectedQuestions.map(q => ({
+        questions: examData.selectedQuestions.map(q => ({
           type: "existing",
           questionRef: q._id
         }))
@@ -105,28 +122,56 @@ const CreateExam = ({ onBack }) => {
       
       console.log("Exam Created:", examPayload);
       
-      // TODO: API call to backend with examPayload
-      // const res = await fetch("http://localhost:5000/api/exams", {
-      //   method: "POST",
-      //   headers: { "Content-Type": "application/json" },
-      //   body: JSON.stringify(examPayload)
-      // });
+      const res = await fetch("http://localhost:5000/api/exams", {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          "x-auth-token": localStorage.getItem("token")
+        },
+        body: JSON.stringify(examPayload)
+      });
       
-      // if (!res.ok) throw new Error("Failed to create exam");
+      const responseData = await res.json();
       
-      // const savedExam = await res.json();
-      // console.log("Exam saved:", savedExam);
+      if (!res.ok) {
+        throw new Error(responseData.error || "Failed to create exam");
+      }
       
-      alert("Exam created successfully!");
-      // Optionally redirect or reset form
+      console.log("Exam saved:", responseData);
+      setSuccessMessage("Exam created successfully!");
+      setTimeout(() => {
+        // Optionally redirect or reset
+        onBack(); // Go back to previous page
+      }, 2000);
+      
+      // Reset form or redirect
+      setExamData({
+        title: "",
+        description: "",
+        duration: 60,
+        totalMarks: 100,
+        startTime: "",
+        endTime: "",
+        maxAttempts: 1,
+        tabSwitchLimit: 3,
+        examCode: "",
+        selectedQuestions: [],
+      });
+      
     } catch (err) {
       console.error("Error creating exam:", err);
-      alert("Failed to create exam. Please try again.");
+      alert(err.message || "Failed to create exam. Please try again.");
     }
   };
 
   return (
     <div className="container py-4 px-4">
+      {successMessage && (
+        <div className="alert alert-success alert-dismissible fade show" role="alert">
+          {successMessage}
+          <button type="button" className="btn-close" onClick={() => setSuccessMessage("")}></button>
+        </div>
+      )}
       <div className="d-flex align-items-center mb-4">
         <button className="btn btn-outline-secondary me-3" onClick={onBack}>
           <i className="fa fa-arrow-left me-2" style={{ cursor: "pointer", fontSize: "1.2rem" }}></i>
@@ -263,6 +308,13 @@ const CreateExam = ({ onBack }) => {
           {activeTab === "questions" && (
             <div className="card p-4 shadow-sm mb-4">
               <h5 className="fw-bold mb-4">Select Questions</h5>
+              {/* Question validation error */}
+              {validationErrors.questions && (
+                <div className="alert alert-danger">
+                  <i className="fa fa-exclamation-triangle me-2"></i>
+                  {validationErrors.questions}
+                </div>
+              )}
               <div className="alert alert-info">
                 <i className="fa fa-info-circle me-2"></i>
                 Select questions from your question bank. The exam will automatically calculate total marks based on selected questions.

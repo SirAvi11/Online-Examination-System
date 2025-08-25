@@ -22,6 +22,12 @@ const createQuestion = async (req, res) => {
 
     const { paperId, moduleId, questionText, options, correctOptionIndex, marks } = req.body;
 
+    // Handle different representations of null/empty values
+    let validatedModuleId = null;
+    if (moduleId && moduleId !== "null" && moduleId !== "undefined" && moduleId !== "") {
+      validatedModuleId = moduleId;
+    }
+
     // Check if options is provided
     if (!options) {
       return res.status(400).json({ error: "Options field is required" });
@@ -43,7 +49,7 @@ const createQuestion = async (req, res) => {
 
     const question = new Question({
       paperId: paperId || null,
-      moduleId,
+      moduleId: validatedModuleId,
       questionText,
       options: parsedOptions,
       correctOptionIndex: parseInt(correctOptionIndex) || 0,

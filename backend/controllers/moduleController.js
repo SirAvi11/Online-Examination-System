@@ -1,12 +1,11 @@
 const Module = require('../models/Module.js');
 const Question = require('../models/Question.js')
 
-// GET all modules (optionally filtered by teacherId)
+// GET all modules for logged-in teacher
 exports.getAllModules = async (req, res) => {
-  const { teacherId } = req.query;
   try {
-    const filter = teacherId ? { teacherId } : {};
-    const modules = await Module.find(filter).sort({ date: -1 });
+    const teacherId = req.user.userId; // Get teacher ID from auth middleware
+    const modules = await Module.find({ teacherId }).sort({ date: -1 });
     res.json(modules);
   } catch (err) {
     console.error(err);
@@ -14,11 +13,13 @@ exports.getAllModules = async (req, res) => {
   }
 };
 
-// GET module by ID
+// GET module by ID (only for the authenticated teacher)
 exports.getModuleById = async (req, res) => {
   const { id } = req.params;
+  const teacherId = req.user.userId;
+  
   try {
-    const module = await Module.findById(id);
+    const module = await Module.findOne({ _id: id, teacherId });
     if (!module) return res.status(404).json({ error: 'Module not found' });
     res.json(module);
   } catch (err) {
@@ -27,13 +28,21 @@ exports.getModuleById = async (req, res) => {
   }
 };
 
-// CREATE module
+// CREATE module for authenticated teacher
 exports.createModule = async (req, res) => {
-  const { name, description, teacherId, color } = req.body;
-  if (!name || !teacherId) return res.status(400).json({ error: 'Name and teacherId are required' });
+  const { name, description, color } = req.body;
+  const teacherId = req.user.userId;
+  
+  if (!name) return res.status(400).json({ error: 'Name is required' });
 
   try {
-    const module = new Module({ name, description, teacherId, color, questionCount: 0 });
+    const module = new Module({ 
+      name, 
+      description, 
+      teacherId, 
+      color, 
+      questionCount: 0 
+    });
     const savedModule = await module.save();
     res.status(201).json(savedModule);
   } catch (err) {
@@ -42,16 +51,17 @@ exports.createModule = async (req, res) => {
   }
 };
 
-// UPDATE module
+// UPDATE module (only for the authenticated teacher)
 exports.updateModule = async (req, res) => {
   const { id } = req.params;
   const { name, description, color } = req.body;
+  const teacherId = req.user.userId;
 
   try {
-    const updatedModule = await Module.findByIdAndUpdate(
-      id,
+    const updatedModule = await Module.findOneAndUpdate(
+      { _id: id, teacherId },
       { ...(name && { name }), ...(description && { description }), ...(color && { color }) },
-      { new: true }
+      { new: true, runValidators: true }
     );
     if (!updatedModule) return res.status(404).json({ error: 'Module not found' });
     res.json(updatedModule);
@@ -61,11 +71,13 @@ exports.updateModule = async (req, res) => {
   }
 };
 
-// DELETE module
+// DELETE module (only for the authenticated teacher)
 exports.deleteModule = async (req, res) => {
   const { id } = req.params;
+  const teacherId = req.user.userId;
+  
   try {
-    const deletedModule = await Module.findByIdAndDelete(id);
+    const deletedModule = await Module.findOneAndDelete({ _id: id, teacherId });
     if (!deletedModule) return res.status(404).json({ error: 'Module not found' });
     res.json({ message: 'Module deleted successfully' });
   } catch (err) {
@@ -74,13 +86,18 @@ exports.deleteModule = async (req, res) => {
   }
 };
 
-// DELETE multiple modules
+// DELETE multiple modules (only for the authenticated teacher)
 exports.deleteModulesBulk = async (req, res) => {
-  const { ids } = req.body; // array of IDs
+  const { ids } = req.body;
+  const teacherId = req.user.userId;
+  
   if (!ids || !Array.isArray(ids)) return res.status(400).json({ error: "Invalid ids array" });
 
   try {
-    const result = await Module.deleteMany({ _id: { $in: ids } });
+    const result = await Module.deleteMany({ 
+      _id: { $in: ids }, 
+      teacherId 
+    });
     res.json({ message: `Deleted ${result.deletedCount} module(s)` });
   } catch (err) {
     console.error(err);
@@ -88,9 +105,17 @@ exports.deleteModulesBulk = async (req, res) => {
   }
 };
 
+// GET questions by module (only for the authenticated teacher)
 exports.getQuestionsByModule = async (req, res) => {
   try {
     const moduleId = req.params.id;
+    const teacherId = req.user.userId;
+
+    // Verify the module belongs to the teacher
+    const module = await Module.findOne({ _id: moduleId, teacherId });
+    if (!module) {
+      return res.status(404).json({ error: "Module not found" });
+    }
 
     // Fetch questions for this module
     const questions = await Question.find({ moduleId: moduleId });

@@ -16,7 +16,11 @@ const QuestionSelector = ({ modules, examQuestions, onChange }) => {
   const handleModuleChange = async (moduleId) => {
     setSelectedModule(moduleId);
     try {
-      const res = await fetch(`/api/modules/${moduleId}/questions`);
+      const res = await fetch(`/api/modules/${moduleId}/questions`, {
+          headers: {
+            "x-auth-token": localStorage.getItem("token")
+          }
+        });
       const data = await res.json();
 
       if (res.ok) {
@@ -37,6 +41,8 @@ const QuestionSelector = ({ modules, examQuestions, onChange }) => {
 
   const handleAddQuestion = async (questionData) => {
     const savedQuestion = await addQuestion(questionData);
+
+    //addQuestion does not return newly saved question id, so no id is given to new question in exam, thus cannot compare with available list
     
     if (savedQuestion) {
       // Add the newly saved question to exam questions

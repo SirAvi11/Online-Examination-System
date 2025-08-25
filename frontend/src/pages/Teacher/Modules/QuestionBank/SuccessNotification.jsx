@@ -42,7 +42,7 @@ const SuccessNotification = ({ successInfo, onClose }) => {
       <div style={{ flex: 1 }}>
         <strong style={{ fontSize: '17px' }}>Success!</strong> 
         <span style={{ marginLeft: '8px' }}>
-          Question #{successInfo.questionNumber} added successfully.
+          Question added successfully.
         </span>
       </div>
       <button 

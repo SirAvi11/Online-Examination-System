@@ -20,24 +20,48 @@ const useQuestion = (moduleId) => {
   });
 
   // Fetch questions
-  useEffect(() => {
-    const fetchQuestions = async () => {
-      try {
-        setLoading(true);
-        const res = await fetch(
-          `http://localhost:5000/api/questions?moduleId=${moduleId}`
-        );
-        if (!res.ok) throw new Error('Failed to fetch questions');
-        const data = await res.json();
-        setQuestions(data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
+ // Get authentication token
+  const getToken = () => {
+    return localStorage.getItem('token') || sessionStorage.getItem('token');
+  };
+
+  // Extract the fetch logic into a reusable function
+  const fetchQuestionsData = async () => {
+    try {
+      setLoading(true);
+      const token = getToken();
+      if (!token) {
+        throw new Error('No authentication token found');
       }
-    };
-    
-    if (moduleId) fetchQuestions();
+
+      const res = await fetch(
+        `http://localhost:5000/api/questions?moduleId=${moduleId}`,
+        {
+          headers: {
+            'x-Auth-token': token
+          }
+        }
+      );
+      
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || 'Failed to fetch questions');
+      }
+      
+      const data = await res.json();
+      setQuestions(data);
+      setError(null);
+    } catch (err) {
+      setError(err.message);
+      console.error("Error fetching questions:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch questions on mount and when moduleId changes
+  useEffect(() => {
+    if (moduleId) fetchQuestionsData();
   }, [moduleId]);
 
 
@@ -174,7 +198,7 @@ const useQuestion = (moduleId) => {
 
   //Toggle Archieved Questions
 
-  const toggleArchieveQuestions = async(questionIds, archive) =>{
+  const toggleArchiveQuestions = async(questionIds, archive) =>{
     try {
       const res = await fetch(
         "http://localhost:5000/api/questions/archive-toggle",
@@ -184,6 +208,16 @@ const useQuestion = (moduleId) => {
           body: JSON.stringify({ questionIds, archive }),
         }
       );
+      
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || 'Error toggling archive status');
+      }
+
+      // Refresh questions after archive operation
+      await fetchQuestionsData();
+      return true;
+
     } catch (err) {
       setError(err.message);
       return false;
@@ -217,7 +251,7 @@ const useQuestion = (moduleId) => {
     isSaving,
     duplicateInfo,
     successInfo,
-    toggleArchieveQuestions,
+    toggleArchiveQuestions,
     setQuestions,
     addQuestion,
     deleteQuestions,
