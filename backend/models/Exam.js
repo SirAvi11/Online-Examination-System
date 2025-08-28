@@ -29,17 +29,7 @@ const examSchema = new mongoose.Schema({
       questionRef: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Question", // only used if type = "existing"
-      },
-      customQuestion: {
-        questionText: String,
-        options: [String],
-        correctAnswer: Number, // index of correct option
-        marks: { type: Number, default: 1 },
-        module: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "Module", // optional for categorization
-        },
-      },
+      }
     },
   ],
 

@@ -8,6 +8,7 @@ const teacherRoutes = require('./routes/teacherRoutes');
 const moduleRoutes = require('./routes/moduleRoutes.js');
 const questionRoutes = require("./routes/questionRoutes.js");
 const examRoutes = require('./routes/examRoutes.js');
+const examRegistrationRoutes = require('./routes/examRegistrationRoutes.js')
 const cron = require('node-cron');
 const Exam = require('./models/Exam');
 
@@ -46,6 +47,7 @@ app.use('/api/teachers', teacherRoutes);
 app.use('/api/modules', moduleRoutes);
 app.use("/api/questions", questionRoutes);
 app.use("/api/exams", examRoutes);
+app.use("/api/exam-registration", examRegistrationRoutes);
 app.use("/uploads", express.static("uploads"));
 
 

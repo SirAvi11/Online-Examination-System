@@ -1,5 +1,7 @@
 const Exam = require("../models/Exam");
 const Question = require("../models/Question");
+const ExamRegistration = require('../models/ExamRegistration');
+const StudentAttempt = require('../models/StudentAttempt');
 
 // GET exams for logged-in teacher
 const getExamsByTeacher = async (req, res) => {
@@ -282,10 +284,65 @@ const generateExamCode = () => {
   return Math.random().toString(36).substring(2, 8).toUpperCase();
 };
 
+const startExamAttempt = async (req, res) => {
+  try {
+    const { examId } = req.params;
+    const studentId = req.user.id;
+    
+    // Check if registered
+    const registration = await ExamRegistration.findOne({
+      studentId,
+      examId
+    });
+    
+    if (!registration) {
+      return res.status(404).json({ error: 'Not registered for this exam' });
+    }
+    
+    // Check if already attempted
+    if (registration.status === 'attempted' || registration.status === 'completed') {
+      return res.status(400).json({ error: 'Already attempted this exam' });
+    }
+    
+    // Get exam details
+    const exam = await Exam.findById(examId);
+    if (!exam) {
+      return res.status(404).json({ error: 'Exam not found' });
+    }
+    
+    // Check if exam is available
+    const now = new Date();
+    if (now < exam.startTime || now > exam.endTime) {
+      return res.status(400).json({ error: 'Exam is not currently available' });
+    }
+    
+    // Create new attempt
+    const attempt = new StudentAttempt({
+      studentId,
+      examId,
+      totalMarks: exam.totalMarks,
+      duration: exam.duration,
+      status: 'in_progress'
+    });
+    
+    await attempt.save();
+    
+    // Update registration with attempt reference
+    registration.attemptId = attempt._id;
+    registration.status = 'attempted';
+    await registration.save();
+    
+    res.status(200).json({ attempt, exam });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 module.exports = { 
   getExamsByTeacher, 
   createExam, 
   getExamById, 
   updateExam, 
-  deleteExam 
+  deleteExam,
+  startExamAttempt
 };

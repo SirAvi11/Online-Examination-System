@@ -1,231 +1,105 @@
-import { useState } from 'react';
-import ExamStatusCard from '../../components/Exam/ExamStatusCard';
+import { useState, useEffect } from "react";
+import ExamStatusCard from "../../components/Exam/ExamStatusCard";
+import ExamRegistrationModal from "./ExamRegistrationModal";
+import ExamDetailsModal from "./ExamDetailsModal";
 
 const StudentExamView = () => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
-  const [filterOpen, setFilterOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 15;
+  const itemsPerPage = 14;
+  const [showModal, setShowModal] = useState(false);
+  const [exams, setExams] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedExam, setSelectedExam] = useState(null);
 
-  // Sample data
-  const [exams, setExams] = useState([
-  {
-    id: 1,
-    title: 'Midterm Exam - Mathematics',
-    subtitle: 'Test Date:',
-    dateRange: 'Mar 15, 2025 - Mar 17, 2025',
-    status: 'In Progress',
-    statusVariant: 'primary'
-  },
-  {
-    id: 2,
-    title: 'Final Exam - Computer Science',
-    subtitle: 'Test Date:',
-    dateRange: 'May 10, 2025',
-    status: 'Upcoming',
-    statusVariant: 'warning'
-  },
-  {
-    id: 3,
-    title: 'Quiz 1 - Physics',
-    subtitle: 'Test Date:',
-    dateRange: 'Feb 28, 2025',
-    status: 'Completed',
-    statusVariant: 'success'
-  },
-  {
-    id: 4,
-    title: 'Midterm Exam - Chemistry',
-    subtitle: 'Test Date:',
-    dateRange: 'Apr 5, 2025 - Apr 7, 2025',
-    status: 'Upcoming',
-    statusVariant: 'warning'
-  },
-  {
-    id: 5,
-    title: 'Unit Test - English Literature',
-    subtitle: 'Test Date:',
-    dateRange: 'Mar 25, 2025',
-    status: 'In Progress',
-    statusVariant: 'primary'
-  },
-  {
-    id: 6,
-    title: 'Lab Assessment - Biology',
-    subtitle: 'Test Date:',
-    dateRange: 'Apr 12, 2025',
-    status: 'Upcoming',
-    statusVariant: 'warning'
-  },
-  {
-    id: 7,
-    title: 'Final Exam - History',
-    subtitle: 'Test Date:',
-    dateRange: 'May 20, 2025',
-    status: 'Upcoming',
-    statusVariant: 'warning'
-  },
-  {
-    id: 8,
-    title: 'Quiz 2 - Physics',
-    subtitle: 'Test Date:',
-    dateRange: 'Mar 2, 2025',
-    status: 'Completed',
-    statusVariant: 'success'
-  },
-  {
-    id: 9,
-    title: 'Assignment Test - Economics',
-    subtitle: 'Test Date:',
-    dateRange: 'Apr 1, 2025',
-    status: 'In Progress',
-    statusVariant: 'primary'
-  },
-  {
-    id: 10,
-    title: 'Mock Test - Programming Fundamentals',
-    subtitle: 'Test Date:',
-    dateRange: 'Mar 18, 2025',
-    status: 'Upcoming',
-    statusVariant: 'warning'
-  },
-  {
-    id: 11,
-    title: 'Mock McQ - Programming',
-    subtitle: 'Test Date:',
-    dateRange: 'Mar 19, 2025',
-    status: 'Upcoming',
-    statusVariant: 'primary'
-  },
-  {
-    id: 12,
-    title: 'Quiz - Environmental Science',
-    subtitle: 'Test Date:',
-    dateRange: 'Feb 22, 2025',
-    status: 'Completed',
-    statusVariant: 'success'
-  },
-  {
-    id: 13,
-    title: 'Unit Test - Geography',
-    subtitle: 'Test Date:',
-    dateRange: 'Apr 8, 2025',
-    status: 'Upcoming',
-    statusVariant: 'warning'
-  },
-  {
-    id: 14,
-    title: 'Lab Practical - Physics',
-    subtitle: 'Test Date:',
-    dateRange: 'Mar 30, 2025',
-    status: 'In Progress',
-    statusVariant: 'primary'
-  },
-  {
-    id: 15,
-    title: 'Semester Exam - Political Science',
-    subtitle: 'Test Date:',
-    dateRange: 'Jun 5, 2025 - Jun 6, 2025',
-    status: 'Upcoming',
-    statusVariant: 'warning'
-  },
-  {
-    id: 16,
-    title: 'Final Project Review - Computer Applications',
-    subtitle: 'Test Date:',
-    dateRange: 'May 25, 2025',
-    status: 'Upcoming',
-    statusVariant: 'warning'
-  },
-  {
-    id: 17,
-    title: 'Mock Interview Assessment',
-    subtitle: 'Test Date:',
-    dateRange: 'Apr 18, 2025',
-    status: 'Upcoming',
-    statusVariant: 'warning'
-  },
-  {
-    id: 18,
-    title: 'Practical Assessment - Chemistry Lab',
-    subtitle: 'Test Date:',
-    dateRange: 'Mar 27, 2025',
-    status: 'In Progress',
-    statusVariant: 'primary'
-  },
-  {
-    id: 19,
-    title: 'Monthly Quiz - Mathematics',
-    subtitle: 'Test Date:',
-    dateRange: 'Feb 26, 2025',
-    status: 'Completed',
-    statusVariant: 'success'
-  },
-  {
-    id: 20,
-    title: 'Short Test - Data Structures',
-    subtitle: 'Test Date:',
-    dateRange: 'Apr 15, 2025',
-    status: 'Upcoming',
-    statusVariant: 'warning'
-  },
-  {
-    id: 21,
-    title: 'Final Exam - Business Management',
-    subtitle: 'Test Date:',
-    dateRange: 'May 28, 2025',
-    status: 'Upcoming',
-    statusVariant: 'warning'
-  },
-  {
-    id: 22,
-    title: 'Weekly Quiz - Computer Networks',
-    subtitle: 'Test Date:',
-    dateRange: 'Mar 12, 2025',
-    status: 'In Progress',
-    statusVariant: 'primary'
-  },
-  {
-    id: 23,
-    title: 'Oral Assessment - English Speaking Skills',
-    subtitle: 'Test Date:',
-    dateRange: 'Mar 22, 2025',
-    status: 'Upcoming',
-    statusVariant: 'warning'
-  },
-  {
-    id: 24,
-    title: 'Case Study Presentation - Marketing',
-    subtitle: 'Test Date:',
-    dateRange: 'Apr 20, 2025',
-    status: 'Upcoming',
-    statusVariant: 'warning'
-  },
-  {
-    id: 25,
-    title: 'Research Paper Submission - Psychology',
-    subtitle: 'Test Date:',
-    dateRange: 'May 2, 2025',
-    status: 'Upcoming',
-    statusVariant: 'warning'
-  }
-]);
+// Fetch exams from API
+useEffect(() => {
+  const fetchExams = async () => {
+    try {
+      const token = localStorage.getItem("token"); // assuming you store auth token
+      const res = await fetch("/api/exam-registration/my-exams", {
+        headers: { "x-auth-token": token }, // 👈 lowercase header key
+      });
+
+      if (!res.ok) {
+        throw new Error(`Error ${res.status}`);
+      }
+
+      const data = await res.json(); // 👈 parse JSON
+      setExams(data);
+    } catch (err) {
+      console.error("Failed to fetch exams:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchExams();
+}, []);
+
+  const handleCardClick = (exam) => {
+    setSelectedExam(exam);
+  };
+
+  const handleRegister = (examCode) => {
+    console.log("Registered with exam code:", examCode);
+  };
+
+  // Transform API exam object -> card fields
+  const formattedExams = exams?.map((exam) => {
+    const startDate = new Date(exam.startTime);
+    const endDate = new Date(exam.endTime);
+
+    // If start and end are on the same calendar day
+    const sameDay =
+      startDate.toDateString() === endDate.toDateString();
+
+    const dateOptions = { day: "2-digit", month: "short", year: "numeric" };
+    const timeOptions = { hour: "2-digit", minute: "2-digit" };
+
+    const dateRange = sameDay
+      ? startDate.toLocaleDateString("en-GB", dateOptions)
+      : `${startDate.toLocaleDateString("en-GB", dateOptions)} - ${endDate.toLocaleDateString("en-GB", dateOptions)}`;
+
+    const timeRange = `${startDate.toLocaleTimeString([], timeOptions)} - ${endDate.toLocaleTimeString([], timeOptions)}`;
 
 
-  // Filtered data
-  const filteredExams = exams.filter(exam =>
+    return {
+      id: exam._id,
+      title: exam.title,
+      subtitle: `Teacher: ${exam.createdBy?.name || "Unknown"}`,
+      dateRange,
+      timeRange,
+      totalMarks: exam.totalMarks,
+      totalQuestions: exam.totalQuestions,
+      status:
+        exam.status === "In Progress"
+          ? "Active"
+          : exam.status === "Completed"
+          ? "Completed"
+          : "Upcoming",
+      statusVariant:
+        exam.status === "In Progress"
+          ? "info"
+          : exam.status === "Completed"
+          ? "success"
+          : "warning",
+    };
+  });
+
+  // Filter by search
+  const filteredExams = formattedExams?.filter((exam) =>
     exam.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Pagination logic
-  const totalPages = Math.ceil(filteredExams.length / itemsPerPage);
+  // Pagination
+  const totalPages = Math.ceil(filteredExams?.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentExams = filteredExams.slice(startIndex, startIndex + itemsPerPage);
+  const currentExams = filteredExams?.slice(
+    startIndex,
+    startIndex + itemsPerPage
+  );
 
-  const handleCardClick = (examId) => {
-    console.log(`Exam ${examId} clicked`);
-  };
 
   const goToPage = (page) => {
     if (page >= 1 && page <= totalPages) {
@@ -237,91 +111,125 @@ const StudentExamView = () => {
     <div className="container py-4 px-4">
       <h1 className="h3 fw-bold m-0 mb-2">Examinations</h1>
 
-      {/* Search & View Mode */}
+      {/* Search */}
       <div className="d-flex flex-wrap align-items-center mb-3 gap-2">
         <input
           type="text"
           className="form-control"
           placeholder="Search examinations..."
-          style={{ maxWidth: '250px' }}
+          style={{ maxWidth: "250px" }}
           value={searchQuery}
           onChange={(e) => {
             setSearchQuery(e.target.value);
-            setCurrentPage(1); // reset to first page on search
+            setCurrentPage(1);
           }}
         />
-        <div className="ms-auto d-flex gap-2">
-          <button
-            className={`btn btn-outline-primary ${viewMode === 'grid' ? 'active' : ''}`}
-            onClick={() => setViewMode('grid')}
-          >
-            Grid
-          </button>
-          <button
-            className={`btn btn-outline-primary ${viewMode === 'list' ? 'active' : ''}`}
-            onClick={() => setViewMode('list')}
-          >
-            List
-          </button>
-        </div>
       </div>
 
       {/* Exams Layout */}
       <section
         aria-label="Examination cards"
         style={{
-          display: 'flex',
-          flexDirection: viewMode === 'grid' ? 'row' : 'column',
-          flexWrap: 'wrap',
-          gap: '0.7rem'
+          display: "flex",
+          flexDirection: "row",
+          flexWrap: "wrap",
+          gap: "0.7rem",
         }}
       >
-        {currentExams.length > 0 ? (
-          currentExams.map(exam => (
+        <div
+          onClick={() => setShowModal(true)}
+          style={{
+            flex: "1 1 calc(33.333% - 1rem)",
+            maxWidth: "15rem",
+            minHeight: "8rem",
+            border: "2px dashed #aaa",
+            borderRadius: "8px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "#555",
+            cursor: "pointer",
+            background: "#f9f9f9",
+          }}
+        >
+          <div className="text-center">
+            <div style={{ fontSize: "2rem", fontWeight: "bold" }}>+</div>
+            <div>Register for an exam</div>
+          </div>
+        </div>
+
+        {/* Registration Modal */}
+        <ExamRegistrationModal
+          show={showModal}
+          handleClose={() => setShowModal(false)}
+          onRegister={handleRegister}
+        />
+
+        {loading ? (
+          <div className="text-center py-5" style={{ width: "100%" }}>
+            <p className="text-muted">Loading exams...</p>
+          </div>
+        ) : currentExams?.length > 0 ? (
+          currentExams?.map((exam) => (
             <div
               key={exam.id}
               style={{
-                flex: viewMode === 'grid' ? '1 1 calc(33.333% - 1rem)' : '1 1 100%',
-                maxWidth: viewMode === 'grid' ? '15rem' : '100%'
+                flex: "1 1 calc(33.333% - 1rem)",
+                maxWidth: "15rem",
               }}
             >
               <ExamStatusCard
                 title={exam.title}
-                subtitle={exam.subtitle}
-                dateRange={exam.dateRange}
                 status={exam.status}
                 statusVariant={exam.statusVariant}
-                onCardClick={() => handleCardClick(exam.id)}
-                maxWidth={viewMode === 'list' ? '100%' : '20rem'}
-                style={{
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis'
-                }}
+                dateRange={exam.dateRange}
+                timeRange={exam.timeRange}
+                totalMarks={exam.totalMarks}
+                totalQuestions={exam.totalQuestions}
+                onCardClick={() => handleCardClick(exam)}
+                maxWidth="20rem"
               />
+
             </div>
           ))
         ) : (
-          <div className="text-center py-5" style={{ width: '100%' }}>
+          <div className="text-center py-5" style={{ width: "100%" }}>
             <p className="text-muted">No exams found matching your search</p>
           </div>
         )}
       </section>
 
+      <ExamDetailsModal
+        show={!!selectedExam}
+        handleClose={() => setSelectedExam(null)}
+        exam={selectedExam}
+        onUnregister={(id) => console.log("Unregister:", id)}
+        onStartExam={(id) => console.log("Start Exam:", id)}
+        onShowInsights={(id) => console.log("Show Insights:", id)}
+      />
+
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="d-flex justify-content-center mt-4" style={{
-      position: 'fixed',
-      bottom: 0,
-      left: '50%',
-      backgroundColor: '#fff',
-      padding: '0.75rem 0rem 1rem 0.75rem',
-      zIndex: 1000,
-    }}>
+        <div
+          className="d-flex justify-content-center mt-4"
+          style={{
+            position: "fixed",
+            bottom: 0,
+            left: "50%",
+            backgroundColor: "#fff",
+            padding: "0.75rem 0rem 1rem 0.75rem",
+            zIndex: 1000,
+          }}
+        >
           <nav>
             <ul className="pagination mb-0">
-              <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
-                <button className="page-link" onClick={() => goToPage(currentPage - 1)}>
+              <li
+                className={`page-item ${currentPage === 1 ? "disabled" : ""}`}
+              >
+                <button
+                  className="page-link"
+                  onClick={() => goToPage(currentPage - 1)}
+                >
                   Previous
                 </button>
               </li>
@@ -329,16 +237,28 @@ const StudentExamView = () => {
               {Array.from({ length: totalPages }, (_, index) => (
                 <li
                   key={index}
-                  className={`page-item ${currentPage === index + 1 ? 'active' : ''}`}
+                  className={`page-item ${
+                    currentPage === index + 1 ? "active" : ""
+                  }`}
                 >
-                  <button className="page-link" onClick={() => goToPage(index + 1)}>
+                  <button
+                    className="page-link"
+                    onClick={() => goToPage(index + 1)}
+                  >
                     {index + 1}
                   </button>
                 </li>
               ))}
 
-              <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
-                <button className="page-link" onClick={() => goToPage(currentPage + 1)}>
+              <li
+                className={`page-item ${
+                  currentPage === totalPages ? "disabled" : ""
+                }`}
+              >
+                <button
+                  className="page-link"
+                  onClick={() => goToPage(currentPage + 1)}
+                >
                   Next
                 </button>
               </li>

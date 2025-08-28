@@ -4,6 +4,7 @@ const ExamStatusCard = ({
   examId = "A",
   title = "Physics - CE 1",
   status = "Upcoming", // "Upcoming" | "Active" | "Completed"
+  statusVariant,
   dateRange,
   timeRange,
   totalQuestions = 25,
@@ -18,14 +19,6 @@ const ExamStatusCard = ({
   onCardClick = null,
   showChevron = true,
 }) => {
-  // Map status to a Bootstrap color
-  const statusVariantMap = {
-    Upcoming: "primary",
-    Active: "success",
-    Completed: "secondary",
-  };
-
-  const statusVariant = statusVariantMap[status] || "primary";
 
   return (
     <div className="d-flex justify-content-center align-items-center">

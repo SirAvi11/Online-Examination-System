@@ -5,7 +5,8 @@ const {
   createExam, 
   getExamById, 
   updateExam, 
-  deleteExam 
+  deleteExam,
+  startExamAttempt 
 } = require("../controllers/examController");
 const authMiddleware = require("../middleware/authMiddleware");
 
@@ -23,5 +24,8 @@ router.put("/:id", authMiddleware, updateExam);
 
 // DELETE /api/exams/:id - Delete an exam
 router.delete("/:id", authMiddleware, deleteExam);
+
+// Start exam attempt
+router.post('/:examId/start', authMiddleware, startExamAttempt);
 
 module.exports = router;
