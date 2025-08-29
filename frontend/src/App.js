@@ -5,7 +5,8 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import TeacherView from './pages/Teacher/TeacherView';
 import StudentView from './pages/Student/StudentView';
 import ExamStatusCard from './components/Exam/ExamStatusCard';
-import Question from './components/Question/Question'
+import Question from './components/Question/Question';
+import ExamWindow from './pages/Student/ExamWindow';
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
         <Route path="/student-dashboard" element={<StudentView />} />
         <Route path="/status-card" element={<ExamStatusCard/>} />
         <Route path="/question-bank" element={<Question/>} />
+        <Route path="/exam-window" element={<ExamWindow />} />
         {/* Add other routes as needed */}
       </Routes>
     </Router>

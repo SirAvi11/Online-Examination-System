@@ -184,9 +184,8 @@ const createExam = async (req, res) => {
 const getExamById = async (req, res) => {
   try {
     const { id } = req.params;
-    const teacherId = req.user.userId;
 
-    const exam = await Exam.findOne({ _id: id, createdBy: teacherId })
+    const exam = await Exam.findOne({ _id: id})
       .populate('questions.questionRef')
       .populate('createdBy', 'name email');
 
@@ -287,7 +286,7 @@ const generateExamCode = () => {
 const startExamAttempt = async (req, res) => {
   try {
     const { examId } = req.params;
-    const studentId = req.user.id;
+    const studentId = req.user.userId;
     
     // Check if registered
     const registration = await ExamRegistration.findOne({

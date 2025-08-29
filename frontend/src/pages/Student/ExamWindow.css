@@ -1,0 +1,264 @@
+/* ExamWindow.css */
+.container-fluid {
+  font-family: Arial, sans-serif;
+  line-height: 1.4;
+  color: black;
+  min-height: 100%;
+  font-size: 16px;
+}
+
+.header, .footer, .legend {
+  background-color: #f3f3f3;
+  border-color: #e5e5e5;
+  font-size: 16px;
+  user-select: none;
+}
+
+.question-title {
+  font-size: 20px;
+  border-bottom: 2px solid #d1d5db;
+  padding-bottom: 8px;
+  margin-bottom: 24px;
+  font-weight: 500;
+}
+
+.question-text {
+  font-size: 18px;
+  margin-bottom: 32px;
+  max-width: 700px;
+  line-height: 1.6;
+}
+
+.option-label {
+  font-size: 18px;
+  user-select: none;
+  cursor: pointer;
+  padding: 10px 0;
+  transition: background-color 0.2s;
+  border-radius: 4px;
+}
+
+.option-label:hover {
+  background-color: #f8f9fa;
+}
+
+.option-checkbox {
+  width: 22px;
+  height: 22px;
+  margin-right: 12px;
+  cursor: pointer;
+}
+
+.btn-mark-review {
+  background-color: #8b0000;
+  color: white;
+  font-size: 16px;
+  padding: 8px 20px;
+  border-radius: 6px;
+  border: none;
+  user-select: none;
+  transition: background-color 0.2s;
+}
+
+.btn-mark-review:hover:not(:disabled) {
+  background-color: #6a0000;
+}
+
+.btn-mark-review:disabled {
+  background-color: #cccccc;
+  color: #666666;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.btn-prev-next {
+  background-color: #0d6efd;
+  color: white;
+  font-size: 16px;
+  padding: 8px 20px;
+  border-radius: 6px;
+  border: none;
+  user-select: none;
+  transition: background-color 0.2s;
+}
+
+.btn-prev-next:hover:not(:disabled) {
+  background-color: #084cd9;
+}
+
+.btn-prev-next:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-submit {
+  background-color: #166534;
+  color: white;
+  font-size: 16px;
+  padding: 8px 24px;
+  border-radius: 6px;
+  border: none;
+  user-select: none;
+  transition: background-color 0.2s;
+}
+
+.btn-submit:hover {
+  background-color: #0f4627;
+}
+
+.legend-item {
+  font-size: 14px;
+  user-select: none;
+  text-align: center;
+}
+
+.legend-color {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.legend-current {
+  background-color: #0d6efd;
+  border: none;
+}
+
+.legend-not-attempted {
+  background-color: transparent;
+  border: 2px solid #6c757d;
+}
+
+.legend-answered {
+  background-color: #166534;
+  border: none;
+}
+
+.legend-not-answered {
+  background-color: #d97706;
+  border: none;
+}
+
+.legend-review {
+  background-color: #212529;
+  border: none;
+}
+
+.sidebar-header {
+  background-color: #e5e5e5;
+  font-size: 18px;
+  font-weight: 500;
+  text-align: center;
+  padding: 12px 0;
+  user-select: none;
+}
+
+.time-left {
+  background-color: #f3f3f3;
+  border-bottom: 2px solid #e5e5e5;
+  padding: 16px 20px;
+  font-size: 18px;
+  text-align: right;
+  user-select: none;
+}
+
+.time-values {
+  font-weight: 700;
+  font-size: 24px;
+  display: inline-block;
+  min-width: 32px;
+}
+
+.time-label {
+  font-weight: 400;
+  font-size: 14px;
+}
+
+.btn-quant {
+  width: 42px;
+  height: 36px;
+  font-size: 16px;
+  padding: 0;
+  border-radius: 4px;
+  user-select: none;
+  border: none;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.legend-current {
+  background-color: #0d6efd;
+  color: white;
+}
+
+.legend-not-attempted {
+  background-color: #e5e5e5;
+  color: #6c757d;
+  border: 1px solid #ced4da;
+}
+
+.legend-answered {
+  background-color: #166534;
+  color: white;
+}
+
+.legend-not-answered {
+  background-color: #d97706;
+  color: white;
+}
+
+.legend-review {
+  background-color: #212529;
+  color: white;
+}
+
+.btn-quant:hover:not(.legend-not-attempted) {
+  transform: scale(1.08);
+  box-shadow: 0 0 6px rgba(0,0,0,0.3);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .container-fluid {
+    flex-direction: column;
+  }
+  
+  .sidebar {
+    width: 100% !important;
+    border-left: none !important;
+    border-top: 1px solid #e5e5e5;
+  }
+  
+  .question-text {
+    font-size: 16px;
+  }
+  
+  .option-label {
+    font-size: 16px;
+  }
+  
+  .footer {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .btn-group {
+    justify-content: center;
+    width: 100%;
+  }
+}
+
+/* Animation for timer when time is running low */
+@keyframes pulse {
+  0% { color: inherit; }
+  50% { color: #dc3545; }
+  100% { color: inherit; }
+}
+
+.time-low {
+  animation: pulse 1s infinite;
+}

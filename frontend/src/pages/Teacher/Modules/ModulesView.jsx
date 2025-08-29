@@ -182,7 +182,7 @@ export default function ModulesView({ teacherId }) {
           <div className="header-container" style={{ position: "relative" }}>
             <div className="d-flex justify-content-between align-items-center mb-4">
               <h3>Modules ({modules.length})</h3>
-              <Button variant="outline-secondary" onClick={() => setShowModal(true)} disabled={selectedModuleIds.length > 0}>+ New Module</Button>
+              <Button variant="outline-secondary" onClick={() => setShowModal(true)} disabled={selectedModuleIds.length > 0} data-cy="new-module-btn">+ New Module</Button>
             </div>
 
             {/* Overlay for bulk delete */}
@@ -217,7 +217,7 @@ export default function ModulesView({ teacherId }) {
                 <th style={{ width: "200px" }}>Actions</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody data-cy="module-list">
               {modules.map(module => {
                 const nameKey = `${module._id}-name`;
                 const descKey = `${module._id}-description`;
@@ -226,7 +226,7 @@ export default function ModulesView({ teacherId }) {
                 const isSelected = selectedModuleIds.includes(module._id);
 
                 return (
-                  <tr key={module._id}>
+                  <tr key={module._id} >
                     <td>
                       <Form.Check
                         type="checkbox"
@@ -308,6 +308,7 @@ export default function ModulesView({ teacherId }) {
                     placeholder="Enter module name"
                     value={newModule.name}
                     onChange={(e) => setNewModule({ ...newModule, name: e.target.value })}
+                    data-cy="module-name-input"
                   />
                 </Form.Group>
                 <Form.Group controlId="moduleDesc" className="mb-3">
@@ -318,13 +319,14 @@ export default function ModulesView({ teacherId }) {
                     placeholder="Enter module description"
                     value={newModule.description}
                     onChange={(e) => setNewModule({ ...newModule, description: e.target.value })}
+                    data-cy="module-description-input"
                   />
                 </Form.Group>
               </Form>
             </Modal.Body>
             <Modal.Footer>
               <Button variant="secondary" onClick={() => setShowModal(false)}>Cancel</Button>
-              <Button variant="primary" onClick={handleSaveModule}>Save</Button>
+              <Button variant="primary" onClick={handleSaveModule} data-cy="create-module-submit">Save</Button>
             </Modal.Footer>
           </Modal>
         </>

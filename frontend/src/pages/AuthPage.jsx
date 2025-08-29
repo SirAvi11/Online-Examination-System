@@ -192,14 +192,14 @@ export default function AuthPage() {
 
         {/* Success message */}
         {successMessage && (
-          <div className="alert alert-success mb-4" role="alert">
+          <div className="alert alert-success mb-4" role="alert" data-cy="register-success">
             {successMessage}
           </div>
         )}
 
         {/* Error message */}
         {errors.submit && (
-          <div className="alert alert-danger mb-4" role="alert">
+          <div className="alert alert-danger mb-4" role="alert" data-cy="register-error">
             {errors.submit}
           </div>
         )}
@@ -216,6 +216,7 @@ export default function AuthPage() {
                 value={formData.email}
                 onChange={handleChange}
                 placeholder="Enter your email"
+                data-cy="register-email"
               />
               {errors.email && <div className="invalid-feedback">{errors.email}</div>}
             </div>
@@ -233,6 +234,8 @@ export default function AuthPage() {
               value={formData.username}
               onChange={handleChange}
               placeholder={isLoginView ? 'Enter username or email' : 'Choose a username'}
+              data-cy="login-email"
+
             />
             {errors.username && <div className="invalid-feedback">{errors.username}</div>}
           </div>
@@ -246,6 +249,8 @@ export default function AuthPage() {
                 className={`form-select ${errors.role ? 'is-invalid' : ''}`}
                 value={formData.role}
                 onChange={handleChange}
+                data-cy="register-role"
+
               >
                 <option value="">-- Select Role --</option>
                 <option value="Teacher">Teacher</option>
@@ -265,6 +270,7 @@ export default function AuthPage() {
               value={formData.password}
               onChange={handleChange}
               placeholder="Enter password"
+              data-cy="register-password"
             />
             {errors.password && <div className="invalid-feedback">{errors.password}</div>}
           </div>
@@ -280,6 +286,7 @@ export default function AuthPage() {
                 value={formData.confirmPassword}
                 onChange={handleChange}
                 placeholder="Confirm your password"
+                data-cy="register-confirm-password"
               />
               {errors.confirmPassword && <div className="invalid-feedback">{errors.confirmPassword}</div>}
             </div>
@@ -295,6 +302,7 @@ export default function AuthPage() {
             type="submit"
             className="btn btn-signin w-100 py-2 mb-4"
             disabled={isLoading}
+            data-cy="register-submit"
           >
             {isLoading ? (
               <>
@@ -329,6 +337,7 @@ export default function AuthPage() {
             className="link-green btn btn-link p-0 small" 
             onClick={toggleView}
             style={{ textDecoration: 'none' }}
+            data-cy="toggle-auth-view"
           >
             {isLoginView ? 'Create an Account' : 'Sign in'}
           </button>

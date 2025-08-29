@@ -11,12 +11,12 @@ const Sidebar = ({ setActiveView, userRole }) => {
   // Common links for all roles
   const commonLinks = [
     { icon: 'fa-th-large', label: 'Dashboard', view: 'dashboard' },
-    { icon: 'fa-file-alt', label: 'Exams', view: 'exams' }
+    { icon: 'fa-file-alt', label: 'Exams', view: 'exams', testId:"nav-exams" }
   ];
 
   // Teacher-specific links
   const teacherLinks = [
-    { icon: 'fa-layer-group', label: 'Modules', view: 'modules' },
+    { icon: 'fa-layer-group', label: 'Modules', view: 'modules', testId:"modules-option" },
     { icon: 'fa-calendar-alt', label: 'Schedules', view: 'schedules' },
     { icon: 'fa-chart-bar', label: 'Insights', view: 'insights' }
   ];
@@ -57,6 +57,7 @@ const Sidebar = ({ setActiveView, userRole }) => {
             {...link} 
             active={activeView === link.view}
             onClick={() => handleLinkClick(link.view)}
+            testId= {link?.testId}
           />
         ))}
       </nav>

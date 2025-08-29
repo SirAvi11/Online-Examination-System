@@ -1,4 +1,4 @@
-const SidebarLink = ({ icon, label, active = false, onClick }) => {
+const SidebarLink = ({ icon, label, active = false, onClick, testId }) => {
   return (
     <a
       href="#"
@@ -8,6 +8,7 @@ const SidebarLink = ({ icon, label, active = false, onClick }) => {
         onClick();
       }}
       style={{ padding: '0.5rem', borderRadius: '0.25rem' }}
+      data-cy = {testId}
     >
       <i className={`fas ${icon} fa-fw`} />
       <span>{label}</span>

@@ -79,6 +79,7 @@ const ExamRegistrationModal = ({ show, handleClose }) => {
             onChange={(e) => setExamCode(e.target.value)}
             disabled={loading}
             autoFocus
+            data-cy="exam-code-input"
           />
           <Form.Text className="text-muted">
             Example: <code>CS101-MID2025</code>
@@ -90,7 +91,7 @@ const ExamRegistrationModal = ({ show, handleClose }) => {
         <Button variant="secondary" onClick={handleCloseClick} disabled={loading}>
           Cancel
         </Button>
-        <Button variant="primary" onClick={handleRegister} disabled={loading}>
+        <Button variant="primary" onClick={handleRegister} disabled={loading} data-cy="exam-submit">
           {loading ? (
             <>
               <Spinner animation="border" size="sm" className="me-2" />

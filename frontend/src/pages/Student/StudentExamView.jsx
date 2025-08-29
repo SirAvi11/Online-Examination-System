@@ -12,37 +12,42 @@ const StudentExamView = () => {
   const [loading, setLoading] = useState(true);
   const [selectedExam, setSelectedExam] = useState(null);
 
-// Fetch exams from API
-useEffect(() => {
-  const fetchExams = async () => {
-    try {
-      const token = localStorage.getItem("token"); // assuming you store auth token
-      const res = await fetch("/api/exam-registration/my-exams", {
-        headers: { "x-auth-token": token }, // 👈 lowercase header key
-      });
+  // Fetch exams from API
+  useEffect(() => {
+    const fetchExams = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await fetch("/api/exam-registration/my-exams", {
+          headers: { "x-auth-token": token },
+        });
 
-      if (!res.ok) {
-        throw new Error(`Error ${res.status}`);
+        if (!res.ok) throw new Error(`Error ${res.status}`);
+        const data = await res.json();
+        setExams(data);
+      } catch (err) {
+        console.error("Failed to fetch exams:", err);
+      } finally {
+        setLoading(false);
       }
+    };
 
-      const data = await res.json(); // 👈 parse JSON
-      setExams(data);
-    } catch (err) {
-      console.error("Failed to fetch exams:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    fetchExams();
+  }, []);
 
-  fetchExams();
-}, []);
+  const handleCardClick = (exam) => setSelectedExam(exam);
+  const handleRegister = (examCode) => console.log("Registered with exam code:", examCode);
 
-  const handleCardClick = (exam) => {
-    setSelectedExam(exam);
-  };
+  // ✅ Open Exam in a new window
+  const handleStartExam = (exam) => {
+    setSelectedExam(null);
+    const token = localStorage.getItem("token");
 
-  const handleRegister = (examCode) => {
-    console.log("Registered with exam code:", examCode);
+    const url = `/exam-window?examId=${exam.id}&token=${encodeURIComponent(token)}`;
+    window.open(
+      url,
+      "_blank",
+      "width=1200,height=800,menubar=no,toolbar=no,location=no,status=no"
+    );
   };
 
   // Transform API exam object -> card fields
@@ -50,10 +55,7 @@ useEffect(() => {
     const startDate = new Date(exam.startTime);
     const endDate = new Date(exam.endTime);
 
-    // If start and end are on the same calendar day
-    const sameDay =
-      startDate.toDateString() === endDate.toDateString();
-
+    const sameDay = startDate.toDateString() === endDate.toDateString();
     const dateOptions = { day: "2-digit", month: "short", year: "numeric" };
     const timeOptions = { hour: "2-digit", minute: "2-digit" };
 
@@ -63,8 +65,8 @@ useEffect(() => {
 
     const timeRange = `${startDate.toLocaleTimeString([], timeOptions)} - ${endDate.toLocaleTimeString([], timeOptions)}`;
 
-
     return {
+      ...exam,
       id: exam._id,
       title: exam.title,
       subtitle: `Teacher: ${exam.createdBy?.name || "Unknown"}`,
@@ -87,25 +89,13 @@ useEffect(() => {
     };
   });
 
-  // Filter by search
   const filteredExams = formattedExams?.filter((exam) =>
     exam.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Pagination
   const totalPages = Math.ceil(filteredExams?.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentExams = filteredExams?.slice(
-    startIndex,
-    startIndex + itemsPerPage
-  );
-
-
-  const goToPage = (page) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
-    }
-  };
+  const currentExams = filteredExams?.slice(startIndex, startIndex + itemsPerPage);
 
   return (
     <div className="container py-4 px-4">
@@ -129,13 +119,9 @@ useEffect(() => {
       {/* Exams Layout */}
       <section
         aria-label="Examination cards"
-        style={{
-          display: "flex",
-          flexDirection: "row",
-          flexWrap: "wrap",
-          gap: "0.7rem",
-        }}
+        style={{ display: "flex", flexWrap: "wrap", gap: "0.7rem" }}
       >
+        {/* Register card */}
         <div
           onClick={() => setShowModal(true)}
           style={{
@@ -151,6 +137,7 @@ useEffect(() => {
             cursor: "pointer",
             background: "#f9f9f9",
           }}
+          data-cy="exam-register-button"
         >
           <div className="text-center">
             <div style={{ fontSize: "2rem", fontWeight: "bold" }}>+</div>
@@ -158,7 +145,6 @@ useEffect(() => {
           </div>
         </div>
 
-        {/* Registration Modal */}
         <ExamRegistrationModal
           show={showModal}
           handleClose={() => setShowModal(false)}
@@ -170,14 +156,8 @@ useEffect(() => {
             <p className="text-muted">Loading exams...</p>
           </div>
         ) : currentExams?.length > 0 ? (
-          currentExams?.map((exam) => (
-            <div
-              key={exam.id}
-              style={{
-                flex: "1 1 calc(33.333% - 1rem)",
-                maxWidth: "15rem",
-              }}
-            >
+          currentExams.map((exam) => (
+            <div key={exam.id} style={{ flex: "1 1 calc(33.333% - 1rem)", maxWidth: "15rem" }}>
               <ExamStatusCard
                 title={exam.title}
                 status={exam.status}
@@ -189,7 +169,6 @@ useEffect(() => {
                 onCardClick={() => handleCardClick(exam)}
                 maxWidth="20rem"
               />
-
             </div>
           ))
         ) : (
@@ -204,68 +183,9 @@ useEffect(() => {
         handleClose={() => setSelectedExam(null)}
         exam={selectedExam}
         onUnregister={(id) => console.log("Unregister:", id)}
-        onStartExam={(id) => console.log("Start Exam:", id)}
+        onStartExam={() => handleStartExam(selectedExam)}
         onShowInsights={(id) => console.log("Show Insights:", id)}
       />
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div
-          className="d-flex justify-content-center mt-4"
-          style={{
-            position: "fixed",
-            bottom: 0,
-            left: "50%",
-            backgroundColor: "#fff",
-            padding: "0.75rem 0rem 1rem 0.75rem",
-            zIndex: 1000,
-          }}
-        >
-          <nav>
-            <ul className="pagination mb-0">
-              <li
-                className={`page-item ${currentPage === 1 ? "disabled" : ""}`}
-              >
-                <button
-                  className="page-link"
-                  onClick={() => goToPage(currentPage - 1)}
-                >
-                  Previous
-                </button>
-              </li>
-
-              {Array.from({ length: totalPages }, (_, index) => (
-                <li
-                  key={index}
-                  className={`page-item ${
-                    currentPage === index + 1 ? "active" : ""
-                  }`}
-                >
-                  <button
-                    className="page-link"
-                    onClick={() => goToPage(index + 1)}
-                  >
-                    {index + 1}
-                  </button>
-                </li>
-              ))}
-
-              <li
-                className={`page-item ${
-                  currentPage === totalPages ? "disabled" : ""
-                }`}
-              >
-                <button
-                  className="page-link"
-                  onClick={() => goToPage(currentPage + 1)}
-                >
-                  Next
-                </button>
-              </li>
-            </ul>
-          </nav>
-        </div>
-      )}
     </div>
   );
 };
