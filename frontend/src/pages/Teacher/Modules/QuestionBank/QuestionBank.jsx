@@ -6,6 +6,7 @@ import AddQuestionModal from './AddQuestionModal';
 import DuplicateWarningModal from './DuplicateWarningModal';
 import SuccessNotification from './SuccessNotification';
 import FilterPane from './FilterPane';
+import ImportModal from './ImportModal';
 import useQuestion from './hooks/useQuestion';
 import ArchiveButton from './ArchiveButton';
 import * as XLSX from "xlsx";
@@ -25,9 +26,9 @@ export default function QuestionBank({ selectedModule, onBack }) {
   const fileInputRef = useRef(null);
 
   // For Excel import
-  const [importedQuestions, setImportedQuestions] = useState([]);   // raw parsed from Excel
   const [questionsToImport, setQuestionsToImport] = useState([]);   // user-selected in transfer list
-  const [showImportModal, setShowImportModal] = useState(false);    // control modal visibility
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importedQuestions, setImportedQuestions] = useState([]);
 
 
   const { 
@@ -185,23 +186,46 @@ const handleFileChange = async (event) => {
 
   const data = await file.arrayBuffer();
   const workbook = XLSX.read(data);
-  const sheet = workbook.Sheets[workbook.SheetNames[0]];
+
+  // Use the 2nd sheet (index 1) since the first is instructions
+  const sheet = workbook.Sheets[workbook.SheetNames[1]];
   const rows = XLSX.utils.sheet_to_json(sheet);
 
   // Map rows to Question objects
-  const parsedQuestions = rows.map((row, idx) => ({
-    id: idx, // temp ID for UI
-    questionText: row.questionText || "",
-    options: row.options ? row.options.split(",").map(o => o.trim()) : [],
-    correctOptionIndex: Number(row.correctOptionIndex) || 0,
-    marks: Number(row.marks) || 1,
-    imageUrl: row.imageUrl || "",
-    moduleId: selectedModule._id,
-  }));
+  const parsedQuestions = rows.map((row, idx) => {
+    const options = [
+      row["Option A"] || "",
+      row["Option B"] || "",
+      row["Option C"] || "",
+      row["Option D"] || "",
+    ];
+
+    const correctOptionIndex = (() => {
+      const letter = (row["Correct Option"] || "").toString().trim().toUpperCase();
+      switch (letter) {
+        case "A": return 0;
+        case "B": return 1;
+        case "C": return 2;
+        case "D": return 3;
+        default: return 0; // fallback
+      }
+    })();
+
+    return {
+      id: idx, // temp ID for UI
+      questionText: row["Question Text"] || "",
+      options,
+      correctOptionIndex,
+      marks: Number(row["Marks"]) || 1,
+      imageUrl: row["Image URL"] || "",
+      moduleId: selectedModule._id,
+    };
+  });
 
   setImportedQuestions(parsedQuestions);
   setShowImportModal(true);
 };
+
 
 
   if (loading) return <div>Loading questions...</div>;
@@ -372,35 +396,15 @@ const handleFileChange = async (event) => {
         onHide={resetDuplicateInfo}
       />
 
-      <Modal show={showImportModal} onHide={() => setShowImportModal(false)} size="lg">
-        <Modal.Header closeButton>
-          <Modal.Title>Import Questions from Excel</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {/* <QuestionSelector
-            modules={[selectedModule]}
-            examQuestions={questionsToImport}   // right list
-            onChange={setQuestionsToImport}     // updates selection
-            importedQuestions={importedQuestions} // left list (parsed from excel)
-          /> */}
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowImportModal(false)}>
-            Cancel
-          </Button>
-          <Button
-            variant="primary"
-            onClick={async () => {
-              for (const q of questionsToImport) {
-                await addQuestion(q);
-              }
-              setShowImportModal(false);
-            }}
-          >
-            Import Selected
-          </Button>
-        </Modal.Footer>
-      </Modal>
+      <ImportModal
+        show={showImportModal}
+        onHide={() => setShowImportModal(false)}
+        importedQuestions={importedQuestions}
+        addQuestion={addQuestion}
+        onImport={(imported) => {
+          console.log("Imported questions:", imported);
+        }}
+      />
     </div>
   );
 }
