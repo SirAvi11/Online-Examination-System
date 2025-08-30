@@ -212,7 +212,7 @@ const handleFileChange = async (event) => {
     })();
 
     return {
-      id: idx, // temp ID for UI
+      _id: idx, // temp ID for UI
       questionText: row["Question Text"] || "",
       options,
       correctOptionIndex,
@@ -315,7 +315,11 @@ const handleFileChange = async (event) => {
               accept=".xlsx"
               ref={fileInputRef}
               style={{ display: "none" }}
-              onChange={handleFileChange}
+              onChange={(e) => {
+                handleFileChange(e);
+                // Reset input so onChange will trigger even if same file is picked again
+                e.target.value = "";
+              }}
             />
 
             {/* Filter Pane */}
