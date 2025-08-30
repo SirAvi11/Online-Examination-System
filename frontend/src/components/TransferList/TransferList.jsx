@@ -10,8 +10,8 @@ const TransferList = ({
   leftTitle = "Available",
   rightTitle = "Selected",
   getItemKey = (item) => item.id,
-  getItemLabel = (item) => item.label,
-  showMarks = false,
+  getItemLabel = (item) => item.questionText,
+  showMarks = true,
   getItemMarks = (item) => item.marks || 0,
 }) => {
   const [checkedLeft, setCheckedLeft] = useState([]);

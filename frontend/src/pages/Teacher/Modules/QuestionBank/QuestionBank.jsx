@@ -400,6 +400,7 @@ const handleFileChange = async (event) => {
         show={showImportModal}
         onHide={() => setShowImportModal(false)}
         importedQuestions={importedQuestions}
+        setImportedQuestions={setImportedQuestions}
         addQuestion={addQuestion}
         onImport={(imported) => {
           console.log("Imported questions:", imported);

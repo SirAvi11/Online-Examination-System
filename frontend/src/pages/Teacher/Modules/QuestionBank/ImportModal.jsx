@@ -7,6 +7,7 @@ export default function ImportModal({
   show,
   onHide,
   importedQuestions,   // parsed from Excel
+  setImportedQuestions,
   onImport,            // callback when user confirms import
   addQuestion,         // API hook
 }) {
@@ -20,7 +21,7 @@ export default function ImportModal({
   }, [show]);
 
   return (
-    <Modal show={show} onHide={onHide} size="lg">
+    <Modal show={show} onHide={onHide} size="xl">
       <Modal.Header closeButton>
         <Modal.Title>Import Questions from Excel</Modal.Title>
       </Modal.Header>
@@ -29,13 +30,9 @@ export default function ImportModal({
         <TransferList
           availableItems={importedQuestions}
           selectedItems={questionsToImport}
+          setSelectedItems={setQuestionsToImport}
+          setAvailableItems={setImportedQuestions}
           onChange={setQuestionsToImport}
-          renderItem={(q) => (
-            <div className="question-row">
-              <span className="question-text">{q.questionText}</span>
-              <span className="question-marks">{q.marks} marks</span>
-            </div>
-          )}
         />
       </Modal.Body>
 
