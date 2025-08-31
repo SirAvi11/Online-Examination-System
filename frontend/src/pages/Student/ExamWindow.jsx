@@ -184,7 +184,7 @@ const ExamWindow = () => {
             ans.state = ans.answer ? 'answered' : 'not-answered';
           }
         }
-        if (i === index) {
+        if (i === index && ans.state != 'review') {
           ans.state = 'active';
         }
         return ans;
@@ -213,7 +213,9 @@ const ExamWindow = () => {
       setCurrentQ(currentQ + 1);
       setAnswers(prev => {
         const updated = [...prev];
-        updated[currentQ + 1].state = 'active';
+        if(updated[currentQ + 1].state != 'review'){
+          updated[currentQ + 1].state = 'active';
+        }
         return updated;
       });
     }
@@ -237,7 +239,9 @@ const ExamWindow = () => {
       setCurrentQ(currentQ - 1);
       setAnswers(prev => {
         const updated = [...prev];
-        updated[currentQ - 1].state = 'active';
+        if(updated[currentQ - 1].state != 'review'){
+          updated[currentQ - 1].state = 'active';
+        }
         return updated;
       });
     }
