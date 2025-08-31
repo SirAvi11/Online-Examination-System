@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
+import ExamSubmissionModal from "./ExamSubmissionModal";
 import './ExamWindow.css'
 
 // Utility to parse query params
@@ -15,6 +16,7 @@ const ExamWindow = () => {
   const [loading, setLoading] = useState(true);
   const [exam, setExam] = useState(null);
   const [currentQ, setCurrentQ] = useState(0);
+  const [showSubmitModal, setShowSubmitModal] = useState(false);
 
   // ✅ Track answers and statuses
   const [answers, setAnswers] = useState([]);
@@ -248,9 +250,7 @@ const ExamWindow = () => {
   };
 
   const handleSubmitTest = () => {
-    if (window.confirm("Are you sure you want to submit your test?")) {
-      alert("Test submitted successfully!");
-    }
+    setShowSubmitModal(true);
   };
 
   return (
@@ -373,6 +373,13 @@ const ExamWindow = () => {
             </div>
           </div>
         </div>
+
+        <ExamSubmissionModal 
+          show={showSubmitModal} 
+          exam={exam}
+          answers={answers} 
+          onClose={() => setShowSubmitModal(false)} 
+        />
       </div>
     </div>
   );

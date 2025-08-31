@@ -76,7 +76,7 @@ const getExamRegistrations = async (req, res) => {
     
     // Check if user is teacher and exam owner
     const exam = await Exam.findById(examId);
-    if (exam.createdBy.toString() !== req.user.id) {
+    if (exam.createdBy.toString() !== req.user.userId) {
       return res.status(403).json({ error: 'Not authorized' });
     }
     

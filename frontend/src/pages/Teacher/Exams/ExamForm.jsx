@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import QuestionSelector from "./QuestionSelector";
+import StudentTab from "./StudentTab";
 
 const ExamForm = ({ onBack, examToEdit = null }) => {
   const isEditMode = !!examToEdit;
@@ -242,6 +243,19 @@ const ExamForm = ({ onBack, examToEdit = null }) => {
                 <i className="fa fa-cog me-2"></i>Settings
               </button>
             </li>
+            {
+              isEditMode && (
+                <li className="nav-item">
+                  <button 
+                    type="button"
+                    className={`nav-link ${activeTab === "students" ? "active" : ""}`}
+                    onClick={() => setActiveTab("students")}
+                  >
+                    <i className="fa fa-users me-2"></i>Students
+                  </button>
+                </li>
+              )
+            }
           </ul>
 
           {/* Exam Details Tab */}
@@ -426,6 +440,16 @@ const ExamForm = ({ onBack, examToEdit = null }) => {
               </div>
             </div>
           )}
+
+          {/* Students Tab */}
+          {
+            activeTab == "students" && (
+              <div className="card p-4 shadow-sm mb-4 h-100">
+                <h5 className="fw-bold mb-4">Registered Students</h5>
+                <StudentTab selectedExam={examToEdit} />
+              </div>
+            )
+          }
 
           {/* Navigation and Submit Buttons */}
           <div className="d-flex justify-content-between mt-4">
