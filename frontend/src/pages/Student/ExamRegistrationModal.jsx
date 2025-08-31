@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Modal, Button, Form, Spinner, Alert } from "react-bootstrap";
 
-const ExamRegistrationModal = ({ show, handleClose }) => {
+const ExamRegistrationModal = ({ show, handleClose, onRegister }) => {
   const [examCode, setExamCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -40,6 +40,9 @@ const ExamRegistrationModal = ({ show, handleClose }) => {
       setTimeout(() => {
         handleClose();
         setSuccess("");
+        if (onRegister) {
+          onRegister(); // ✅ refresh list in parent
+        }
       }, 1500);
     } catch (err) {
       setError(err.message || "Invalid exam code. Please try again.");

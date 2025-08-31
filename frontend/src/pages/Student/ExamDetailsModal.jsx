@@ -1,11 +1,43 @@
 import { useState } from "react";
 import { Modal, Button } from "react-bootstrap";
 
-const ExamDetailsModal = ({ show, handleClose, exam, onUnregister, onStartExam, onShowInsights }) => {
+const ExamDetailsModal = ({ show, handleClose, exam, onStartExam, onShowInsights, onUnregisterSuccess }) => {
   const [confirmUnregister, setConfirmUnregister] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   if (!exam) return null;
   const { title, description, status, id } = exam;
+
+  // Unregister student from exam
+  const unRegister = async (examId) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const res = await fetch(`http://localhost:5000/api/exam-registration/${examId}/cancel`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          "x-auth-token": localStorage.getItem("token"),
+        },
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to unregister from exam");
+      }
+
+      // If unregister succeeded
+      if (onUnregisterSuccess) {
+        onUnregisterSuccess(); // parent can refresh list
+      }
+      handleClose(); // close modal
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Footer buttons
   const renderFooter = () => {
@@ -14,12 +46,17 @@ const ExamDetailsModal = ({ show, handleClose, exam, onUnregister, onStartExam, 
         return (
           <div className="d-flex justify-content-between w-100">
             <span className="text-danger fw-semibold">Are you sure you want to unregister?</span>
-            <div>
+            <div className="d-flex flex-row justify-content-center align-items-center">
               <Button variant="outline-secondary" onClick={() => setConfirmUnregister(false)}>
                 Cancel
               </Button>
-              <Button variant="danger" className="ms-2" onClick={() => { onUnregister?.(id); setConfirmUnregister(false); }}>
-                Yes, Unregister
+              <Button 
+                variant="danger" 
+                className="ms-2" 
+                onClick={() => { unRegister(id); setConfirmUnregister(false); }}
+                disabled={loading}
+              >
+                {loading ? "Unregistering..." : "Yes, Unregister"}
               </Button>
             </div>
           </div>
@@ -80,6 +117,7 @@ const ExamDetailsModal = ({ show, handleClose, exam, onUnregister, onStartExam, 
       </Modal.Header>
 
       <Modal.Body>
+        {error && <p className="text-danger">{error}</p>}
         {status === "Active" ? (
           <p className="text-warning fw-semibold">This exam is currently in progress. Actions are disabled.</p>
         ) : (

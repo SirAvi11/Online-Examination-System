@@ -12,9 +12,7 @@ const StudentExamView = () => {
   const [loading, setLoading] = useState(true);
   const [selectedExam, setSelectedExam] = useState(null);
 
-  // Fetch exams from API
-  useEffect(() => {
-    const fetchExams = async () => {
+  const fetchExams = async () => {
       try {
         const token = localStorage.getItem("token");
         const res = await fetch("/api/exam-registration/my-exams", {
@@ -29,13 +27,15 @@ const StudentExamView = () => {
       } finally {
         setLoading(false);
       }
-    };
+  };
 
+  // Fetch exams from API
+  useEffect(() => {
+  
     fetchExams();
   }, []);
 
   const handleCardClick = (exam) => setSelectedExam(exam);
-  const handleRegister = (examCode) => console.log("Registered with exam code:", examCode);
 
   // ✅ Open Exam in a new window
   const handleStartExam = (exam) => {
@@ -148,7 +148,7 @@ const StudentExamView = () => {
         <ExamRegistrationModal
           show={showModal}
           handleClose={() => setShowModal(false)}
-          onRegister={handleRegister}
+          onRegister={fetchExams}
         />
 
         {loading ? (
@@ -182,8 +182,8 @@ const StudentExamView = () => {
         show={!!selectedExam}
         handleClose={() => setSelectedExam(null)}
         exam={selectedExam}
-        onUnregister={(id) => console.log("Unregister:", id)}
         onStartExam={() => handleStartExam(selectedExam)}
+        onUnregisterSuccess={fetchExams}
         onShowInsights={(id) => console.log("Show Insights:", id)}
       />
     </div>

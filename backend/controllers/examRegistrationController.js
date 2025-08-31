@@ -90,23 +90,50 @@ const getExamRegistrations = async (req, res) => {
   }
 };
 
-// Cancel registration for an exam
-const cancelRegistration = async (req, res) => {
+// Student cancels their own registration
+const cancelRegistrationSelf = async (req, res) => {
   try {
     const { examId } = req.params;
-    const studentId = req.user.id;
-    
-    // Find and delete registration
+    const studentId = req.user.userId; // logged-in student
+
     const registration = await ExamRegistration.findOneAndDelete({
       studentId,
       examId
     });
-    
+
     if (!registration) {
       return res.status(404).json({ error: 'Registration not found' });
     }
-    
+
     res.json({ message: 'Registration cancelled successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Teacher cancels a student’s registration
+const cancelRegistrationByTeacher = async (req, res) => {
+  try {
+    const { examId, studentId } = req.params;
+
+    // ✅ Check ownership
+    const exam = await Exam.findById(examId);
+    if (!exam) return res.status(404).json({ error: 'Exam not found' });
+
+    if (exam.createdBy.toString() !== req.user.userId) {
+      return res.status(403).json({ error: 'Not authorized to cancel for this exam' });
+    }
+
+    const registration = await ExamRegistration.findOneAndDelete({
+      studentId,
+      examId
+    });
+
+    if (!registration) {
+      return res.status(404).json({ error: 'Registration not found' });
+    }
+
+    res.json({ message: 'Student registration cancelled successfully' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -116,5 +143,6 @@ module.exports = {
   registerForExam,
   getMyExams,
   getExamRegistrations,
-  cancelRegistration
+  cancelRegistrationSelf,
+  cancelRegistrationByTeacher
 };

@@ -334,22 +334,37 @@ const ExamWindow = () => {
         <div className="d-flex flex-column border-start" style={{ width: '320px', backgroundColor: 'white' }}>
           {/* Time Left */}
           <div className="time-left border-bottom p-4">
-            <div className="fs-5 mb-2">Time Left</div>
-            <div className="d-flex justify-content-end gap-5 text-black">
-              <div className="text-center">
-                <div className="time-values fs-3">{formatTime(timeLeft.hours)}</div>
-                <div className="time-label">hours</div>
-              </div>
-              <div className="text-center">
-                <div className="time-values fs-3">{formatTime(timeLeft.minutes)}</div>
-                <div className="time-label">minutes</div>
-              </div>
-              <div className="text-center">
-                <div className="time-values fs-3">{formatTime(timeLeft.seconds)}</div>
-                <div className="time-label">seconds</div>
-              </div>
-            </div>
-          </div>
+  <div className="fs-5 mb-2">
+    Time Left <i className="fas fa-clock ms-2"></i>
+  </div>
+  <div className="d-flex justify-content-end align-items-center gap-3 text-black fs-3">
+    
+    {/* Hours */}
+    <div className="text-center">
+      <div className="time-values">{formatTime(timeLeft.hours)}</div>
+      <div className="time-label fs-6">hours</div>
+    </div>
+
+    {/* Colon */}
+    <div className="fw-bold mb-3">:</div>
+
+    {/* Minutes */}
+    <div className="text-center">
+      <div className="time-values">{formatTime(timeLeft.minutes)}</div>
+      <div className="time-label fs-6">minutes</div>
+    </div>
+
+    {/* Colon */}
+    <div className="fw-bold mb-3">:</div>
+
+    {/* Seconds */}
+    <div className="text-center">
+      <div className="time-values">{formatTime(timeLeft.seconds)}</div>
+      <div className="time-label fs-6">seconds</div>
+    </div>
+  </div>
+</div>
+
 
           {/* Questions section */}
           <div>

@@ -30,26 +30,26 @@ const StudentTab = ({ selectedExam }) => {
     }
   };
 
-  // Unregister a student
+  // Unregister a student (Teacher side)
   const handleUnregister = async (studentId) => {
-    // try {
-    //   const res = await fetch(`/api/registrations/${selectedExam.id}/${studentId}`, {
-    //     method: "DELETE",
-    //     headers: {
-    //       "Content-Type": "application/json",
-    //       "x-auth-token": localStorage.getItem("token"),
-    //     },
-    //   });
+    try {
+      const res = await fetch(`http://localhost:5000/api/exam-registration/${selectedExam?.id}/students/${studentId}/cancel`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          "x-auth-token": localStorage.getItem("token"),
+        },
+      });
 
-    //   if (!res.ok) {
-    //     throw new Error("Failed to unregister student");
-    //   }
+      if (!res.ok) {
+        throw new Error("Failed to unregister student");
+      }
 
-    //   // Refresh student list
-    //   fetchStudents();
-    // } catch (err) {
-    //   setError(err.message);
-    // }
+      // Refresh student list after successful unregister
+      fetchStudents();
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
     useEffect(() => {
