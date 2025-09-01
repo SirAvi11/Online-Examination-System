@@ -26,7 +26,6 @@ export default function QuestionBank({ selectedModule, onBack }) {
   const fileInputRef = useRef(null);
 
   // For Excel import
-  const [questionsToImport, setQuestionsToImport] = useState([]);   // user-selected in transfer list
   const [showImportModal, setShowImportModal] = useState(false);
   const [importedQuestions, setImportedQuestions] = useState([]);
 

@@ -128,7 +128,10 @@ export default function ModulesView({ teacherId }) {
     }
   };
 
-  const handleBack = () => setSelectedModule(null);
+  const handleBack = () => {
+    setSelectedModule(null)
+    fetchModules()
+  };
 
   // --- Selection Functions ---
   const toggleSelectModule = (moduleId) => {

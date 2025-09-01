@@ -297,23 +297,26 @@ const startExamAttempt = async (req, res) => {
     if (!registration) {
       return res.status(404).json({ error: 'Not registered for this exam' });
     }
-    
-    // Check if already attempted
-    if (registration.status === 'attempted' || registration.status === 'completed') {
-      return res.status(400).json({ error: 'Already attempted this exam' });
-    }
-    
+
     // Get exam details
     const exam = await Exam.findById(examId);
     if (!exam) {
       return res.status(404).json({ error: 'Exam not found' });
     }
+
+    // ✅ Check if student has exceeded max attempts
+    const attemptCount = await StudentAttempt.countDocuments({ examId, studentId });
+    if (attemptCount >= exam.maxAttempts) {
+      return res.status(400).json({ 
+        error: `Maximum number of attempts (${exam.maxAttempts}) reached for this exam` 
+      });
+    }
     
     // Check if exam is available
-    const now = new Date();
-    if (now < exam.startTime || now > exam.endTime) {
-      return res.status(400).json({ error: 'Exam is not currently available' });
-    }
+    // const now = new Date();
+    // if (now < exam.startTime || now > exam.endTime) {
+    //   return res.status(400).json({ error: 'Exam is not currently available' });
+    // }
     
     // Create new attempt
     const attempt = new StudentAttempt({
@@ -333,9 +336,11 @@ const startExamAttempt = async (req, res) => {
     
     res.status(200).json({ attempt, exam });
   } catch (error) {
+    console.error("❌ Error starting exam attempt:", error.message);
     res.status(500).json({ error: error.message });
   }
 };
+
 
 module.exports = { 
   getExamsByTeacher, 

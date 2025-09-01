@@ -86,17 +86,19 @@ const ExamWindow = () => {
   }, []);
 
   if (loading) return (
-    <div className="d-flex justify-content-center align-items-center" style={{height: '100vh'}}>
-      <div className="spinner-border text-primary" style={{width: '3rem', height: '3rem'}} role="status">
+    <div className="exam-loading-container">
+      <div className="exam-loading-spinner" role="status">
         <span className="visually-hidden">Loading exam...</span>
       </div>
+      <p className="exam-loading-text">Preparing your exam...</p>
     </div>
   );
   
   if (!exam) return (
-    <div className="d-flex justify-content-center align-items-center" style={{height: '100vh'}}>
-      <div className="alert alert-danger" style={{fontSize: '1.2rem', padding: '1.5rem'}}>
-        Failed to load exam. Please try again.
+    <div className="exam-error-container">
+      <div className="exam-error-alert">
+        <i className="exam-error-icon fas fa-exclamation-circle"></i>
+        <p>Failed to load exam. Please check your connection and try again.</p>
       </div>
     </div>
   );
@@ -253,132 +255,182 @@ const ExamWindow = () => {
     setShowSubmitModal(true);
   };
 
+  // Check if current question has an image
+  const hasImage = question.imageUrl;
+
   return (
-    <div className="d-flex flex-column vh-100 bg-secondary">
-      <div className="container-fluid flex-grow-1 p-0 bg-white d-flex flex-column flex-md-row" style={{maxWidth: '100%'}}>
+    <div className="exam-container">
+      <div className="exam-content-wrapper">
         
         {/* Left main content */}
-        <div className="flex-grow-1 d-flex flex-column">
+        <div className="exam-main-content">
           {/* Header */}
-          <div className="header border-bottom text-center py-3">
-            <h4 className="m-0">{exam.title} - CAT Preparation</h4>
+          <div className="exam-header">
+            <h4>{exam.title} - CAT Preparation</h4>
           </div>
           
           {/* Question content */}
-          <div className="p-4 flex-grow-1">
-            <h2 className="question-title">Question {currentQ + 1} of {exam.questions.length}</h2>
-            <p className="question-text">{question.questionText}</p>
-            
-            <form className="d-flex flex-column gap-4" style={{ maxWidth: '700px' }}>
-              {question?.options?.map((opt, idx) => (
-                <label key={idx} className="option-label d-flex align-items-center">
-                  <input
-                    type="radio"
-                    className="option-checkbox me-3"
-                    name={question.id}
-                    value={opt}
-                    checked={answers[currentQ]?.answer === opt}
-                    onChange={() => handleAnswer(currentQ, opt)}
+          <div className="exam-question-content">
+            <div className="question-header">
+              <h2 className="question-title">Question {currentQ + 1} of {exam.questions.length}</h2>
+              <div className="question-progress">
+                <div className="progress-bar">
+                  <div 
+                    className="progress-fill" 
+                    style={{width: `${((currentQ + 1) / exam.questions.length) * 100}%`}}
+                  ></div>
+                </div>
+              </div>
+            </div>
+            <div className="question-body">
+              {/* Question image if available */}
+              {hasImage && (
+                <div className="question-image-container">
+                  <img 
+                    src={question.imageUrl} 
+                    alt="Question illustration" 
+                    className="question-image"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                    }}
                   />
-                  <span className="fs-6">{String.fromCharCode(65 + idx)}. {opt}</span>
-                </label>
-              ))}
-            </form>
+                </div>
+              )}
+              
+              <p className="question-text">{question.questionText}</p>
+              
+              <form className="options-container">
+                {/* Render binary options (True/False) if specified */}
+                {question.type === 'binary' ? (
+                  <div className="binary-options">
+                    <label className="option-label binary-option">
+                      <input
+                        type="radio"
+                        className="option-checkbox"
+                        name={question.id}
+                        value="True"
+                        checked={answers[currentQ]?.answer === "True"}
+                        onChange={() => handleAnswer(currentQ, "True")}
+                      />
+                      <span className="option-text">True</span>
+                    </label>
+                    <label className="option-label binary-option">
+                      <input
+                        type="radio"
+                        className="option-checkbox"
+                        name={question.id}
+                        value="False"
+                        checked={answers[currentQ]?.answer === "False"}
+                        onChange={() => handleAnswer(currentQ, "False")}
+                      />
+                      <span className="option-text">False</span>
+                    </label>
+                  </div>
+                ) : (
+                  // Regular multiple choice options
+                  question?.options?.map((opt, idx) => (
+                    <label key={idx} className="option-label">
+                      <input
+                        type="radio"
+                        className="option-checkbox"
+                        name={question.id}
+                        value={opt}
+                        checked={answers[currentQ]?.answer === opt}
+                        onChange={() => handleAnswer(currentQ, opt)}
+                      />
+                      <span className="option-text">{String.fromCharCode(65 + idx)}. {opt}</span>
+                    </label>
+                  ))
+                )}
+              </form>
+            </div>
           </div>
           
           {/* Footer buttons and legend */}
-          <div className="footer border-top d-flex flex-column flex-md-row align-items-center justify-content-between px-4 py-4 gap-3 gap-md-0">
-            <div className="d-flex gap-3">
-              {/* Disable mark for review if no option is selected */}
+          <div className="exam-footer">
+            <div className="footer-controls">
               <button 
                 type="button" 
-                className="btn-mark-review" 
+                className={`btn-mark-review ${isMarkReviewDisabled() ? 'disabled' : ''}`} 
                 onClick={() => handleMarkReview(currentQ)}
                 disabled={isMarkReviewDisabled()}
               >
+                <i className={`fas ${answers[currentQ]?.state === 'review' ? 'fa-check-circle' : 'fa-flag'}`}></i>
                 {getMarkReviewButtonText()}
               </button>
-              <button type="button" className="btn-prev-next" disabled={currentQ === 0} onClick={handlePrevQuestion}>
-                Previous
-              </button>
-              <button type="button" className="btn-prev-next" disabled={currentQ === exam.questions.length - 1} onClick={handleNextQuestion}>
-                Next
-              </button>
+              <div className="navigation-buttons">
+                <button type="button" className="btn-prev" disabled={currentQ === 0} onClick={handlePrevQuestion}>
+                  <i className="fas fa-chevron-left"></i> Previous
+                </button>
+                <button type="button" className="btn-next" disabled={currentQ === exam.questions.length - 1} onClick={handleNextQuestion}>
+                  Next <i className="fas fa-chevron-right"></i>
+                </button>
+              </div>
             </div>
             <button type="button" className="btn-submit" onClick={handleSubmitTest}>
-              Submit Test
+              <i className="fas fa-paper-plane"></i> Submit Test
             </button>
           </div>
           
           {/* Legend */}
-          <div className="legend border-top d-flex flex-wrap justify-content-center gap-5 py-3 px-4 text-center text-nowrap">
-            <div className="legend-item d-flex align-items-center gap-2">
+          <div className="legend-container">
+            <div className="legend-item">
               <span className="legend-color legend-current"></span>Current
             </div>
-            <div className="legend-item d-flex align-items-center gap-2">
+            <div className="legend-item">
               <span className="legend-color legend-not-attempted"></span>Not Attempted
             </div>
-            <div className="legend-item d-flex align-items-center gap-2">
+            <div className="legend-item">
               <span className="legend-color legend-answered"></span>Answered
             </div>
-            <div className="legend-item d-flex align-items-center gap-2">
+            <div className="legend-item">
               <span className="legend-color legend-not-answered"></span>Not Answered
             </div>
-            <div className="legend-item d-flex align-items-center gap-2">
+            <div className="legend-item">
               <span className="legend-color legend-review"></span>Review
             </div>
           </div>
         </div>
 
         {/* Right sidebar */}
-        <div className="d-flex flex-column border-start" style={{ width: '320px', backgroundColor: 'white' }}>
+        <div className="exam-sidebar">
           {/* Time Left */}
-          <div className="time-left border-bottom p-4">
-  <div className="fs-5 mb-2">
-    Time Left <i className="fas fa-clock ms-2"></i>
-  </div>
-  <div className="d-flex justify-content-end align-items-center gap-3 text-black fs-3">
-    
-    {/* Hours */}
-    <div className="text-center">
-      <div className="time-values">{formatTime(timeLeft.hours)}</div>
-      <div className="time-label fs-6">hours</div>
-    </div>
-
-    {/* Colon */}
-    <div className="fw-bold mb-3">:</div>
-
-    {/* Minutes */}
-    <div className="text-center">
-      <div className="time-values">{formatTime(timeLeft.minutes)}</div>
-      <div className="time-label fs-6">minutes</div>
-    </div>
-
-    {/* Colon */}
-    <div className="fw-bold mb-3">:</div>
-
-    {/* Seconds */}
-    <div className="text-center">
-      <div className="time-values">{formatTime(timeLeft.seconds)}</div>
-      <div className="time-label fs-6">seconds</div>
-    </div>
-  </div>
-</div>
-
+          <div className="time-container">
+            <div className="time-header">
+              <i className="fas fa-clock"></i>
+              <span>Time Remaining</span>
+            </div>
+            <div className="time-display">
+              <div className="time-unit">
+                <div className="time-value">{formatTime(timeLeft.hours)}</div>
+                <div className="time-label">Hours</div>
+              </div>
+              <div className="time-separator">:</div>
+              <div className="time-unit">
+                <div className="time-value">{formatTime(timeLeft.minutes)}</div>
+                <div className="time-label">Minutes</div>
+              </div>
+              <div className="time-separator">:</div>
+              <div className="time-unit">
+                <div className="time-value">{formatTime(timeLeft.seconds)}</div>
+                <div className="time-label">Seconds</div>
+              </div>
+            </div>
+          </div>
 
           {/* Questions section */}
-          <div>
-            <div className="sidebar-header border-bottom py-3">
-              <h5 className="m-0">Questions</h5>
+          <div className="questions-panel">
+            <div className="sidebar-header">
+              <h5>Question Navigator</h5>
             </div>
-            <div className="p-4 d-grid gap-2" style={{ gridTemplateColumns: 'repeat(5, 1fr)', fontSize: '14px', userSelect: 'none' }}>
+            <div className="questions-grid">
               {exam.questions.map((q, idx) => {
                 const colorClass = getButtonColor(idx);
                 return (
                   <button
                     key={q.id}
                     type="button"
-                    className={`btn-quant ${colorClass}`}
+                    className={`question-number ${colorClass}`}
                     onClick={() => handleQuestionNavigation(idx)}
                   >
                     {idx + 1}

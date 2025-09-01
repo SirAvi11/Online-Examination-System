@@ -1,5 +1,6 @@
 // controllers/questionController.js
 const Question = require("../models/Question.js");
+const Module = require("../models/Module.js");
 
 // GET questions by moduleId
 const getQuestions = async (req, res) => {
@@ -59,6 +60,14 @@ const createQuestion = async (req, res) => {
     });
 
     const saved = await question.save();
+
+    if (validatedModuleId) {
+      await Module.findByIdAndUpdate(
+        validatedModuleId,
+        { $inc: { questionCount: 1 } }
+      );
+    }
+
     res.json(saved);
   } catch (err) {
     console.error("Error saving question:", err);
@@ -80,6 +89,18 @@ const bulkDeleteQuestions = async (req, res) => {
       return res.status(400).json({ message: "No IDs provided" });
     }
     await Question.deleteMany({ _id: { $in: ids } });
+    // Decrement counts per module
+    const moduleCounts = {};
+    questions.forEach(q => {
+      if (q.moduleId) {
+        moduleCounts[q.moduleId] = (moduleCounts[q.moduleId] || 0) + 1;
+      }
+    });
+
+    // Bulk update each module
+    for (const [moduleId, count] of Object.entries(moduleCounts)) {
+      await Module.findByIdAndUpdate(moduleId, { $inc: { questionCount: -count } });
+    }
     res.json({ message: "Questions deleted successfully" });
   } catch (err) {
     res.status(500).json({ message: err.message });
