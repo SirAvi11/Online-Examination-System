@@ -1,38 +1,47 @@
 import { useState, useEffect } from "react";
+import {Button} from "react-bootstrap";
 import "./TransferList.css";
+import useQuestion from "../../pages/Teacher/Modules/QuestionBank/hooks/useQuestion";
+import AddQuestionModal from "../../pages/Teacher/Modules/QuestionBank/AddQuestionModal";
 
 const TransferList = ({
-  availableItems,
-  selectedItems,
-  setAvailableItems,
-  setSelectedItems,
+  availableQuestions,
+  examQuestions,
+  setAvailableQuestions,
+  setExamQuestions,
   activeModuleId,
   renderItem,
   leftTitle = "Available",
-  rightTitle = "Selected",
+  rightTitle = "Exam Questions",
   getItemKey = (item) => item._id, // unique id for item
   getItemLabel = (item) => item.questionText,
   showMarks = true,
   getItemMarks = (item) => item.marks || 0,
+  enableCustomQuestion = false,
+  modules
 }) => {
   const [checkedLeft, setCheckedLeft] = useState([]);
   const [checkedRight, setCheckedRight] = useState([]);
+  const [showModal, setShowModal] = useState(false);
 
-  // 🔹 Reset checkboxes when availableItems updates OR module changes
+  const {isSaving, successInfo, addQuestion} = useQuestion("");
+
+
+  // 🔹 Reset checkboxes when availableQuestions updates OR module changes
   useEffect(() => {
     setCheckedLeft([]);
     setCheckedRight([]);
-  }, [availableItems, activeModuleId]);
+  }, [availableQuestions, activeModuleId]);
 
    // Get IDs of already selected questions
-  const selectedIds = new Set(selectedItems.map((q) => q._id));
+  const selectedIds = new Set(examQuestions.map((q) => q._id));
 
   // 🔹 Only items from active module should be visible in both lists
-  const filteredAvailable = availableItems.filter(
+  const filteredAvailable = availableQuestions.filter(
     (q) => q.moduleId === activeModuleId && !selectedIds.has(q._id)
   );
-  
-  const filteredSelected = selectedItems;
+
+  const filteredSelected = examQuestions;
 
 
   // Move from left → right
@@ -41,16 +50,16 @@ const TransferList = ({
       (item) => !filteredSelected.some((s) => s._id === item._id)
     );
 
-    setSelectedItems([...selectedItems, ...newItems]);
-    setAvailableItems(
-      availableItems.filter((q) => !checkedLeft.some((sel) => sel._id === q._id))
+    setExamQuestions([...examQuestions, ...newItems]);
+    setAvailableQuestions(
+      availableQuestions.filter((q) => !checkedLeft.some((sel) => sel._id === q._id))
     );
     setCheckedLeft([]);
   };
 
   // Move from right → left
   const moveToLeft = () => {
-    const remainingSelected = selectedItems.filter(
+    const remainingSelected = examQuestions.filter(
       (q) => !checkedRight.some((sel) => sel._id === q._id)
     );
 
@@ -59,11 +68,25 @@ const TransferList = ({
     );
 
     // Add items back to available
-    setAvailableItems([...availableItems, ...movedItems]);
+    setAvailableQuestions([...availableQuestions, ...movedItems]);
 
-    // Update selectedItems without moved ones
-    setSelectedItems(remainingSelected);
+    // Update examQuestions without moved ones
+    setExamQuestions(remainingSelected);
     setCheckedRight([]);
+  };
+
+  const handleAddQuestion = async (questionData) => {
+    const savedQuestion = await addQuestion(questionData);
+
+    //addQuestion does not return newly saved question id, so no id is given to new question in exam, thus cannot compare with available list
+    
+    if (savedQuestion) {
+      // Add the newly saved question to exam questions
+      setExamQuestions([...examQuestions, questionData]);
+      return savedQuestion;
+    }
+    
+    return null;
   };
 
   return (
@@ -131,9 +154,20 @@ const TransferList = ({
       {/* Right List */}
       <div className="list">
         <div className="questions-fixed">
-          <h4 className="listbox-title">
-            {rightTitle} ({filteredSelected.length})
-          </h4>
+          <span className="listbox-header d-flex justify-content-between align-items-center">
+              <h4 className="listbox-title mb-3 flex-grow-1 text-center ms-1">Exam Questions ({examQuestions.length})</h4>
+              {enableCustomQuestion &&(
+                <Button 
+                variant="outline-secondary" 
+                size="sm"
+                className="p-1 me-1" // Added ms-2 for margin on the left side
+                onClick={() => setShowModal(true)}
+                title="Add new question"
+              >
+                <i className="fa fa-plus"></i>
+              </Button>
+              )}
+            </span>
           <div className="list-header">
             <label className="question select-all">
               <input
@@ -156,6 +190,7 @@ const TransferList = ({
                 {filteredSelected.reduce((sum, q) => sum + getItemMarks(q), 0)})
               </span>
             )}
+
           </div>
         </div>
         <div className="questions-scroll">
@@ -182,7 +217,18 @@ const TransferList = ({
           ))}
         </div>
       </div>
+
+      {/* Modals */}
+      <AddQuestionModal
+        show={showModal}
+        onHide={() => setShowModal(false)}
+        onSave={handleAddQuestion}
+        isSaving={isSaving}
+        successInfo={successInfo}
+        modules={modules}
+      />
     </div>
+
   );
 };
 
