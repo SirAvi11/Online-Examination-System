@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import QuestionSelector from "./QuestionSelector";
 import StudentTab from "./StudentTab";
+import "./ExamForm.css";
+
 
 const ExamForm = ({ onBack, examToEdit = null }) => {
   const isEditMode = !!examToEdit;
@@ -195,9 +197,9 @@ const ExamForm = ({ onBack, examToEdit = null }) => {
   };
 
   return (
-    <div className="container py-4 px-4">
+    <div className="container py-4 px-4 exam-form-container">
       {successMessage && (
-        <div className="alert alert-success alert-dismissible fade show" role="alert">
+        <div className="alert alert-success exam-success-alert alert-dismissible fade show">
           {successMessage}
           <button type="button" className="btn-close" onClick={() => setSuccessMessage("")}></button>
         </div>
@@ -215,7 +217,7 @@ const ExamForm = ({ onBack, examToEdit = null }) => {
       {!loading && !error && (
         <form onSubmit={handleSubmit}>
           {/* Navigation Tabs */}
-          <ul className="nav nav-tabs mb-4">
+          <ul className="nav nav-tabs mb-3 exam-form-tabs">
             <li className="nav-item">
               <button 
                 type="button"
@@ -260,8 +262,8 @@ const ExamForm = ({ onBack, examToEdit = null }) => {
 
           {/* Exam Details Tab */}
           {activeTab === "details" && (
-            <div className="card p-4 shadow-sm mb-4">
-              <h5 className="fw-bold mb-4">Exam Information</h5>
+            <div className="card p-4 shadow-sm mb-3 exam-form-card">
+              <h5 className="fw-bold mb-2">Exam Information</h5>
               
               <div className="row">
                 <div className="col-md-12 mb-3">
@@ -353,7 +355,7 @@ const ExamForm = ({ onBack, examToEdit = null }) => {
 
           {/* Questions Tab */}
           {activeTab === "questions" && (
-            <div className="card p-4 shadow-sm mb-4">
+            <div className="card p-4 shadow-sm mb-3 exam-form-card">
               <h5 className="fw-bold mb-4">Select Questions</h5>
               {/* Question validation error */}
               {validationErrors.questions && (
@@ -376,7 +378,7 @@ const ExamForm = ({ onBack, examToEdit = null }) => {
 
           {/* Settings Tab */}
           {activeTab === "settings" && (
-            <div className="card p-4 shadow-sm mb-4">
+            <div className="card p-4 shadow-sm mb-3 exam-form-card">
               <h5 className="fw-bold mb-4">Exam Settings</h5>
               
               <div className="row">
@@ -410,7 +412,7 @@ const ExamForm = ({ onBack, examToEdit = null }) => {
 
                 <div className="col-md-6 mb-3">
                   <label className="form-label fw-semibold">Exam Code</label>
-                  <div className="input-group">
+                  <div className="input-group exam-code-group">
                     <input
                       type="text"
                       className="form-control"
@@ -444,7 +446,7 @@ const ExamForm = ({ onBack, examToEdit = null }) => {
           {/* Students Tab */}
           {
             activeTab == "students" && (
-              <div className="card p-4 shadow-sm mb-4 h-100">
+              <div className="card p-4 shadow-sm mb-3 h-100 exam-form-card">
                 <h5 className="fw-bold mb-4">Registered Students</h5>
                 <StudentTab selectedExam={examToEdit} />
               </div>
@@ -452,8 +454,8 @@ const ExamForm = ({ onBack, examToEdit = null }) => {
           }
 
           {/* Navigation and Submit Buttons */}
-          <div className="d-flex justify-content-between mt-4">
-            <div>
+          <div className="d-flex justify-content-between mt-2 mb-1">
+            <div className="mb-3">
               {activeTab === "questions" && (
                 <button 
                   type="button" 

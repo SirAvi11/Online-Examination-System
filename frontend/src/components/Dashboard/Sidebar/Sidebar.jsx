@@ -61,7 +61,7 @@ const Sidebar = ({ setActiveView, userRole }) => {
           />
         ))}
       </nav>
-      <nav className="pb-4 px-3 pt-3 d-flex flex-column gap-2 border-top">
+      <nav className="pb-2 px-3 pt-3 d-flex flex-column gap-2 border-top">
         {secondaryLinks.map((link, index) => (
           <SidebarLink 
             key={`secondary-${index}`} 

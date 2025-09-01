@@ -102,9 +102,8 @@
   align-items: center;
 }
 
-.question-text {
+.selector-question-text {
   display: inline-block;
-  width: 300px; /* adjust width as needed */
   margin-left: 8px; /* gap between checkbox and text */
 }
 

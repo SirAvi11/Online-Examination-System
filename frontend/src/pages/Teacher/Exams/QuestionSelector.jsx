@@ -15,6 +15,7 @@ const QuestionSelector = ({ modules, examQuestions, onChange }) => {
   
   const handleModuleChange = async (moduleId) => {
     setSelectedModule(moduleId);
+    setSelectedAvailable([]);
     try {
       const res = await fetch(`/api/modules/${moduleId}/questions`, {
           headers: {
@@ -62,7 +63,15 @@ const QuestionSelector = ({ modules, examQuestions, onChange }) => {
   };
 
   const moveToAvailable = () => {
-    setAvailableQuestions([...availableQuestions, ...selectedExam]);
+
+    const questionsToMove = []
+
+    for(const q of selectedExam){
+      if(q.moduleId == selectedModule){
+        questionsToMove.push(q);
+      }
+    }
+    setAvailableQuestions([...availableQuestions, ...questionsToMove]);
     onChange(examQuestions.filter((q) => !selectedExam.includes(q)));
     setSelectedExam([]);
   };
@@ -126,7 +135,7 @@ const QuestionSelector = ({ modules, examQuestions, onChange }) => {
                       }
                     }}
                   />
-                  <span className="question-text">{q.questionText}</span>
+                  <span className="selector-question-text">{q.questionText}</span>
                 </label>
                 <span className="question-marks">{q.marks}</span>
               </div>
@@ -202,7 +211,7 @@ const QuestionSelector = ({ modules, examQuestions, onChange }) => {
                       }
                     }}
                   />
-                  <span className="question-text">{q.questionText}</span>
+                  <span className="selector-question-text">{q.questionText}</span>
                 </label>
                 <span className="question-marks">{q.marks}</span>
               </div>
