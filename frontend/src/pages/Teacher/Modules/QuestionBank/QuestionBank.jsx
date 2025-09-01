@@ -1,6 +1,6 @@
 // QuestionBank.js
 import React, { useState, useMemo, useRef } from 'react';
-import { Dropdown, ButtonGroup, Modal, Button } from "react-bootstrap";
+import { Button } from "react-bootstrap";
 import QuestionTable from './QuestionTable';
 import AddQuestionModal from './AddQuestionModal';
 import DuplicateWarningModal from './DuplicateWarningModal';
@@ -9,8 +9,6 @@ import FilterPane from './FilterPane';
 import ImportModal from './ImportModal';
 import useQuestion from './hooks/useQuestion';
 import ArchiveButton from './ArchiveButton';
-import * as XLSX from "xlsx";
-import { saveAs } from "file-saver";
 import './QuestionBank.css';
 
 export default function QuestionBank({ selectedModule, onBack }) {
@@ -22,13 +20,7 @@ export default function QuestionBank({ selectedModule, onBack }) {
   const [archiveState, setArchiveState] = useState(false);
   const filterButtonRef = useRef(null);
 
-  // For file input ref
-  const fileInputRef = useRef(null);
-
   // For Excel import
-  const [showImportModal, setShowImportModal] = useState(false);
-  const [importedQuestions, setImportedQuestions] = useState([]);
-
 
   const { 
     questions, 
@@ -120,113 +112,6 @@ export default function QuestionBank({ selectedModule, onBack }) {
     setFilters({});
   };
 
-const handleDownloadTemplate = () => {
-  // --- Instructions Sheet Data ---
-  const instructionsData = [
-    ["Column Name", "Description", "Example"],
-    ["Question Text", "The text of the question. (Required)", "What is 2+2?"],
-    ["Option A", "First answer choice. (Required and Unique)", "2"],
-    ["Option B", "Second answer choice. (Required and Unique)", "4"],
-    ["Option C", "Third answer choice. (Optional)", "5 / blank"],
-    ["Option D", "Fourth answer choice. (Optional)", "2 / blank"],
-    [
-      "Correct Option",
-      "Correct option (starting from A for the first option). (Required)",
-      "B (means '4' is correct from options above)"
-    ],
-    ["Marks", "Marks awarded for this question. Must be a number. (Required)", "2"],
-    [
-      "ImageUrl",
-      "Optional. URL to an image for the question. Leave blank if none.",
-      "https://example.com/image.png"
-    ]
-  ];
-  const wsInstructions = XLSX.utils.aoa_to_sheet(instructionsData);
-
-  // Set column widths for readability
-  wsInstructions["!cols"] = [
-    { wch: 20 }, // Column Name
-    { wch: 60 }, // Description
-    { wch: 40 }  // Example
-  ];
-
-  // --- Template Sheet Data ---
-  const templateHeaders = [
-    ["Question Text", "Option A", "Option B", "Option C", "Option D", "Correct Option", "Marks", "ImageUrl"]
-  ];
-
-  const wsTemplate = XLSX.utils.aoa_to_sheet(templateHeaders);
-
-  // Set column widths
-  wsTemplate["!cols"] = [
-    { wch: 40 }, // Question Text
-    { wch: 20 }, // Option A
-    { wch: 20 }, // Option B
-    { wch: 20 }, // Option C
-    { wch: 20 }, // Option D
-    { wch: 20 }, // Correct Option
-    { wch: 10 }, // Marks
-    { wch: 40 }  // ImageUrl
-  ];
-
-  // --- Workbook ---
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, wsInstructions, "Instructions");
-  XLSX.utils.book_append_sheet(wb, wsTemplate, "Template");
-
-  // --- Export File ---
-  const wbout = XLSX.write(wb, { type: "array", bookType: "xlsx" });
-  saveAs(new Blob([wbout], { type: "application/octet-stream" }), "QuestionTemplate.xlsx");
-};
-
-const handleFileChange = async (event) => {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  const data = await file.arrayBuffer();
-  const workbook = XLSX.read(data);
-
-  // Use the 2nd sheet (index 1) since the first is instructions
-  const sheet = workbook.Sheets[workbook.SheetNames[1]];
-  const rows = XLSX.utils.sheet_to_json(sheet);
-
-  // Map rows to Question objects
-  const parsedQuestions = rows.map((row, idx) => {
-    const options = [
-      row["Option A"] || "",
-      row["Option B"] || "",
-      row["Option C"] || "",
-      row["Option D"] || "",
-    ];
-
-    const correctOptionIndex = (() => {
-      const letter = (row["Correct Option"] || "").toString().trim().toUpperCase();
-      switch (letter) {
-        case "A": return 0;
-        case "B": return 1;
-        case "C": return 2;
-        case "D": return 3;
-        default: return 0; // fallback
-      }
-    })();
-
-    return {
-      _id: idx, // temp ID for UI
-      questionText: row["Question Text"] || "",
-      options,
-      correctOptionIndex,
-      marks: Number(row["Marks"]) || 1,
-      imageUrl: row["Image URL"] || "",
-      moduleId: selectedModule._id,
-    };
-  });
-
-  setImportedQuestions(parsedQuestions);
-  setShowImportModal(true);
-};
-
-
-
   if (loading) return <div>Loading questions...</div>;
   if (error) return <div>Error: {error}</div>;
 
@@ -288,38 +173,11 @@ const handleFileChange = async (event) => {
               <i className="fa fa-plus me-2"></i>New
             </Button>
 
-            <Dropdown as={ButtonGroup}>
-              {/* Upload button */}
-              <Button
-                variant="outline-secondary"
-                onClick={() => fileInputRef.current.click()}
-                disabled={selectedQuestionIds.length > 0}
-              >
-                <i className="fa fa-upload me-2"></i>Upload
-              </Button>
-
-              {/* Dropdown arrow */}
-              <Dropdown.Toggle split variant="outline-secondary" id="upload-dropdown" />
-
-              <Dropdown.Menu>
-                <Dropdown.Item onClick={handleDownloadTemplate}>
-                  <i className="fa fa-download me-2"></i>Download Template
-                </Dropdown.Item>
-              </Dropdown.Menu>
-            </Dropdown>
-
-            {/* Hidden file input */}
-            <input
-              type="file"
-              accept=".xlsx"
-              ref={fileInputRef}
-              style={{ display: "none" }}
-              onChange={(e) => {
-                handleFileChange(e);
-                // Reset input so onChange will trigger even if same file is picked again
-                e.target.value = "";
-              }}
-            />
+            <ImportModal
+              disabled={selectedQuestionIds.length > 0}
+              selectedModule={selectedModule}
+              addQuestion={addQuestion}
+             />
 
             {/* Filter Pane */}
             {showFilterPane && (
@@ -397,17 +255,6 @@ const handleFileChange = async (event) => {
       <DuplicateWarningModal
         duplicateInfo={duplicateInfo}
         onHide={resetDuplicateInfo}
-      />
-
-      <ImportModal
-        show={showImportModal}
-        onHide={() => setShowImportModal(false)}
-        importedQuestions={importedQuestions}
-        setImportedQuestions={setImportedQuestions}
-        addQuestion={addQuestion}
-        onImport={(imported) => {
-          console.log("Imported questions:", imported);
-        }}
       />
     </div>
   );
