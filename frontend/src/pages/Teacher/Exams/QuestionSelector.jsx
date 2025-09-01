@@ -87,6 +87,7 @@ const QuestionSelector = ({ modules, examQuestions, onChange }) => {
         availableItems={availableQuestions} 
         setAvailableItems={setAvailableQuestions}
         selectedItems={selectedExam}
+        activeModuleId={selectedModule}
         setSelectedItems={setSelectedExam}
         showMarks
       />

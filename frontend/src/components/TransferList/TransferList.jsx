@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "./TransferList.css";
 
 const TransferList = ({
@@ -6,10 +6,11 @@ const TransferList = ({
   selectedItems,
   setAvailableItems,
   setSelectedItems,
+  activeModuleId,
   renderItem,
   leftTitle = "Available",
   rightTitle = "Selected",
-  getItemKey = (item) => item.id,
+  getItemKey = (item) => item._id, // unique id for item
   getItemLabel = (item) => item.questionText,
   showMarks = true,
   getItemMarks = (item) => item.marks || 0,
@@ -17,17 +18,51 @@ const TransferList = ({
   const [checkedLeft, setCheckedLeft] = useState([]);
   const [checkedRight, setCheckedRight] = useState([]);
 
+  // 🔹 Reset checkboxes when availableItems updates OR module changes
+  useEffect(() => {
+    setCheckedLeft([]);
+    setCheckedRight([]);
+  }, [availableItems, activeModuleId]);
+
+   // Get IDs of already selected questions
+  const selectedIds = new Set(selectedItems.map((q) => q._id));
+
+  // 🔹 Only items from active module should be visible in both lists
+  const filteredAvailable = availableItems.filter(
+    (q) => q.moduleId === activeModuleId && !selectedIds.has(q._id)
+  );
+  
+  const filteredSelected = selectedItems;
+
+
   // Move from left → right
   const moveToRight = () => {
-    setSelectedItems([...selectedItems, ...checkedLeft]);
-    setAvailableItems(availableItems.filter((q) => !checkedLeft.includes(q)));
+    const newItems = checkedLeft.filter(
+      (item) => !filteredSelected.some((s) => s._id === item._id)
+    );
+
+    setSelectedItems([...selectedItems, ...newItems]);
+    setAvailableItems(
+      availableItems.filter((q) => !checkedLeft.some((sel) => sel._id === q._id))
+    );
     setCheckedLeft([]);
   };
 
   // Move from right → left
   const moveToLeft = () => {
-    setAvailableItems([...availableItems, ...checkedRight]);
-    setSelectedItems(selectedItems.filter((q) => !checkedRight.includes(q)));
+    const remainingSelected = selectedItems.filter(
+      (q) => !checkedRight.some((sel) => sel._id === q._id)
+    );
+
+    const movedItems = checkedRight.filter(
+      (sel) => sel.moduleId === activeModuleId
+    );
+
+    // Add items back to available
+    setAvailableItems([...availableItems, ...movedItems]);
+
+    // Update selectedItems without moved ones
+    setSelectedItems(remainingSelected);
     setCheckedRight([]);
   };
 
@@ -37,19 +72,19 @@ const TransferList = ({
       <div className="list">
         <div className="questions-fixed">
           <h4 className="listbox-title">
-            {leftTitle} ({availableItems.length})
+            {leftTitle} ({filteredAvailable.length})
           </h4>
           <div className="list-header">
             <label className="question select-all">
               <input
                 type="checkbox"
                 checked={
-                  availableItems.length > 0 &&
-                  checkedLeft.length === availableItems.length
+                  filteredAvailable.length > 0 &&
+                  checkedLeft.length === filteredAvailable.length
                 }
                 onChange={(e) =>
                   e.target.checked
-                    ? setCheckedLeft(availableItems)
+                    ? setCheckedLeft(filteredAvailable)
                     : setCheckedLeft([])
                 }
               />
@@ -59,7 +94,7 @@ const TransferList = ({
           </div>
         </div>
         <div className="questions-scroll">
-          {availableItems.map((item) => (
+          {filteredAvailable.map((item) => (
             <div key={getItemKey(item)} className="question-row">
               <label className="question">
                 <input
@@ -69,9 +104,7 @@ const TransferList = ({
                     if (e.target.checked) {
                       setCheckedLeft([...checkedLeft, item]);
                     } else {
-                      setCheckedLeft(
-                        checkedLeft.filter((i) => i !== item)
-                      );
+                      setCheckedLeft(checkedLeft.filter((i) => i !== item));
                     }
                   }}
                 />
@@ -99,19 +132,19 @@ const TransferList = ({
       <div className="list">
         <div className="questions-fixed">
           <h4 className="listbox-title">
-            {rightTitle} ({selectedItems.length})
+            {rightTitle} ({filteredSelected.length})
           </h4>
           <div className="list-header">
             <label className="question select-all">
               <input
                 type="checkbox"
                 checked={
-                  selectedItems.length > 0 &&
-                  checkedRight.length === selectedItems.length
+                  filteredSelected.length > 0 &&
+                  checkedRight.length === filteredSelected.length
                 }
                 onChange={(e) =>
                   e.target.checked
-                    ? setCheckedRight(selectedItems)
+                    ? setCheckedRight(filteredSelected)
                     : setCheckedRight([])
                 }
               />
@@ -120,17 +153,13 @@ const TransferList = ({
             {showMarks && (
               <span className="marks-label">
                 Marks (
-                {selectedItems.reduce(
-                  (sum, q) => sum + getItemMarks(q),
-                  0
-                )}
-                )
+                {filteredSelected.reduce((sum, q) => sum + getItemMarks(q), 0)})
               </span>
             )}
           </div>
         </div>
         <div className="questions-scroll">
-          {selectedItems.map((item) => (
+          {filteredSelected.map((item) => (
             <div key={getItemKey(item)} className="question-row">
               <label className="question">
                 <input
@@ -140,9 +169,7 @@ const TransferList = ({
                     if (e.target.checked) {
                       setCheckedRight([...checkedRight, item]);
                     } else {
-                      setCheckedRight(
-                        checkedRight.filter((i) => i !== item)
-                      );
+                      setCheckedRight(checkedRight.filter((i) => i !== item));
                     }
                   }}
                 />
