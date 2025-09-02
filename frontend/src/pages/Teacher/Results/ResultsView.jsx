@@ -8,11 +8,13 @@ const ResultsView = () => {
     img: "https://storage.googleapis.com/a1aa/image/3a4aaca0-0578-4531-7e7a-755920e3d856.jpg",
     status: "Passed",
     score: "45/50 (85%)",
+    scoreValue: 85,
     scoreColor: "green",
     grade: "Excellent",
     gradeColor: "green",
     timeSpent: "22 MIN",
-    submittedAt: "09 Nov 2019, 9:00 AM",
+    timeSpentValue: 22,
+    submittedAt: "2019-11-09T09:00:00",
     attended: true,
   },
   {
@@ -20,14 +22,31 @@ const ResultsView = () => {
     img: "https://storage.googleapis.com/a1aa/image/2be09f7c-3ca5-47a7-23f2-8e4bf958f073.jpg",
     status: "Failed",
     score: "15/50 (28%)",
+    scoreValue: 28,
     scoreColor: "red",
     grade: "Poor",
     gradeColor: "red",
     timeSpent: "22 MIN",
-    submittedAt: "09 Nov 2019, 9:00 AM",
+    timeSpentValue: 22,
+    submittedAt: "2019-11-09T09:00:00",
     attended: true,
   },
-  ];
+  {
+    name: "Absent Student",
+    img: "https://via.placeholder.com/32",
+    status: "Failed",
+    score: "0/50 (0%)",
+    scoreValue: 0,
+    scoreColor: "red",
+    grade: "Poor",
+    gradeColor: "red",
+    timeSpent: "0 MIN",
+    timeSpentValue: 0,
+    submittedAt: "-",
+    attended: false,
+  },
+];
+
 
   const examData = {
     examTitle: "Unit 6 Final Exam",
