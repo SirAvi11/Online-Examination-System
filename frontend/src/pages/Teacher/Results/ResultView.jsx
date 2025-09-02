@@ -1,0 +1,169 @@
+import { useEffect, useState } from "react";
+import ResultInsight from "./ResultInsight";
+import ExamStatusCard from "../../../components/Exam/ExamStatusCard";
+import { Button } from "react-bootstrap";
+import { ArrowLeft } from "react-bootstrap-icons";
+
+const ResultView = () => {
+  const [rawExamData, setRawExamData] = useState([]);
+  const [uiExamData, setUiExamData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [selectedExam, setSelectedExam] = useState(null);
+
+  const fetchExams = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await fetch("http://localhost:5000/api/exams/completed", {
+        headers: {
+          "Content-Type": "application/json",
+          "x-auth-token": localStorage.getItem("token"),
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch completed exams");
+      }
+
+      const data = await response.json();
+      setRawExamData(data);
+
+      const mappedExams = data.map((exam) => {
+        const { status, statusVariant } = getExamStatus(
+          exam.startTime,
+          exam.endTime
+        );
+
+        const start = new Date(exam.startTime);
+        const end = new Date(exam.endTime);
+
+        const startDateStr = start.toLocaleDateString(undefined, {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        });
+        const endDateStr = end.toLocaleDateString(undefined, {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        });
+        const dateRange =
+          startDateStr === endDateStr
+            ? startDateStr
+            : `${startDateStr} - ${endDateStr}`;
+
+        const startTimeStr = start.toLocaleTimeString(undefined, {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+        });
+        const endTimeStr = end.toLocaleTimeString(undefined, {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+        });
+        const timeRange = `${startTimeStr} - ${endTimeStr}`;
+
+        return {
+          id: exam._id,
+          title: exam.title,
+          totalMarks: exam.totalMarks,
+          dateRange,
+          timeRange,
+          status,
+          statusVariant,
+        };
+      });
+      setUiExamData(mappedExams);
+    } catch (err) {
+      setError(err.message || "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchExams();
+  }, []);
+
+  const getExamStatus = (startTime, endTime) => {
+    const now = new Date();
+    const start = new Date(startTime);
+    const end = new Date(endTime);
+
+    if (now < start) return { status: "Upcoming", statusVariant: "warning" };
+    if (now >= start && now <= end)
+      return { status: "In Progress", statusVariant: "primary" };
+    return { status: "Completed", statusVariant: "success" };
+  };
+
+  const handleCardClick = (examId) => {
+    const exam = rawExamData.find((e) => e._id === examId);
+    setSelectedExam(exam);
+  };
+
+  if (loading) return <p className="text-center py-5">Loading completed exams...</p>;
+  if (error) return <p className="text-center text-danger py-5">{error}</p>;
+
+  return (
+    <div className="container p-4">
+      {selectedExam ? (
+        <>
+          <ResultInsight exam={selectedExam} onBack={() => setSelectedExam(null)} />
+        </>
+      ) : (
+        <>
+          {/* 🏷️ Page Title */}
+          <div className="mb-4">
+            <h3>Exam Results</h3>
+            <p className="text-muted">
+              Select a completed exam to view detailed performance insights and reports.
+            </p>
+          </div>
+
+          {/* 📋 Exam Cards Grid */}
+          <section
+            aria-label="Examination cards"
+            className="d-flex flex-wrap justify-content-center gap-3"
+          >
+            {uiExamData.length > 0 ? (
+              uiExamData.map((exam) => (
+                <div
+                  key={exam.id}
+                  style={{
+                    flex: "1 1 calc(25% - 1rem)",
+                    minWidth: "16rem",
+                    maxWidth: "20rem",
+                  }}
+                >
+                  <ExamStatusCard
+                    title={exam.title}
+                    subtitle={exam.subtitle}
+                    dateRange={exam.dateRange}
+                    timeRange={exam.timeRange}
+                    totalMarks={exam.totalMarks}
+                    status={exam.status}
+                    statusVariant={exam.statusVariant}
+                    onCardClick={() => handleCardClick(exam.id)}
+                    maxWidth="100%"
+                  />
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-5" style={{ width: "100%" }}>
+                <h5 className="text-muted mb-2">No completed exams available</h5>
+                <p className="text-muted small">
+                  Once you’ve conducted exams, they will appear here for review.
+                </p>
+              </div>
+            )}
+          </section>
+        </>
+      )}
+    </div>
+  );
+};
+
+export default ResultView;

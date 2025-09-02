@@ -6,7 +6,7 @@ import Header from '../../components/Header/Header';
 import DashboardView from './Dashboard/DashboardView';
 import ExamView from './Exams/ExamView';
 import TeacherScheduleView from './TeacherScheduleView';
-import ResultsView from "./Results/ResultsView";
+import ResultsView from "./Results/ResultView";
 import ModulesView from './Modules/ModulesView';
 import { useNavigate } from 'react-router-dom';
 

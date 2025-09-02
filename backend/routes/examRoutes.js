@@ -6,9 +6,13 @@ const {
   getExamById, 
   updateExam, 
   deleteExam,
-  startExamAttempt 
+  startExamAttempt,
+  getCompletedExamsByTeacher
 } = require("../controllers/examController");
 const authMiddleware = require("../middleware/authMiddleware");
+
+// GET /api/exams/completed - Get completed exams for logged-in teacher
+router.get("/completed", authMiddleware, getCompletedExamsByTeacher);
 
 // GET /api/exams - Get all exams for logged-in teacher
 router.get("/", authMiddleware, getExamsByTeacher);
@@ -27,5 +31,6 @@ router.delete("/:id", authMiddleware, deleteExam);
 
 // Start exam attempt
 router.post('/:examId/start', authMiddleware, startExamAttempt);
+
 
 module.exports = router;

@@ -62,6 +62,35 @@ const getExamsByTeacher = async (req, res) => {
   }
 };
 
+// GET completed exams for logged-in teacher (for result insights)
+const getCompletedExamsByTeacher = async (req, res) => {
+  try {
+    const teacherId = req.user.userId;
+    const now = new Date();
+
+    // Fetch only completed exams created by this teacher
+    const exams = await Exam.find({
+      createdBy: teacherId,
+      endTime: { $lt: now }   // exams whose endTime is in the past
+    })
+    .populate('questions.questionRef')
+    .sort({ endTime: -1 }); // latest completed first
+
+    // Ensure status field is always marked correctly
+    const completedExams = exams.map(exam => {
+      const examObj = exam.toObject();
+      examObj.status = "Completed";
+      return examObj;
+    });
+
+    res.status(200).json(completedExams);
+  } catch (err) {
+    console.error("❌ Error fetching completed exams:", err.message);
+    res.status(500).json({ error: "Server error while fetching completed exams" });
+  }
+};
+
+
 // CREATE a new exam
 const createExam = async (req, res) => {
   try {
@@ -348,5 +377,6 @@ module.exports = {
   getExamById, 
   updateExam, 
   deleteExam,
-  startExamAttempt
+  startExamAttempt,
+  getCompletedExamsByTeacher
 };

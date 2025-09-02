@@ -208,7 +208,7 @@ const ExamForm = ({ onBack, examToEdit = null }) => {
         <button className="btn btn-outline-secondary me-3" onClick={onBack}>
           <i className="fa fa-arrow-left me-2" style={{ cursor: "pointer", fontSize: "1.2rem" }}></i>
         </button>
-        <h1 className="h3 fw-bold m-0">{isEditMode ? "Edit Exam" : "Create Exam"}</h1>
+        <h1 className="h3 m-0">{isEditMode ? "Edit Exam" : "Create Exam"}</h1>
       </div>
 
       {loading && <div className="text-center py-5"><div className="spinner-border" role="status"></div></div>}

@@ -137,7 +137,7 @@ const ManageExam = ({ onCreate, onEdit }) => {
 
   return (
     <div className="container py-4 px-4">
-      <h1 className="h3 fw-bold m-0 mb-2">Manage Exams</h1>
+      <h1 className="h3 m-0 mb-2">Manage Exams</h1>
 
       {/* Search & View Mode */}
       <div className="d-flex flex-wrap align-items-center mb-3 gap-2">

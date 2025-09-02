@@ -1,7 +1,7 @@
 import ExamResultCard from "./ExamResultCard";
 import StudentTable from "./StudentTable";
 import {Button} from "react-bootstrap";
-const ResultsView = () => {
+const ResultInsight = ({exam,onBack}) => {
   const sampleStudents = [
   {
     name: "Anaru Hakopa",
@@ -67,10 +67,6 @@ const ResultsView = () => {
     }
   };
 
-  const onBack = () =>{
-
-  }
-
   return (
     <div className="App p-4">
       <div className="d-flex align-items-center justify-content-between mb-4">
@@ -98,4 +94,4 @@ const ResultsView = () => {
   );
 };
 
-export default ResultsView;
+export default ResultInsight;
