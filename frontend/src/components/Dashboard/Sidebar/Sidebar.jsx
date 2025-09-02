@@ -18,7 +18,7 @@ const Sidebar = ({ setActiveView, userRole }) => {
   const teacherLinks = [
     { icon: 'fa-layer-group', label: 'Modules', view: 'modules', testId:"modules-option" },
     { icon: 'fa-calendar-alt', label: 'Schedules', view: 'schedules' },
-    { icon: 'fa-chart-bar', label: 'Insights', view: 'insights' }
+    { icon: 'fa-bar-chart', label: 'Results', view: 'results' }
   ];
 
   const secondaryLinks = [

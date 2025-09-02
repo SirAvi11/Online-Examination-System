@@ -6,7 +6,7 @@ import Header from '../../components/Header/Header';
 import DashboardView from './Dashboard/DashboardView';
 import ExamView from './Exams/ExamView';
 import TeacherScheduleView from './TeacherScheduleView';
-import TeacherInsightsView from './TeacherInsightsView';
+import ResultsView from "./Results/ResultsView";
 import ModulesView from './Modules/ModulesView';
 import { useNavigate } from 'react-router-dom';
 
@@ -36,8 +36,8 @@ const TeacherView = () => {
         return <ModulesView teacherId={user.id} />;
       case 'schedules':
         return <TeacherScheduleView />;
-      case 'insights':
-        return <TeacherInsightsView />;
+      case 'results':
+        return <ResultsView />;
       // Add more cases as needed
       default:
         return <DashboardView />;
