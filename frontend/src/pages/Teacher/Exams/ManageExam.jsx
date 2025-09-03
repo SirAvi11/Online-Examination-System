@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { Button } from 'react-bootstrap';
 import ExamStatusCard from '../../../components/Exam/ExamStatusCard';
 import ExamDetailsModal from './ExamDetailsModal';
+import ExamFilterPane from "./ExamFilterPane";
 import './ManageExam.css';
 
 const ManageExam = ({ onCreate, onEdit }) => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 14;
 
@@ -16,6 +16,11 @@ const ManageExam = ({ onCreate, onEdit }) => {
 
   const [selectedExam, setSelectedExam] = useState(null);
   const [showModal, setShowModal] = useState(false);
+
+  const [filters, setFilters] = useState({});
+  const filterButtonRef = useRef(null);
+  const [showFilterPane, setShowFilterPane] = useState(false); 
+
 
   useEffect(() => {
     const fetchExams = async () => {
@@ -115,10 +120,51 @@ const ManageExam = ({ onCreate, onEdit }) => {
     }
   };
 
-  // Filtering
-  const filteredExams = exams.filter(exam =>
-    exam.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+    // Filter exams based on applied filters
+  const filteredExams = useMemo(() => {
+    if (!filters || Object.keys(filters).length === 0) {
+      return exams; // show all exams when no filters applied
+    }
+
+    return exams.filter(exam => {
+      // Filter by exam title
+      if (filters.title && !exam.title.toLowerCase().includes(filters.title.toLowerCase())) {
+        return false;
+      }
+
+      // Filter by start date
+      if (filters.startDate) {
+        const examStart = new Date(exam.startTime);
+        if (examStart < new Date(filters.startDate)) {
+          return false;
+        }
+      }
+
+      // Filter by end date
+      if (filters.endDate) {
+        const examEnd = new Date(exam.endTime);
+        if (examEnd > new Date(filters.endDate)) {
+          return false;
+        }
+      }
+
+      // Filter by marks range
+      if (filters.minMarks !== null && exam.totalMarks < filters.minMarks) {
+        return false;
+      }
+      if (filters.maxMarks !== null && exam.totalMarks > filters.maxMarks) {
+        return false;
+      }
+
+      // Filter by status
+      if (filters.status && exam.status !== filters.status) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [exams, filters]);
+
 
   // Pagination
   const totalPages = Math.ceil(filteredExams.length / itemsPerPage);
@@ -135,37 +181,89 @@ const ManageExam = ({ onCreate, onEdit }) => {
     }
   };
 
-  return (
-    <div className="container py-4 px-4">
-      <h1 className="h3 m-0 mb-2">Manage Exams</h1>
+  // Handle applying filters
+  const handleApplyFilters = (newFilters) => {
+    setFilters(newFilters);
+    setShowFilterPane(false);
+  };
 
-      {/* Search & View Mode */}
-      <div className="d-flex flex-wrap align-items-center mb-3 gap-2">
-        <input
-          type="text"
-          className="form-control"
-          placeholder="Search exams..."
-          style={{ maxWidth: '250px' }}
-          value={searchQuery}
-          onChange={(e) => {
-            setSearchQuery(e.target.value);
-            setCurrentPage(1);
-          }}
-        />
-        <div className="ms-auto d-flex gap-2">
-          <button
-            className={`btn btn-outline-primary ${viewMode === 'grid' ? 'active' : ''}`}
-            onClick={() => setViewMode('grid')}
-          >
-            Grid
-          </button>
-          <button
-            className={`btn btn-outline-primary ${viewMode === 'list' ? 'active' : ''}`}
-            onClick={() => setViewMode('list')}
-          >
-            List
-          </button>
-        </div>
+  // Handle clearing filters
+  const handleClearFilters = () => {
+    setFilters({});
+  };
+
+  return (
+    <div className="p-4" style={{ width: "100%", position: "relative", display:"flex", flexDirection:"column" }}>
+      <div className="header-container" style={{ position: "relative" }}>
+          <div className="d-flex justify-content-between align-items-center mb-4">
+            <h3>Manage Exams ({exams.length})</h3>
+            <div className='d-flex' style={{position: "relative"}}>
+              {/* Filter Button - Updated */}
+              <div ref={filterButtonRef}>
+                <Button
+                  variant={Object.keys(filters).length > 0 ? "primary" : "outline-secondary"}
+                  onClick={() => setShowFilterPane(!showFilterPane)}
+                >
+                  <i className="fa fa-filter me-2"></i>
+                  Filter
+                  {Object.keys(filters).length > 0 && (
+                    <span className="ms-1">•</span>
+                  )}
+                </Button>
+              </div>
+
+              {/* Filter Pane */}
+              {showFilterPane && (
+                <ExamFilterPane
+                  onApply={handleApplyFilters}
+                  onClose={() => setShowFilterPane(false)}
+                />
+              )}
+            </div>
+          </div>
+          {/* Show active filters and clear option */}
+          {Object.values(filters).some(v => v !== null && v !== "" ) && (
+            <div className="filter-badges p-2 bg-light rounded d-flex justify-content-between align-items-center flex-wrap">
+              <div>
+                <small className="text-muted me-2">Active filters:</small>
+
+                {/* Exam Title */}
+                {filters.title && (
+                  <span className="badge bg-secondary filter-badge me-1">
+                    Title: {filters.title}
+                  </span>
+                )}
+
+                {/* Exam Dates */}
+                {(filters.startDate || filters.endDate) && (
+                  <span className="badge bg-secondary filter-badge me-1">
+                    {filters.startDate ? `From: ${filters.startDate}` : ""}
+                    {filters.startDate && filters.endDate ? " " : ""}
+                    {filters.endDate ? `To: ${filters.endDate}` : ""}
+                  </span>
+                )}
+
+                {/* Marks */}
+                {(filters.minMarks !== null || filters.maxMarks !== null) && (
+                  <span className="badge bg-secondary filter-badge me-1">
+                    Marks: {filters.minMarks ?? 0} - {filters.maxMarks ?? "∞"}
+                  </span>
+                )}
+
+                {/* Status */}
+                {filters.status && (
+                  <span className="badge bg-secondary filter-badge me-1">
+                    Status: {filters.status}
+                  </span>
+                )}
+              </div>
+
+              {/* Clear Button */}
+              <Button variant="outline-danger" size="sm" onClick={handleClearFilters}>
+                Clear all
+              </Button>
+            </div>
+          )}
       </div>
 
       {/* Exams Layout */}
@@ -176,17 +274,17 @@ const ManageExam = ({ onCreate, onEdit }) => {
           aria-label="Examination cards"
           style={{
             display: 'flex',
-            flexDirection: viewMode === 'grid' ? 'row' : 'column',
+            flexDirection: 'row',
             flexWrap: 'wrap',
-            gap: '0.7rem'
+            gap: '1rem'
           }}
         >
           {/* Add Exam card */}
           <div
             onClick={handleAddExam}
             style={{
-              flex: viewMode === 'grid' ? '1 1 calc(33.333% - 1rem)' : '1 1 100%',
-              maxWidth: viewMode === 'grid' ? '15rem' : '100%',
+              flex: '1 1 calc(33.333% - 1rem)',
+              maxWidth: '15rem',
               minHeight: '8rem',
               border: '2px dashed #aaa',
               borderRadius: '8px',
@@ -210,8 +308,8 @@ const ManageExam = ({ onCreate, onEdit }) => {
               <div
                 key={exam.id}
                 style={{
-                  flex: viewMode === 'grid' ? '1 1 calc(33.333% - 1rem)' : '1 1 100%',
-                  maxWidth: viewMode === 'grid' ? '15rem' : '100%'
+                  flex: '1 1 calc(33.333% - 1rem)',
+                  maxWidth: '15rem'
                 }}
               >
                 <ExamStatusCard
@@ -223,7 +321,7 @@ const ManageExam = ({ onCreate, onEdit }) => {
                   status={exam.status}
                   statusVariant={exam.statusVariant}
                   onCardClick={() => handleCardClick(exam.id)}
-                  maxWidth={viewMode === 'list' ? '100%' : '20rem'}
+                  maxWidth='100%'
                 />
               </div>
             ))
@@ -237,10 +335,7 @@ const ManageExam = ({ onCreate, onEdit }) => {
 
       {/* Pagination */}
       {!loading && totalPages > 1 && (
-        <div className="d-flex justify-content-center mt-4" style={{
-          position: 'fixed',
-          bottom: 0,
-          left: '50%',
+        <div className="d-flex justify-content-center mt-auto" style={{
           backgroundColor: '#fff',
           padding: '0.75rem 0rem 1rem 0.75rem',
           zIndex: 1000,

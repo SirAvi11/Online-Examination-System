@@ -197,7 +197,7 @@ const ExamForm = ({ onBack, examToEdit = null }) => {
   };
 
   return (
-    <div className="container py-4 px-4 exam-form-container">
+    <div className="container py-4 px-4 exam-form-container" style={{overflow:"auto"}}>
       {successMessage && (
         <div className="alert alert-success exam-success-alert alert-dismissible fade show">
           {successMessage}

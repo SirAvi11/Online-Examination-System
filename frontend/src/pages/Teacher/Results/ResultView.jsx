@@ -126,7 +126,7 @@ const ResultView = () => {
           {/* 📋 Exam Cards Grid */}
           <section
             aria-label="Examination cards"
-            className="d-flex flex-wrap justify-content-center gap-3"
+            className="d-flex flex-wrap gap-3"
           >
             {uiExamData.length > 0 ? (
               uiExamData.map((exam) => (

@@ -68,7 +68,7 @@ const ResultInsight = ({exam,onBack}) => {
   };
 
   return (
-    <div className="App p-4">
+    <div className="report-card">
       <div className="d-flex align-items-center justify-content-between mb-4">
         <div className="d-flex align-items-center">
           <button className="btn btn-outline-secondary me-3" onClick={onBack}>
