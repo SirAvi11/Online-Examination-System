@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Modal, Button, Table, Form } from "react-bootstrap";
 import "./ModulesView.css";
+import "./QuestionBank/QuestionTable.css";
 import QuestionBank from "./QuestionBank/QuestionBank";
 
 export default function ModulesView({ teacherId }) {
@@ -179,7 +180,7 @@ export default function ModulesView({ teacherId }) {
   };
 
   return (
-    <div className="p-4" style={{ width: "100%", position: "relative" }}>
+    <div className="p-4" style={{ width: "100%", position: "relative", display:"flex", flexDirection:"column" }}>
       {!selectedModule ? (
         <>
           <div className="header-container" style={{ position: "relative" }}>
@@ -203,99 +204,104 @@ export default function ModulesView({ teacherId }) {
             )}
           </div>
 
-          <Table striped bordered hover responsive>
-            <thead>
-              <tr>
-                <th>
-                  <Form.Check
-                    type="checkbox"
-                    checked={selectedModuleIds.length === modules.length && modules.length > 0}
-                    onChange={toggleSelectAll}
-                  />
-                </th>
-                <th style={{ minWidth: 320 }}>Module Name</th>
-                <th>Description</th>
-                <th>Questions</th>
-                <th style={{ width: "180px" }}>Created On</th>
-                <th style={{ width: "200px" }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody data-cy="module-list">
-              {modules.map(module => {
-                const nameKey = `${module._id}-name`;
-                const descKey = `${module._id}-description`;
-                const isEditingName = !!editing[nameKey];
-                const isEditingDesc = !!editing[descKey];
-                const isSelected = selectedModuleIds.includes(module._id);
-
-                return (
-                  <tr key={module._id} >
-                    <td>
+            <div className="table-scroll-container h-100">
+              <table className="h-100 custom-table">
+                <thead>
+                  <tr>
+                    <th>
                       <Form.Check
                         type="checkbox"
-                        checked={isSelected}
-                        onChange={() => toggleSelectModule(module._id)}
+                        checked={selectedModuleIds.length === modules.length && modules.length > 0}
+                        onChange={toggleSelectAll}
                       />
-                    </td>
-                    <td className="editable-cell">
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                        {isEditingName ? (
-                          <Form.Control
-                            type="text"
-                            value={editingValues[nameKey] ?? ""}
-                            onChange={(e) => changeEditingValue(module._id, "name", e.target.value)}
-                            onKeyDown={(e) => { if (e.key === "Enter") saveEditing(module._id, "name"); }}
-                            autoFocus
-                          />
-                        ) : (
-                          module.name
-                        )}
-                        <Button
-                          variant="link"
-                          size="sm"
-                          className="cell-edit-btn"
-                          onClick={() => isEditingName ? saveEditing(module._id, "name") : startEditing(module._id, "name")}
-                        >
-                          <i className={`fa ${isEditingName ? "fa-save" : "fa-edit"}`} />
-                        </Button>
-                      </div>
-                    </td>
-
-                    <td className="editable-cell">
-                      {isEditingDesc ? (
-                        <Form.Control
-                          as="textarea"
-                          rows={2}
-                          value={editingValues[descKey] ?? ""}
-                          onChange={(e) => changeEditingValue(module._id, "description", e.target.value)}
-                          onKeyDown={(e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) saveEditing(module._id, "description"); }}
-                          autoFocus
-                        />
-                      ) : (
-                        module.description || <span className="text-muted">No description</span>
-                      )}
-                      <Button
-                        variant="link"
-                        size="sm"
-                        className="cell-edit-btn"
-                        onClick={() => isEditingDesc ? saveEditing(module._id, "description") : startEditing(module._id, "description")}
-                      >
-                        <i className={`fa ${isEditingDesc ? "fa-save" : "fa-edit"}`} />
-                      </Button>
-                    </td>
-
-                    <td>{module.questionCount ?? 0}</td>
-                    <td>{new Date(module.date).toLocaleDateString()}</td>
-                    <td>
-                      <Button variant="outline-info" size="sm" onClick={() => handleOpenQuestionBank(module)}>
-                        See question bank
-                      </Button>
-                    </td>
+                    </th>
+                    <th style={{ width: "40px", textAlign:"center" }}>#</th>
+                    <th style={{ minWidth: 320 }}>Module Name</th>
+                    <th>Description</th>
+                    <th style={{textAlign:"center" }}>Questions</th>
+                    <th style={{ width: "180px", textAlign:"center" }}>Created On</th>
+                    <th style={{ width: "200px", textAlign:"center" }}>Actions</th>
                   </tr>
-                );
-              })}
-            </tbody>
-          </Table>
+                </thead>
+                <tbody data-cy="module-list">
+                  {modules.map((module, index) => {
+                    const nameKey = `${module._id}-name`;
+                    const descKey = `${module._id}-description`;
+                    const isEditingName = !!editing[nameKey];
+                    const isEditingDesc = !!editing[descKey];
+                    const isSelected = selectedModuleIds.includes(module._id);
+
+                    return (
+                      <tr key={module._id} >
+                        <td>
+                          <Form.Check
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => toggleSelectModule(module._id)}
+                          />
+                        </td>
+                        <td style={{ textAlign:"center" }}>{index + 1}</td>
+                        <td className="editable-cell">
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                            {isEditingName ? (
+                              <Form.Control
+                                type="text"
+                                value={editingValues[nameKey] ?? ""}
+                                onChange={(e) => changeEditingValue(module._id, "name", e.target.value)}
+                                onKeyDown={(e) => { if (e.key === "Enter") saveEditing(module._id, "name"); }}
+                                autoFocus
+                              />
+                            ) : (
+                              module.name
+                            )}
+                            <Button
+                              variant="link"
+                              size="sm"
+                              className="cell-edit-btn"
+                              onClick={() => isEditingName ? saveEditing(module._id, "name") : startEditing(module._id, "name")}
+                            >
+                              <i className={`fa ${isEditingName ? "fa-save" : "fa-edit"}`} />
+                            </Button>
+                          </div>
+                        </td>
+
+                        <td className="editable-cell">
+                          {isEditingDesc ? (
+                            <Form.Control
+                              as="textarea"
+                              rows={2}
+                              value={editingValues[descKey] ?? ""}
+                              onChange={(e) => changeEditingValue(module._id, "description", e.target.value)}
+                              onKeyDown={(e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) saveEditing(module._id, "description"); }}
+                              autoFocus
+                            />
+                          ) : (
+                            module.description || <span className="text-muted">No description</span>
+                          )}
+                          <Button
+                            variant="link"
+                            size="sm"
+                            className="cell-edit-btn"
+                            onClick={() => isEditingDesc ? saveEditing(module._id, "description") : startEditing(module._id, "description")}
+                          >
+                            <i className={`fa ${isEditingDesc ? "fa-save" : "fa-edit"}`} />
+                          </Button>
+                        </td>
+
+                        <td style={{textAlign:"center" }}>{module.questionCount ?? 0}</td>
+                        <td style={{textAlign:"center" }}>{new Date(module.date).toLocaleDateString()}</td>
+                        <td style={{textAlign:"center" }}>
+                          <Button variant="outline-info" size="sm" onClick={() => handleOpenQuestionBank(module)}>
+                            See question bank
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          
 
           {/* New Module Modal */}
           <Modal show={showModal} onHide={() => setShowModal(false)}>

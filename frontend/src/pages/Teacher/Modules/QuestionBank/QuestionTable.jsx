@@ -3,7 +3,7 @@ import "./QuestionTable.css";
 
 const QuestionTable = ({ questions, selectedQuestionIds, onSelect, onSelectAll, onExpand, expandedRow }) => {
   return (
-    <div className="table-scroll-container">
+    <div className="table-scroll-container h-100">
       <table className="custom-table">
         <thead>
           <tr>
@@ -14,10 +14,10 @@ const QuestionTable = ({ questions, selectedQuestionIds, onSelect, onSelectAll, 
                 onChange={onSelectAll}
               />
             </th>
-            <th style={{ width: "50px" }}>#</th>
+            <th style={{ width: "40px", textAlign:"center" }}>#</th>
             <th>Question</th>
             <th>Answer</th>
-            <th style={{ width: "120px" }}>Actions</th>
+            <th style={{ width: "120px", textAlign:"center" }}>Actions</th>
           </tr>
         </thead>
         <tbody>

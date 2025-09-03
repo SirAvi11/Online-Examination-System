@@ -16,10 +16,10 @@ const QuestionRow = ({ question, index, isSelected, onSelect, onExpand, isExpand
             onChange={() => onSelect(question._id)}
           />
         </td>
-        <td>{index + 1}</td>
+        <td style={{ textAlign:"center" }}>{index + 1}</td>
         <td>{question.questionText}</td>
         <td>{question.options[question.correctOptionIndex]}</td>
-        <td>
+        <td style={{textAlign:"center" }}>
           <Button
             size="sm"
             variant="outline-info"

@@ -1,5 +1,5 @@
 .table-scroll-container {
-  max-height: 500px;
+  min-height: 500px;
   overflow-y: auto;
   overflow-x: hidden;
   position: relative;
@@ -22,6 +22,7 @@
   background-color: #f8f9fa;
   z-index: 2;
   border-bottom: 2px solid #dee2e6;
+  border: 1px solid #dee2e6;
   text-align: left;
   padding: 0.75rem;
   vertical-align: middle;
@@ -47,6 +48,7 @@
 .custom-table td {
   padding: 0.75rem;
   vertical-align: middle;
+  border: 1px solid #dee2e6;
 }
 
 /* Expanded row styling */

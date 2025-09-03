@@ -116,7 +116,7 @@ export default function QuestionBank({ selectedModule, onBack }) {
   if (error) return <div>Error: {error}</div>;
 
   return (
-    <div className="p-3">
+    <div className="h-100 d-flex flex-column">
       {/* Success Notification */}
       <SuccessNotification 
         successInfo={successInfo} 
