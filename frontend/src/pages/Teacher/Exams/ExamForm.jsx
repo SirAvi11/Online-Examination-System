@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import QuestionSelector from "./QuestionSelector";
 import StudentTab from "./StudentTab";
 import "./ExamForm.css";
+import { Button } from "react-bootstrap";
 
 
 const ExamForm = ({ onBack, examToEdit = null }) => {
@@ -204,10 +205,10 @@ const ExamForm = ({ onBack, examToEdit = null }) => {
           <button type="button" className="btn-close" onClick={() => setSuccessMessage("")}></button>
         </div>
       )}
-      <div className="d-flex align-items-center mb-4">
-        <button className="btn btn-outline-secondary me-3" onClick={onBack}>
-          <i className="fa fa-arrow-left me-2" style={{ cursor: "pointer", fontSize: "1.2rem" }}></i>
-        </button>
+      <div className="d-flex align-items-center mb-4" style={{gap:'12px'}}>
+        <Button variant="outline-secondary" onClick={onBack} className='d-flex justify-contents-center align-items-center'>
+          <i className="fa fa-caret-left"></i> Back
+        </Button>
         <h1 className="h3 m-0">{isEditMode ? "Edit Exam" : "Create Exam"}</h1>
       </div>
 

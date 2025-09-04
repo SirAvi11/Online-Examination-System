@@ -71,14 +71,14 @@ const ResultInsight = ({ examId, onBack }) => {
   return (
     <div className="report-card">
       <div className="d-flex align-items-center justify-content-between mb-4">
-        <div className="d-flex align-items-center">
-          <button className="btn btn-outline-secondary me-3" onClick={onBack}>
-            <i className="fa fa-arrow-left me-2" style={{ cursor: "pointer", fontSize: "1rem" }}></i>
-          </button>
+        <div className="d-flex align-items-center" style={{gap:"12px"}}>
+          <Button variant="outline-secondary" onClick={onBack} className='d-flex justify-contents-center align-items-center'>
+            <i className="fa fa-caret-left"></i> Back
+          </Button>
           <h3>Report Card</h3>
         </div>
         <Button variant="outline-secondary" onClick={() => window.print()}>
-          Generate Report
+          <i class="fa fa-file-alt me-2"></i>Generate Report
         </Button>
       </div>
 

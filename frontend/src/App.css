@@ -37,3 +37,13 @@
     transform: rotate(360deg);
   }
 }
+
+.page-heading {
+  font-family: 'Inter', 'Roboto', 'Lato', sans-serif;
+  font-size: 1.75rem;       /* ~28px */
+  font-weight: 600;         /* Semi-bold for authority */
+  letter-spacing: 0.5px;    /* Subtle spacing for elegance */
+  color: #2c3e50;           /* Dark slate gray, not harsh black */
+  margin-bottom: 1rem;  
+}
+

@@ -197,29 +197,32 @@ const ManageExam = ({ onCreate, onEdit }) => {
       <div className="header-container" style={{ position: "relative" }}>
           <div className="d-flex justify-content-between align-items-center mb-4">
             <h3>Manage Exams ({exams.length})</h3>
-            <div className='d-flex' style={{position: "relative"}}>
-              {/* Filter Button - Updated */}
-              <div ref={filterButtonRef}>
-                <Button
-                  variant={Object.keys(filters).length > 0 ? "primary" : "outline-secondary"}
-                  onClick={() => setShowFilterPane(!showFilterPane)}
-                >
-                  <i className="fa fa-filter me-2"></i>
-                  Filter
-                  {Object.keys(filters).length > 0 && (
-                    <span className="ms-1">•</span>
-                  )}
-                </Button>
-              </div>
+            {/* Show filter and add buttons only when there are exams or filters are applied */}
+            {(exams.length > 0 || Object.keys(filters).length > 0) && (
+              <div className='d-flex' style={{position: "relative"}}>
+                {/* Filter Button - Updated */}
+                <div ref={filterButtonRef}>
+                  <Button
+                    variant={Object.keys(filters).length > 0 ? "primary" : "outline-secondary"}
+                    onClick={() => setShowFilterPane(!showFilterPane)}
+                  >
+                    <i className="fa fa-filter me-2"></i>
+                    Filter
+                    {Object.keys(filters).length > 0 && (
+                      <span className="ms-1">•</span>
+                    )}
+                  </Button>
+                </div>
 
-              {/* Filter Pane */}
-              {showFilterPane && (
-                <ExamFilterPane
-                  onApply={handleApplyFilters}
-                  onClose={() => setShowFilterPane(false)}
-                />
-              )}
-            </div>
+                {/* Filter Pane */}
+                {showFilterPane && (
+                  <ExamFilterPane
+                    onApply={handleApplyFilters}
+                    onClose={() => setShowFilterPane(false)}
+                  />
+                )}
+              </div>
+            )}
           </div>
           {/* Show active filters and clear option */}
           {Object.values(filters).some(v => v !== null && v !== "" ) && (
@@ -266,10 +269,58 @@ const ManageExam = ({ onCreate, onEdit }) => {
           )}
       </div>
 
-      {/* Exams Layout */}
+      {/* Loading state */}
       {loading ? (
-        <div className="text-center py-5">Loading exams...</div>
+        <div className="d-flex justify-content-center align-items-center" style={{ height: "300px" }}>
+          <div className="text-center">
+            <div className="spinner-border text-primary" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+            <p className="mt-3 text-muted">Loading exams...</p>
+          </div>
+        </div>
+      ) : exams.length === 0 && Object.keys(filters).length === 0 ? (
+        // No exams screen
+        <div className="d-flex flex-column justify-content-center align-items-center text-center py-5 flex-grow-1">
+          <div className="mb-4">
+            <svg width="120" height="120" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 14L12 17M12 11L12 11.001M7 3.33782C8.47087 2.48697 10.1786 2 12 2C17.5228 2 22 6.47715 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 10.1786 2.48697 8.47087 3.33782 7" 
+                stroke="#6c757d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+          <h4 className="text-muted mb-3">No Exams Found</h4>
+          <p className="text-muted mb-4" style={{ maxWidth: "500px" }}>
+            You haven't created any exams yet. Exams are scheduled assessments that students can take.
+            Get started by creating your first exam.
+          </p>
+          <Button 
+            variant="primary" 
+            onClick={handleAddExam}
+            className="px-4 py-2"
+          >
+            Create Your First Exam
+          </Button>
+        </div>
+      ) : filteredExams.length === 0 && Object.keys(filters).length > 0 ? (
+        // No exams match filters screen
+        <div className="d-flex flex-column justify-content-center align-items-center text-center py-5 flex-grow-1">
+          <div className="mb-4">
+            <svg width="120" height="120" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 14L12 17M12 11L12 11.001M7 3.33782C8.47087 2.48697 10.1786 2 12 2C17.5228 2 22 6.47715 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 10.1786 2.48697 8.47087 3.33782 7" 
+                stroke="#6c757d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M21 21L15 15" stroke="#6c757d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+          <h4 className="text-muted mb-3">No Exams Match Your Filters</h4>
+          <p className="text-muted mb-4" style={{ maxWidth: "500px" }}>
+            No exams match the current filter criteria. Try adjusting your filters or 
+            <Button variant="link" className="p-0 ms-1" onClick={handleClearFilters}>
+              clear all filters
+            </Button> to see all exams.
+          </p>
+        </div>
       ) : (
+        // Exams Layout (only shown when there are exams)
         <section
           aria-label="Examination cards"
           style={{
@@ -303,38 +354,32 @@ const ManageExam = ({ onCreate, onEdit }) => {
           </div>
 
           {/* Render fetched exams */}
-          {currentExams.length > 0 ? (
-            currentExams.map(exam => (
-              <div
-                key={exam.id}
-                style={{
-                  flex: '1 1 calc(33.333% - 1rem)',
-                  maxWidth: '15rem'
-                }}
-              >
-                <ExamStatusCard
-                  title={exam.title}
-                  subtitle={exam.subtitle}
-                  dateRange={exam.dateRange}
-                  timeRange={exam.timeRange}
-                  totalMarks={exam.totalMarks}
-                  status={exam.status}
-                  statusVariant={exam.statusVariant}
-                  onCardClick={() => handleCardClick(exam.id)}
-                  maxWidth='100%'
-                />
-              </div>
-            ))
-          ) : (
-            <div className="text-center py-5" style={{ width: '100%' }}>
-              <p className="text-muted">No exams found matching your search</p>
+          {currentExams.map(exam => (
+            <div
+              key={exam.id}
+              style={{
+                flex: '1 1 calc(33.333% - 1rem)',
+                maxWidth: '15rem'
+              }}
+            >
+              <ExamStatusCard
+                title={exam.title}
+                subtitle={exam.subtitle}
+                dateRange={exam.dateRange}
+                timeRange={exam.timeRange}
+                totalMarks={exam.totalMarks}
+                status={exam.status}
+                statusVariant={exam.statusVariant}
+                onCardClick={() => handleCardClick(exam.id)}
+                maxWidth='100%'
+              />
             </div>
-          )}
+          ))}
         </section>
       )}
 
-      {/* Pagination */}
-      {!loading && totalPages > 1 && (
+      {/* Pagination - Only show when there are exams */}
+      {!loading && exams.length > 0 && totalPages > 1 && (
         <div className="d-flex justify-content-center mt-auto" style={{
           backgroundColor: '#fff',
           padding: '0.75rem 0rem 1rem 0.75rem',

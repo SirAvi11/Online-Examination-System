@@ -12,6 +12,7 @@ export default function ModulesView({ teacherId }) {
   const [editing, setEditing] = useState({});
   const [editingValues, setEditingValues] = useState({});
   const [selectedModuleIds, setSelectedModuleIds] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Get token from localStorage
   const getToken = () => {
@@ -25,6 +26,7 @@ export default function ModulesView({ teacherId }) {
 
   const fetchModules = async () => {
     try {
+      setIsLoading(true);
       const token = getToken();
       const res = await fetch(`http://localhost:5000/api/modules`, {
         headers: {
@@ -37,6 +39,8 @@ export default function ModulesView({ teacherId }) {
     } catch (err) {
       console.error("Error fetching modules:", err);
       alert("Failed to fetch modules. Please check your authentication.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -186,9 +190,17 @@ export default function ModulesView({ teacherId }) {
           <div className="header-container" style={{ position: "relative" }}>
             <div className="d-flex justify-content-between align-items-center mb-4">
               <h3>Modules ({modules.length})</h3>
-              <Button variant="outline-secondary" onClick={() => setShowModal(true)} disabled={selectedModuleIds.length > 0} data-cy="new-module-btn">+ New Module</Button>
-            </div>
-
+              {(modules.length > 0 || isLoading) && (
+                  <Button 
+                    variant="outline-secondary" 
+                    onClick={() => setShowModal(true)} 
+                    disabled={selectedModuleIds.length > 0} 
+                    data-cy="new-module-btn"
+                  >
+                    <i className="fa fa-plus me-2"></i> New Module
+                  </Button>
+                )}            
+              </div>
             {/* Overlay for bulk delete */}
             {selectedModuleIds.length > 0 && (
               <div className="overlay show">
@@ -204,8 +216,40 @@ export default function ModulesView({ teacherId }) {
             )}
           </div>
 
+          {isLoading ? (
+            <div className="d-flex justify-content-center align-items-center" style={{ height: "300px" }}>
+              <div className="text-center">
+                <div className="spinner-border text-primary" role="status">
+                  <span className="visually-hidden">Loading...</span>
+                </div>
+                <p className="mt-3 text-muted">Loading modules...</p>
+              </div>
+            </div>
+          ) : modules.length === 0 ? (
+            // No modules screen
+            <div className="d-flex flex-column justify-content-center align-items-center text-center py-5">
+              <div className="mb-4">
+                <svg width="120" height="120" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 5V19M5 12H19" stroke="#6c757d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M3 5H21M5 3V7M19 3V7M5 21H19C20.1046 21 21 20.1046 21 19V5C21 3.89543 20.1046 3 19 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21Z" stroke="#6c757d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              <h4 className="text-muted mb-3">No Modules Found</h4>
+              <p className="text-muted mb-4" style={{ maxWidth: "500px" }}>
+                You haven't created any modules yet. Modules help you organize your questions into categories or topics.
+                Get started by creating your first module.
+              </p>
+              <Button 
+                variant="primary" 
+                onClick={() => setShowModal(true)}
+                className="px-4 py-2"
+              >
+                Create Your First Module
+              </Button>
+            </div>
+          ) : (
             <div className="table-scroll-container h-100">
-              <table className="h-100 custom-table">
+              <table className="custom-table">
                 <thead>
                   <tr>
                     <th>
@@ -301,7 +345,7 @@ export default function ModulesView({ teacherId }) {
                 </tbody>
               </table>
             </div>
-          
+          )}
 
           {/* New Module Modal */}
           <Modal show={showModal} onHide={() => setShowModal(false)}>

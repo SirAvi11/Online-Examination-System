@@ -112,8 +112,16 @@ export default function QuestionBank({ selectedModule, onBack }) {
     setFilters({});
   };
 
-  if (loading) return <div>Loading questions...</div>;
-  if (error) return <div>Error: {error}</div>;
+  if (loading) return <div className="d-flex justify-content-center align-items-center" style={{ height: "300px" }}>
+    <div className="text-center">
+      <div className="spinner-border text-primary" role="status">
+        <span className="visually-hidden">Loading...</span>
+      </div>
+      <p className="mt-3 text-muted">Loading questions...</p>
+    </div>
+  </div>;
+  
+  if (error) return <div className="alert alert-danger m-4">Error: {error}</div>;
 
   return (
     <div className="h-100 d-flex flex-column">
@@ -126,8 +134,8 @@ export default function QuestionBank({ selectedModule, onBack }) {
       {/* Header and controls */}
       <div className="header-container" style={{ position: "relative" }}>
         <div className="d-flex justify-content-between align-items-center mb-4">
-          <Button variant="outline-secondary" onClick={onBack}>
-            ← Back to Modules
+          <Button variant="outline-secondary" onClick={onBack} className='d-flex justify-contents-center align-items-center'>
+            <i className="fa fa-caret-left"></i> Back to Modules
           </Button>
 
           <div className="text-center">
@@ -139,55 +147,60 @@ export default function QuestionBank({ selectedModule, onBack }) {
             </h6>
           </div>
 
-          <div className="d-flex gap-2 position-relative">
-            {/* Toggle Button (shows only when questions are selected) */}
-            {(selectedQuestionIds.length > 0 || true) && (
-              <ArchiveButton 
-                state={archiveState}
-                selectedQuestionIds={selectedQuestionIds} 
-                toggleArchiveQuestions={toggleArchiveQuestions}
-                setSelectedQuestionIds={setSelectedQuestionIds}
-              />
-            )}
-            
-            {/* Filter Button - Updated */}
-            <div ref={filterButtonRef}>
+          {/* Show buttons only when there are questions or filters are applied */}
+          
+            <div className="d-flex gap-2 position-relative">
+              {/* Toggle Button (shows only when questions are selected) */}
+              {(filteredQuestions.length > 0 || Object.keys(filters).length > 0) && (selectedQuestionIds.length > 0 || true) && (
+                <ArchiveButton 
+                  state={archiveState}
+                  selectedQuestionIds={selectedQuestionIds} 
+                  toggleArchiveQuestions={toggleArchiveQuestions}
+                  setSelectedQuestionIds={setSelectedQuestionIds}
+                />
+              )}
+              
+              {/* Filter Button - Updated */}
+              <div ref={filterButtonRef}>
+                <Button
+                  variant={Object.keys(filters).length > 0 ? "primary" : "outline-secondary"}
+                  onClick={() => setShowFilterPane(!showFilterPane)}
+                  disabled={selectedQuestionIds.length > 0}
+                >
+                  <i className="fa fa-filter me-2"></i>
+                  Filter
+                  {Object.keys(filters).length > 0 && (
+                    <span className="ms-1">•</span>
+                  )}
+                </Button>
+              </div>
+              
+
+              {(filteredQuestions.length > 0 || Object.keys(filters).length > 0) && (
               <Button
-                variant={Object.keys(filters).length > 0 ? "primary" : "outline-secondary"}
-                onClick={() => setShowFilterPane(!showFilterPane)}
+                variant="outline-secondary"
+                onClick={() => setShowModal(true)}
                 disabled={selectedQuestionIds.length > 0}
               >
-                <i className="fa fa-filter me-2"></i>
-                Filter
-                {Object.keys(filters).length > 0 && (
-                  <span className="ms-1">•</span>
-                )}
+                <i className="fa fa-plus me-2"></i>New
               </Button>
-            </div>
+              )}
 
-            <Button
-              variant="outline-secondary"
-              onClick={() => setShowModal(true)}
-              disabled={selectedQuestionIds.length > 0}
-            >
-              <i className="fa fa-plus me-2"></i>New
-            </Button>
-
-            <ImportModal
-              disabled={selectedQuestionIds.length > 0}
-              selectedModule={selectedModule}
-              addQuestion={addQuestion}
-             />
-
-            {/* Filter Pane */}
-            {showFilterPane && (
-              <FilterPane
-                onApply={handleApplyFilters}
-                onClose={() => setShowFilterPane(false)}
-                questions={questions}
+              <ImportModal
+                disabled={selectedQuestionIds.length > 0}
+                selectedModule={selectedModule}
+                addQuestion={addQuestion}
               />
-            )}
-          </div>
+
+              {/* Filter Pane */}
+              {showFilterPane && (
+                <FilterPane
+                  onApply={handleApplyFilters}
+                  onClose={() => setShowFilterPane(false)}
+                  questions={questions}
+                />
+              )}
+            </div>
         </div>
 
         {/* Show active filters and clear option */}
@@ -233,15 +246,58 @@ export default function QuestionBank({ selectedModule, onBack }) {
         )}
       </div>
 
-      {/* Question table */}
-      <QuestionTable
-        questions={filteredQuestions}
-        selectedQuestionIds={selectedQuestionIds}
-        expandedRow={expandedRow}
-        onSelect={toggleSelectQuestion}
-        onSelectAll={toggleSelectAll}
-        onExpand={setExpandedRow}
-      />
+      {/* Show no questions screen when no questions exist */}
+      {filteredQuestions.length === 0 && Object.keys(filters).length === 0 ? (
+        <div className="d-flex flex-column justify-content-center align-items-center text-center py-5 flex-grow-1">
+          <div className="mb-4">
+            <svg width="120" height="120" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M8 10H8.01M12 10H12.01M16 10H16.01M9 16H5C3.89543 16 3 15.1046 3 14V6C3 4.89543 3.89543 4 5 4H19C20.1046 4 21 4.89543 21 6V14C21 15.1046 20.1046 16 19 16H14L9 21V16Z" 
+                stroke="#6c757d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+          <h4 className="text-muted mb-3">No Questions Found</h4>
+          <p className="text-muted mb-4" style={{ maxWidth: "500px" }}>
+            This module doesn't have any questions yet. Questions are the building blocks of your exams.
+            Get started by adding your first question to this module.
+          </p>
+          <div className="d-flex gap-2">
+            <Button 
+              variant="primary" 
+              onClick={() => setShowModal(true)}
+              className="px-4 py-2"
+            >
+              <i className="fa fa-plus me-2"></i>Add Your First Question
+            </Button>
+          </div>
+        </div>
+      ) : filteredQuestions.length === 0 && Object.keys(filters).length > 0 ? (
+        <div className="d-flex flex-column justify-content-center align-items-center text-center py-5 flex-grow-1">
+          <div className="mb-4">
+            <svg width="120" height="120" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M8 10H8.01M12 10H12.01M16 10H16.01M9 16H5C3.89543 16 3 15.1046 3 14V6C3 4.89543 3.89543 4 5 4H19C20.1046 4 21 4.89543 21 6V14C21 15.1046 20.1046 16 19 16H14L9 21V16Z" 
+                stroke="#6c757d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M21 21L15 15" stroke="#6c757d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+          <h4 className="text-muted mb-3">No Questions Match Your Filters</h4>
+          <p className="text-muted mb-4" style={{ maxWidth: "500px" }}>
+            No questions match the current filter criteria. Try adjusting your filters or 
+            <Button variant="link" className="p-0 ms-1" onClick={handleClearFilters}>
+              clear all filters
+            </Button> to see all questions.
+          </p>
+        </div>
+      ) : (
+        /* Question table (only shown when there are questions) */
+        <QuestionTable
+          questions={filteredQuestions}
+          selectedQuestionIds={selectedQuestionIds}
+          expandedRow={expandedRow}
+          onSelect={toggleSelectQuestion}
+          onSelectAll={toggleSelectAll}
+          onExpand={setExpandedRow}
+        />
+      )}
 
       {/* Modals */}
       <AddQuestionModal
