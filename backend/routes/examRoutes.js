@@ -7,7 +7,9 @@ const {
   updateExam, 
   deleteExam,
   startExamAttempt,
-  getCompletedExamsByTeacher
+  getCompletedExamsByTeacher,
+  getReportCard,
+  getStudentAttemptReport
 } = require("../controllers/examController");
 const authMiddleware = require("../middleware/authMiddleware");
 
@@ -31,6 +33,12 @@ router.delete("/:id", authMiddleware, deleteExam);
 
 // Start exam attempt
 router.post('/:examId/start', authMiddleware, startExamAttempt);
+
+// GET /api/exams/:examId/report-card - Detailed report card for an exam
+router.get('/:examId/report-card', authMiddleware, getReportCard);
+
+router.get("/:examId/student/:studentId", authMiddleware, getStudentAttemptReport);
+
 
 
 module.exports = router;

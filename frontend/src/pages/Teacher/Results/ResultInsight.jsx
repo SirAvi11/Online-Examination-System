@@ -1,71 +1,72 @@
+import { useEffect, useState } from "react";
 import ExamResultCard from "./ExamResultCard";
 import StudentTable from "./StudentTable";
-import {Button} from "react-bootstrap";
-const ResultInsight = ({exam,onBack}) => {
-  const sampleStudents = [
-  {
-    name: "Anaru Hakopa",
-    img: "https://storage.googleapis.com/a1aa/image/3a4aaca0-0578-4531-7e7a-755920e3d856.jpg",
-    status: "Passed",
-    score: "45/50 (85%)",
-    scoreValue: 85,
-    scoreColor: "green",
-    grade: "Excellent",
-    gradeColor: "green",
-    timeSpent: "22 MIN",
-    timeSpentValue: 22,
-    submittedAt: "2019-11-09T09:00:00",
-    attended: true,
-  },
-  {
-    name: "Tua Manuera",
-    img: "https://storage.googleapis.com/a1aa/image/2be09f7c-3ca5-47a7-23f2-8e4bf958f073.jpg",
-    status: "Failed",
-    score: "15/50 (28%)",
-    scoreValue: 28,
-    scoreColor: "red",
-    grade: "Poor",
-    gradeColor: "red",
-    timeSpent: "22 MIN",
-    timeSpentValue: 22,
-    submittedAt: "2019-11-09T09:00:00",
-    attended: true,
-  },
-  {
-    name: "Absent Student",
-    img: "https://via.placeholder.com/32",
-    status: "Failed",
-    score: "0/50 (0%)",
-    scoreValue: 0,
-    scoreColor: "red",
-    grade: "Poor",
-    gradeColor: "red",
-    timeSpent: "0 MIN",
-    timeSpentValue: 0,
-    submittedAt: "-",
-    attended: false,
-  },
-];
+import { Button, Spinner, Alert } from "react-bootstrap";
 
+const ResultInsight = ({ examId, onBack }) => {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [rawData, setRawData] = useState(null);
+  const [attemptedStudents, setAttemptedStudents] = useState([]);
+  const [absentStudents, setAbsentStudents] = useState([]);
 
-  const examData = {
-    examTitle: "Unit 6 Final Exam",
-    courseName: "English Lv 6",
-    questionInfo: "20 Questions: MCQ Based",
-    startDate: "21 Oct 2020 9:00 AM",
-    endDate: "21 Oct 2020 12:00 AM",
-    duration: "30 Min",
-    totalMarks: 50,
-    passMarks: 40,
-    stats: {
-      totalStudents: 400,
-      averageScore: 100,
-      totalAbsent: 12,
-      totalFinished: 365,
-      totalPassed: 365,
-      totalFailed: 35
+  useEffect(() => {
+    const fetchReport = async () => {
+      try {
+        setLoading(true);
+        const token = localStorage.getItem("token");
+
+        const res = await fetch(`http://localhost:5000/api/exams/${examId}/report-card`, {
+          headers: {
+            "Content-Type": "application/json",
+            "x-auth-token": token,
+          },
+        });
+
+        if (!res.ok) {
+          throw new Error(`Failed to fetch report: ${res.status}`);
+        }
+
+        const data = await res.json();
+        console.log("Data", data);
+        setRawData(data);
+        setAttemptedStudents(data.attemptedStudents || []);
+        setAbsentStudents(data.absentStudents || []);
+        setLoading(false);
+      } catch (err) {
+        console.error("❌ Error fetching report card:", err);
+        setError("Failed to load report card");
+        setLoading(false);
+      }
+    };
+
+    if (examId) {
+      fetchReport();
     }
-  };
+  }, [examId]);
+
+  
+  // calculate average score
+  const avgScore =
+    attemptedStudents && attemptedStudents.length > 0
+      ? (
+          attemptedStudents.reduce((sum, s) => sum + (s.score || 0), 0) /
+          attemptedStudents.length
+        ).toFixed(2)
+      : 0;
+
+
+  if (loading) {
+    return (
+      <div className="d-flex justify-content-center align-items-center" style={{ minHeight: "200px" }}>
+        <Spinner animation="border" variant="primary" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return <Alert variant="danger">{error}</Alert>;
+  }
 
   return (
     <div className="report-card">
@@ -74,22 +75,30 @@ const ResultInsight = ({exam,onBack}) => {
           <button className="btn btn-outline-secondary me-3" onClick={onBack}>
             <i className="fa fa-arrow-left me-2" style={{ cursor: "pointer", fontSize: "1rem" }}></i>
           </button>
-          <h3>Exam Result</h3>
+          <h3>Report Card</h3>
         </div>
-        <Button variant="outline-secondary" onClick={() => console.log("Printing Report")}>Generate Report</Button>
+        <Button variant="outline-secondary" onClick={() => window.print()}>
+          Generate Report
+        </Button>
       </div>
-      <ExamResultCard {...examData} />
-      <div class="alert alert-warning d-flex justify-content-between align-items-center" role="alert">
-        <div class="d-flex align-items-center">
-          <i class="bi bi-exclamation-circle-fill me-2"></i>
+
+      {/* ✅ Pass exam metadata */}
+      {rawData && <ExamResultCard exam={rawData.exam} counts={rawData.counts} attemptedStudents={attemptedStudents} avgScore={avgScore}/>}
+
+      {/* Alert to publish results */}
+      <div className="alert alert-warning d-flex justify-content-between align-items-center" role="alert">
+        <div className="d-flex align-items-center">
+          <i className="bi bi-exclamation-circle-fill me-2"></i>
           <span>Exam results aren’t published yet.</span>
         </div>
-        <div class="d-flex">
-          <button type="button" class="btn btn-outline-primary btn-sm me-2">Publish without Feedback</button>
-          <button type="button" class="btn btn-primary btn-sm">Publish with Feedback</button>
+        <div className="d-flex">
+          <button type="button" className="btn btn-outline-primary btn-sm me-2">Publish without Feedback</button>
+          <button type="button" className="btn btn-primary btn-sm">Publish with Feedback</button>
         </div>
       </div>
-      <StudentTable students={sampleStudents} />
+
+      {/* ✅ Pass student lists */}
+      <StudentTable students={[...attemptedStudents, ...absentStudents]} examId={examId} avgScore={avgScore} />
     </div>
   );
 };

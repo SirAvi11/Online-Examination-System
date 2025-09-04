@@ -1,23 +1,8 @@
 import "./ExamResultCard.css";
 
-const ExamResultCard = ({
-  examTitle = 'Untitled Exam',
-  courseName = 'General Course',
-  questionInfo = '0 Questions: No description',
-  startDate = 'Not set',
-  endDate = 'Not set',
-  duration = '0 Min',
-  totalMarks = 0,
-  passMarks = 0,
-  stats = {
-    totalStudents: 0,
-    averageScore: 0,
-    totalAbsent: 0,
-    totalFinished: 0,
-    totalPassed: 0,
-    totalFailed: 0
-  }
-}) => {
+const ExamResultCard = ({ exam, counts, avgScore }) => {
+  if (!exam || !counts) return null;
+
   // Helper function to format the icon circles
   const renderIconCircle = (bgColor, icon) => (
     <div className={`icon-circle ${bgColor} me-3`}>
@@ -28,41 +13,47 @@ const ExamResultCard = ({
   // Stats items configuration
   const statItems = [
     {
-      key: 'totalStudents',
-      title: 'Total Students',
-      icon: 'fas fa-user',
-      bgClass: 'bg-blue'
+      key: "totalRegistered",
+      title: "Total Students",
+      icon: "fas fa-user",
+      bgClass: "bg-blue",
+      value: counts.totalRegistered,
     },
     {
-      key: 'averageScore',
-      title: 'Average Score',
-      icon: 'far fa-star',
-      bgClass: 'bg-gray'
+      key: "averageScore",
+      title: "Average Score",
+      icon: "far fa-star",
+      bgClass: "bg-gray",
+      value: avgScore,
     },
     {
-      key: 'totalAbsent',
-      title: 'Total Absent Students',
-      icon: 'fas fa-info-circle',
-      bgClass: 'bg-yellow'
+      key: "totalAbsent",
+      title: "Total Absent Students",
+      icon: "fas fa-info-circle",
+      bgClass: "bg-yellow",
+      value: counts.totalAbsent,
     },
     {
-      key: 'totalFinished',
-      title: 'Total Finished Students',
-      icon: 'fas fa-check-circle',
-      bgClass: 'bg-cyan'
+      key: "totalPresent",
+      title: "Total Finished Students",
+      icon: "fas fa-check-circle",
+      bgClass: "bg-cyan",
+      value: counts.totalPresent,
     },
     {
-      key: 'totalPassed',
-      title: 'Total Passed Students',
-      icon: 'fas fa-check-double',
-      bgClass: 'bg-lime'
+      key: "totalPass",
+      title: "Total Passed Students",
+      icon: "fas fa-check-double",
+      bgClass: "bg-lime",
+      value: counts.totalPass,
     },
     {
-      key: 'totalFailed',
-      title: 'Total Failed Students',
-      icon: 'fas fa-times-circle',
-      bgClass: 'bg-red'
-    }
+      key: "totalFail",
+      title: "Total Failed Students",
+      icon: "fas fa-times-circle",
+      bgClass: "bg-red",
+      value: counts.totalFail,
+    },
   ];
 
   return (
@@ -71,22 +62,29 @@ const ExamResultCard = ({
         {/* Header Section */}
         <div className="d-flex flex-column flex-sm-row justify-content-between align-items-start mb-3">
           <div className="d-flex flex-column align-items-start">
-            <h1 className="h5 fw-normal mb-1 text-dark">Exam: {examTitle}</h1>
-            <p className="text-secondary small mb-1">Course: {courseName}</p>
-            <p className="text-secondary small mb-0">{questionInfo}</p>
+            <h1 className="h5 fw-normal mb-1 text-dark">
+              {exam.title}
+            </h1>
+            <p className="text-secondary small mb-1">Course: General Course</p>
+            <p className="text-secondary small mb-0">
+              {exam.numberOfQuestions} Questions
+            </p>
           </div>
           <div className="text-end text-secondary small mt-3 mt-sm-0">
             <div>
-              {startDate} <span className="mx-1">→</span> {endDate}
+              {/* If you later include exam.startTime / endTime in response, format here */}
+              Duration: {exam.duration} minutes
             </div>
             <div className="d-inline-flex gap-2 mt-2 justify-content-end flex-wrap">
               <div className="d-flex align-items-center gap-1 border border-secondary rounded px-2 py-1 text-secondary small">
                 <i className="far fa-clock"></i>
-                <span>{duration}</span>
+                <span>{exam.duration} Min</span>
               </div>
               <div className="d-flex align-items-center gap-1 border border-secondary rounded px-2 py-1 text-secondary small">
                 <i className="fas fa-file-alt"></i>
-                <span>{totalMarks} (Pass marks: {passMarks})</span>
+                <span>
+                  {exam.totalMarks} (Pass marks: {exam.passMark})
+                </span>
               </div>
             </div>
           </div>
@@ -94,13 +92,13 @@ const ExamResultCard = ({
 
         {/* Stats Grid */}
         <div className="row g-3">
-          {statItems.map(item => (
+          {statItems.map((item) => (
             <div key={item.key} className="col-12 col-md-4">
               <div className="d-flex align-items-center border border-1 rounded p-3">
                 {renderIconCircle(item.bgClass, item.icon)}
                 <div>
                   <p className="small text-secondary mb-1">{item.title}</p>
-                  <p className="h5 mb-0 text-dark">{stats[item.key]}</p>
+                  <p className="h5 mb-0 text-dark">{item.value}</p>
                 </div>
               </div>
             </div>
@@ -110,6 +108,5 @@ const ExamResultCard = ({
     </div>
   );
 };
-
 
 export default ExamResultCard;

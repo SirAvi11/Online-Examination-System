@@ -193,7 +193,7 @@ const ManageExam = ({ onCreate, onEdit }) => {
   };
 
   return (
-    <div className="p-4" style={{ width: "100%", position: "relative", display:"flex", flexDirection:"column" }}>
+    <div className="p-4" style={{ width: "100%", position: "relative", display:"flex", flexDirection:"column", overflow:"hidden" }}>
       <div className="header-container" style={{ position: "relative" }}>
           <div className="d-flex justify-content-between align-items-center mb-4">
             <h3>Manage Exams ({exams.length})</h3>

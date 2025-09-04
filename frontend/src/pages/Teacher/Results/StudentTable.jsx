@@ -1,28 +1,72 @@
-// StudentTable.jsx
-import React, { useState } from "react";
-import "bootstrap/dist/css/bootstrap.min.css";
-import "@fortawesome/fontawesome-free/css/all.min.css";
+import React, { useState, useMemo } from "react";
+import { Spinner } from "react-bootstrap";
+import StudentAnalysisModal from "./StudentAnalysisModal"; // ✅ import it
 import "./StudentTable.css";
 
-const StudentTable = ({ students }) => {
+const StudentTable = ({ students, examId, avgScore }) => {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [gradeFilter, setGradeFilter] = useState("all");
-  const [activeTab, setActiveTab] = useState("attended"); // attended | absent
+  const [activeTab, setActiveTab] = useState("attended");
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
 
-  // Handle sorting
-  const handleSort = (key) => {
-    let direction = "asc";
-    if (sortConfig.key === key && sortConfig.direction === "asc") {
-      direction = "desc";
-    }
-    setSortConfig({ key, direction });
-  };
+  // Modal state
+  const [showModal, setShowModal] = useState(false);
+  const [loadingDetail, setLoadingDetail] = useState(false);
+  const [studentReport, setStudentReport] = useState(null);
 
-  const sortedStudents = [...students].sort((a, b) => {
+  // ✅ Normalize students from backend into UI-friendly objects
+  const normalizedStudents = useMemo(
+    () =>
+      students.map((s) => {
+        const attended = s.status !== "absent";
+        const statusLabel = attended
+          ? s.pass
+            ? "Passed"
+            : "Failed"
+          : "Absent";
+
+        const scoreColor = s.pass ? "green" : "red";
+        const gradeColor =
+          s.grade === "Excellent"
+            ? "green"
+            : s.grade === "Average"
+            ? "yellow"
+            : "red";
+
+        const timeSpent = s.timeSpentMinutes
+          ? `${s.timeSpentMinutes} min`
+          : attended
+          ? "-"
+          : "0 min";
+
+        const submittedAt = s.submittedAt
+          ? new Date(s.submittedAt).toLocaleString()
+          : attended
+          ? "In Progress / Cheated"
+          : "Absent";
+
+        return {
+          ...s,
+          attended,
+          statusLabel,
+          score: `${s.score}/${s.totalMarks}`,
+          scoreValue: s.score,
+          scoreColor,
+          grade: s.grade,
+          gradeColor,
+          timeSpent,
+          timeSpentValue: s.timeSpentMinutes || 0,
+          submittedAt,
+          img: "/default-avatar.png",
+        };
+      }),
+    [students]
+  );
+
+  // Sorting
+  const sortedStudents = [...normalizedStudents].sort((a, b) => {
     if (!sortConfig.key) return 0;
-
     const valueA = a[sortConfig.key];
     const valueB = b[sortConfig.key];
 
@@ -40,16 +84,15 @@ const StudentTable = ({ students }) => {
   // Filtering
   const filteredStudents = sortedStudents.filter((s) => {
     const matchesSearch =
-      s.name.toLowerCase().includes(search.toLowerCase()) ||
+      s.name?.toLowerCase().includes(search.toLowerCase()) ||
       s.email?.toLowerCase().includes(search.toLowerCase());
 
     const matchesStatus =
       statusFilter === "all" ||
-      (statusFilter === "Passed" && s.status === "Passed") ||
-      (statusFilter === "Failed" && s.status === "Failed");
+      (statusFilter === "Passed" && s.statusLabel === "Passed") ||
+      (statusFilter === "Failed" && s.statusLabel === "Failed");
 
-    const matchesGrade =
-      gradeFilter === "all" || gradeFilter === s.grade;
+    const matchesGrade = gradeFilter === "all" || gradeFilter === s.grade;
 
     const matchesTab =
       activeTab === "attended" ? s.attended === true : s.attended === false;
@@ -57,16 +100,48 @@ const StudentTable = ({ students }) => {
     return matchesSearch && matchesStatus && matchesGrade && matchesTab;
   });
 
-  const attendedCount = students.filter((s) => s.attended).length;
-  const absentCount = students.filter((s) => !s.attended).length;
+  const attendedCount = normalizedStudents.filter((s) => s.attended).length;
+  const absentCount = normalizedStudents.filter((s) => !s.attended).length;
+
+  const handleSort = (key) => {
+    let direction = "asc";
+    if (sortConfig.key === key && sortConfig.direction === "asc") {
+      direction = "desc";
+    }
+    setSortConfig({ key, direction });
+  };
 
   const renderSortIcon = (key) => {
-    if (sortConfig.key !== key) return <i className="fas fa-chevron-down ms-1"></i>;
+    if (sortConfig.key !== key)
+      return <i className="fas fa-chevron-down ms-1"></i>;
     return sortConfig.direction === "asc" ? (
       <i className="fas fa-chevron-up ms-1 text-primary"></i>
     ) : (
       <i className="fas fa-chevron-down ms-1 text-primary"></i>
     );
+  };
+
+  // 🔎 Fetch student detail and open modal
+  const handleSeeDetail = async (studentId) => {
+    setShowModal(true);
+    setLoadingDetail(true);
+    setStudentReport(null);
+
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/exams/${examId}/student/${studentId}`,
+        {
+          headers: { "x-auth-token": localStorage.getItem("token") },
+        }
+      );
+      if (!res.ok) throw new Error("Failed to fetch student report");
+      const data = await res.json();
+      setStudentReport(data);
+    } catch (err) {
+      console.error("❌ Error fetching student attempt report:", err);
+    } finally {
+      setLoadingDetail(false);
+    }
   };
 
   return (
@@ -137,6 +212,7 @@ const StudentTable = ({ students }) => {
             <option value="Excellent">Excellent</option>
             <option value="Average">Average</option>
             <option value="Poor">Poor</option>
+            <option value="Absent">Absent</option>
           </select>
         </div>
       </form>
@@ -152,8 +228,8 @@ const StudentTable = ({ students }) => {
               <th scope="col" className="ps-4" onClick={() => handleSort("name")}>
                 Student name {renderSortIcon("name")}
               </th>
-              <th scope="col" onClick={() => handleSort("status")}>
-                Passed / Failed {renderSortIcon("status")}
+              <th scope="col" onClick={() => handleSort("statusLabel")}>
+                Status {renderSortIcon("statusLabel")}
               </th>
               <th scope="col" onClick={() => handleSort("scoreValue")}>
                 Score {renderSortIcon("scoreValue")}
@@ -186,12 +262,14 @@ const StudentTable = ({ students }) => {
                 <td>
                   <span
                     className={
-                      student.status === "Passed"
+                      student.statusLabel === "Passed"
                         ? "badge-passed"
-                        : "badge-failed"
+                        : student.statusLabel === "Failed"
+                        ? "badge-failed"
+                        : "badge-absent"
                     }
                   >
-                    {student.status}
+                    {student.statusLabel}
                   </span>
                 </td>
                 <td>
@@ -207,12 +285,12 @@ const StudentTable = ({ students }) => {
                 <td>{student.timeSpent}</td>
                 <td>{student.submittedAt}</td>
                 <td className="pe-4">
-                  <a
-                    href="#"
-                    className="text-primary text-decoration-none fw-semibold"
+                  <button
+                    className="btn btn-link text-primary fw-semibold p-0"
+                    onClick={() => handleSeeDetail(student.studentId)}
                   >
                     See Detail
-                  </a>
+                  </button>
                 </td>
               </tr>
             ))}
@@ -226,6 +304,16 @@ const StudentTable = ({ students }) => {
           </tbody>
         </table>
       </div>
+
+      {/* Use StudentAnalysisModal instead of inline modal */}
+      <StudentAnalysisModal
+        show={showModal}
+        handleClose={() => setShowModal(false)}
+        student={studentReport?.student}
+        exam={studentReport?.exam}
+        loading={loadingDetail}
+        classAverage={avgScore}
+      />
     </div>
   );
 };

@@ -2,6 +2,20 @@ const Exam = require("../models/Exam");
 const Question = require("../models/Question");
 const ExamRegistration = require('../models/ExamRegistration');
 const StudentAttempt = require('../models/StudentAttempt');
+const mongoose = require('mongoose');
+
+
+// --- helpers ---
+const gradeFromPercent = (p) => {
+  if (p >= 80) return "Excellent";
+  if (p >= 50) return "Average";
+  return "Poor";
+};
+
+const minutesDiff = (start, end) => {
+  if (!start || !end) return null;
+  return Math.max(0, Math.round((new Date(end) - new Date(start)) / 60000));
+};
 
 // GET exams for logged-in teacher
 const getExamsByTeacher = async (req, res) => {
@@ -371,6 +385,231 @@ const startExamAttempt = async (req, res) => {
 };
 
 
+// --- GET report card ---
+/**
+ * GET /api/exams/:examId/report-card
+ * Returns a comprehensive report for the given exam
+ */
+const getReportCard = async (req, res) => {
+  try {
+    const { examId } = req.params;
+    const teacherId = req.user.userId;
+
+    if (!mongoose.Types.ObjectId.isValid(examId)) {
+      return res.status(400).json({ error: "Invalid examId" });
+    }
+
+    // 1) Fetch exam
+    const exam = await Exam.findById(examId).lean();
+    if (!exam) {
+      return res.status(404).json({ error: "Exam not found" });
+    }
+
+    if (String(exam.createdBy) !== String(teacherId)) {
+      return res.status(403).json({ error: "You are not authorized to view this exam report" });
+    }
+
+    const passMark = Math.ceil((exam.totalMarks || 0) * 0.4); // 40% (rounded up)
+
+    // 2) Fetch registrations (with student name)
+    const registrations = await ExamRegistration.find({ examId })
+      .populate({ path: 'studentId', select: 'name email' })
+      .lean();
+
+    // 3) Fetch attempts for this exam
+    const attempts = await StudentAttempt.find({ examId })
+      .select('studentId status score totalMarks startedAt submittedAt timeRemaining duration')
+      .lean();
+
+    // 4) If multiple attempts exist (shouldn’t, but guard anyway), keep the “latest” one
+    //    Prefer the latest submittedAt; if missing, fall back to createdAt.
+    const latestAttemptByStudent = new Map();
+    for (const att of attempts) {
+      const sid = String(att.studentId);
+      const prev = latestAttemptByStudent.get(sid);
+      const prevTime = prev ? (prev.submittedAt || prev.createdAt) : null;
+      const currTime = att.submittedAt || att.createdAt;
+
+      if (!prev || (currTime && prevTime && new Date(currTime) > new Date(prevTime))) {
+        latestAttemptByStudent.set(sid, att);
+      } else if (!prev) {
+        latestAttemptByStudent.set(sid, att);
+      }
+    }
+
+    // 5) Build lists
+    const attemptedStudents = [];
+    const absentStudents = [];
+    let presentCount = 0;
+    let passCount = 0;
+    let failCount = 0;
+
+    for (const reg of registrations) {
+      const sid = String(reg.studentId?._id || reg.studentId);
+      const sName = reg.studentId?.name || "Unknown";
+      const attempt = latestAttemptByStudent.get(sid);
+
+      if (attempt) {
+        // Present (attempt exists irrespective of status)
+        presentCount++;
+
+        const score = attempt.score || 0;
+        const total = attempt.totalMarks ?? exam.totalMarks ?? 0;
+        const percent = total > 0 ? Math.round((score / total) * 100) : 0;
+
+        // Cheat handling: count as present, but FAIL regardless of score
+        const isCheated = attempt.status === 'cheated';
+        const isPass = !isCheated && score >= passMark;
+
+        if (isPass) passCount++; else failCount++;
+
+        attemptedStudents.push({
+          studentId: sid,
+          name: sName,
+          pass: isPass,
+          score,
+          totalMarks: total,
+          percentage: percent,
+          grade: gradeFromPercent(percent),
+          status: attempt.status, // submitted | cheated | in_progress
+          timeSpentMinutes: minutesDiff(attempt.startedAt, attempt.submittedAt) ?? (
+            // fallback if submittedAt missing: duration - timeRemaining
+            typeof attempt.duration === 'number' && typeof attempt.timeRemaining === 'number'
+              ? Math.max(0, attempt.duration - attempt.timeRemaining)
+              : null
+          ),
+          startedAt: attempt.startedAt || null,
+          submittedAt: attempt.submittedAt || null
+        });
+      } else {
+        // Absent (registered but no attempt record)
+        absentStudents.push({
+          studentId: sid,
+          name: sName,
+          pass: false,
+          score: 0,
+          totalMarks: exam.totalMarks || 0,
+          percentage: 0,
+          grade: "Absent",
+          status: "absent",
+          timeSpentMinutes: 0,
+          startedAt: null,
+          submittedAt: null
+        });
+      }
+    }
+
+    // 6) Response
+    const response = {
+      exam: {
+        examId: String(exam._id),
+        title: exam.title,
+        numberOfQuestions: exam.totalQuestions ?? (exam.questions?.length || 0),
+        duration: exam.duration,              // minutes
+        totalMarks: exam.totalMarks || 0,
+        passMark,                             // 40% rule
+      },
+      counts: {
+        totalRegistered: registrations.length,
+        totalAbsent: absentStudents.length,   // registered but no attempt
+        totalPresent: presentCount,           // registered with attempt
+        totalPass: passCount,
+        totalFail: failCount
+      },
+      attemptedStudents: attemptedStudents
+        // optional: keep a consistent order (e.g., highest score first)
+        .sort((a, b) => b.score - a.score || (a.name || '').localeCompare(b.name || '')),
+      absentStudents: absentStudents
+        .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+    };
+
+    return res.status(200).json(response);
+  } catch (err) {
+    console.error("❌ Error building report card:", err);
+    return res.status(500).json({ error: "Server error while building report card" });
+  }
+};
+
+// GET /api/exams/:examId/student/:studentId
+const getStudentAttemptReport = async (req, res) => {
+  try {
+    const { examId, studentId } = req.params;
+    const teacherId = req.user.userId;
+
+    // 1. Validate exam exists & belongs to this teacher
+    const exam = await Exam.findById(examId);
+    if (!exam) return res.status(404).json({ error: "Exam not found" });
+
+    if (String(exam.createdBy) !== String(teacherId)) {
+      return res.status(403).json({ error: "Not authorized to view this report" });
+    }
+
+    // 2. Find student attempt
+    const attempt = await StudentAttempt.findOne({ examId, studentId })
+      .populate("studentId", "name email")
+      .populate("answers.questionId", "questionText options correctOptionIndex");
+
+    if (!attempt) {
+      return res.status(404).json({ error: "No attempt found for this student" });
+    }
+
+    // 3. Build response object
+    const passMark = Math.ceil(exam.totalMarks * 0.4); // 40% threshold
+
+    const response = {
+      exam: {
+        examId: exam._id,
+        title: exam.title,
+        duration: exam.duration,
+        totalMarks: exam.totalMarks,
+        passMark,
+        tabSwitchLimit: exam.tabSwitchLimit,
+      },
+      student: {
+        studentId: attempt.studentId._id,
+        name: attempt.studentId.name,
+        email: attempt.studentId.email,
+        score: attempt.score,
+        totalMarks: attempt.totalMarks,
+        percentage: Math.round((attempt.score / attempt.totalMarks) * 100),
+        pass: attempt.score >= passMark,
+        grade:
+          attempt.score >= passMark
+            ? attempt.score / attempt.totalMarks >= 0.75
+              ? "Excellent"
+              : "Average"
+            : "Poor",
+        status: attempt.status,
+        startedAt: attempt.startedAt,
+        submittedAt: attempt.submittedAt,
+        timeSpentMinutes: attempt.submittedAt
+          ? Math.round((attempt.submittedAt - attempt.startedAt) / 60000)
+          : null,
+        tabSwitchCount: attempt.tabSwitchCount,
+        ipAddress: attempt.ipAddress,
+        deviceInfo: attempt.deviceInfo,
+        answers: attempt.answers.map((ans) => {
+          const q = ans.questionId;
+          return {
+            questionId: q._id,
+            questionText: q.questionText,
+            selectedOption: ans.selectedOption,
+            correctOption: q.options[q.correctOptionIndex],
+            isCorrect: ans.isCorrect,
+            marksObtained: ans.marksObtained,
+          };
+        }),
+      },
+    };
+
+    res.json(response);
+  } catch (err) {
+    console.error("❌ Error fetching student attempt report:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
+
 module.exports = { 
   getExamsByTeacher, 
   createExam, 
@@ -378,5 +617,7 @@ module.exports = {
   updateExam, 
   deleteExam,
   startExamAttempt,
-  getCompletedExamsByTeacher
+  getCompletedExamsByTeacher,
+  getReportCard,
+  getStudentAttemptReport
 };

@@ -111,7 +111,7 @@ const ResultView = () => {
     <div className="container p-4">
       {selectedExam ? (
         <>
-          <ResultInsight exam={selectedExam} onBack={() => setSelectedExam(null)} />
+          <ResultInsight examId={selectedExam._id} onBack={() => setSelectedExam(null)} />
         </>
       ) : (
         <>
