@@ -8,6 +8,7 @@ const {
   deleteExam,
   startExamAttempt,
   getCompletedExamsByTeacher,
+  getCompletedExamsByStudent,
   getReportCard,
   getStudentAttemptReport
 } = require("../controllers/examController");
@@ -38,6 +39,10 @@ router.post('/:examId/start', authMiddleware, startExamAttempt);
 router.get('/:examId/report-card', authMiddleware, getReportCard);
 
 router.get("/:examId/student/:studentId", authMiddleware, getStudentAttemptReport);
+
+// GET /api/exams/student/completed - Get completed exams for logged-in student
+router.get("/student/completed", authMiddleware, getCompletedExamsByStudent);
+
 
 
 

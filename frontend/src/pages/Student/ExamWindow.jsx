@@ -39,6 +39,21 @@ const ExamWindow = () => {
         const data = await res.json();
         setExam(data);
 
+        // ✅ Start attempt
+        const attemptRes = await fetch(`http://localhost:5000/api/attempt/start`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-auth-token": token
+          },
+          body: JSON.stringify({ examId })
+        });
+        const attemptData = await attemptRes.json();
+        console.log("Attempt started:", attemptData);
+
+        // Store attemptId for later updates/submission
+        localStorage.setItem("attemptId", attemptData._id);
+
         // ✅ Initialize states: Q1 active, rest not-attempted
         const initialAnswers = data.questions.map((q, i) => ({
           answer: '',
@@ -55,12 +70,12 @@ const ExamWindow = () => {
     fetchExam();
   }, [examId, token]);
 
-  // Timer effect
+ // Timer effect
   useEffect(() => {
     const timer = setInterval(() => {
       setTimeLeft(prev => {
         let { hours, minutes, seconds } = prev;
-        
+
         if (seconds > 0) {
           seconds--;
         } else {
@@ -74,16 +89,23 @@ const ExamWindow = () => {
               seconds = 59;
             } else {
               clearInterval(timer);
+
+              // ⏰ Auto-submit when time runs out
               alert("Time is up! Your exam will be submitted automatically.");
+              handleFinalSubmit(true);
+
               return { hours: 0, minutes: 0, seconds: 0 };
             }
           }
         }
+
         return { hours, minutes, seconds };
       });
     }, 1000);
+
     return () => clearInterval(timer);
   }, []);
+
 
   if (loading) return (
     <div className="exam-loading-container">
@@ -255,6 +277,50 @@ const ExamWindow = () => {
     setShowSubmitModal(true);
   };
 
+  const handleFinalSubmit = async (isAuto = false) => {
+    try {
+      const attemptId = localStorage.getItem("attemptId");
+      if (!attemptId) {
+        alert("No active attempt found.");
+        return;
+      }
+
+      const formattedAnswers = exam.questions.map((q, idx) => ({
+        questionId: q.questionRef._id,
+        selectedOption: answers[idx]?.answer || null
+      }));
+
+      const res = await fetch(
+        `http://localhost:5000/api/attempt/${attemptId}/submit`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "x-auth-token": token
+          },
+          body: JSON.stringify({ answers: formattedAnswers })
+        }
+      );
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Submission failed");
+
+      if (isAuto) {
+        alert("⏰ Time is up! Exam auto-submitted.");
+      } else {
+        alert("✅ Exam submitted successfully!");
+      }
+
+      setShowSubmitModal(false);
+      // optional redirect
+      // navigate(`/exam-result/${exam._id}`);
+    } catch (err) {
+      console.error("❌ Error submitting exam:", err);
+      alert("Failed to submit exam. Try again.");
+    }
+  };
+
+
   // Check if current question has an image
   const hasImage = question.imageUrl;
 
@@ -266,7 +332,7 @@ const ExamWindow = () => {
         <div className="exam-main-content">
           {/* Header */}
           <div className="exam-header">
-            <h4>{exam.title} - CAT Preparation</h4>
+            <h4>{exam.title}</h4>
           </div>
           
           {/* Question content */}
@@ -283,6 +349,7 @@ const ExamWindow = () => {
               </div>
             </div>
             <div className="question-body">
+              <p className="question-text">{question.questionText}</p>
               {/* Question image if available */}
               {hasImage && (
                 <div className="question-image-container">
@@ -296,9 +363,6 @@ const ExamWindow = () => {
                   />
                 </div>
               )}
-              
-              <p className="question-text">{question.questionText}</p>
-              
               <form className="options-container">
                 {/* Render binary options (True/False) if specified */}
                 {question.type === 'binary' ? (
@@ -445,7 +509,8 @@ const ExamWindow = () => {
           show={showSubmitModal} 
           exam={exam}
           answers={answers} 
-          onClose={() => setShowSubmitModal(false)} 
+          onClose={() => setShowSubmitModal(false)}
+          onConfirm={handleFinalSubmit} 
         />
       </div>
     </div>

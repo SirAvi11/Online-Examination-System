@@ -41,13 +41,11 @@ const QuestionSelector = ({ modules, examQuestions, onChange }) => {
   };
 
   const handleAddQuestion = async (questionData) => {
-    const savedQuestion = await addQuestion(questionData);
-
-    //addQuestion does not return newly saved question id, so no id is given to new question in exam, thus cannot compare with available list
-    
-    if (savedQuestion) {
+    const savedQuestion = await addQuestion(questionData);    
+    if (savedQuestion._id !== null) {
       // Add the newly saved question to exam questions
-      onChange([...examQuestions, questionData]);
+      onChange([...examQuestions, 
+        savedQuestion]);
       return savedQuestion;
     }
     

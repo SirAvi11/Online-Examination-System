@@ -79,6 +79,7 @@ const getExamsByTeacher = async (req, res) => {
 // GET completed exams for logged-in teacher (for result insights)
 const getCompletedExamsByTeacher = async (req, res) => {
   try {
+    // await Exam.updateAllStatuses(); 
     const teacherId = req.user.userId;
     const now = new Date();
 
@@ -228,9 +229,12 @@ const getExamById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const exam = await Exam.findOne({ _id: id})
-      .populate('questions.questionRef')
-      .populate('createdBy', 'name email');
+    const exam = await Exam.findOne({ _id: id })
+      .populate({
+        path: "questions.questionRef",
+        select: "-correctOptionIndex" // exclude the answer field
+      })
+      .populate("createdBy", "name email");
 
     if (!exam) {
       return res.status(404).json({ error: "Exam not found" });
@@ -246,8 +250,8 @@ const getExamById = async (req, res) => {
       exam.status = "Completed";
     }
 
-    // Save the updated status if it changed
-    if (exam.isModified('status')) {
+    // Only save if status has changed
+    if (exam.isModified("status")) {
       await exam.save();
     }
 
@@ -257,6 +261,7 @@ const getExamById = async (req, res) => {
     res.status(500).json({ error: "Server error while fetching exam" });
   }
 };
+
 
 // UPDATE exam
 const updateExam = async (req, res) => {
@@ -416,23 +421,27 @@ const getReportCard = async (req, res) => {
       .populate({ path: 'studentId', select: 'name email' })
       .lean();
 
-    // 3) Fetch attempts for this exam
+    // 3) Fetch attempts for this exam (include updatedAt so we can pick latest properly)
     const attempts = await StudentAttempt.find({ examId })
-      .select('studentId status score totalMarks startedAt submittedAt timeRemaining duration')
+      .select(
+        'studentId status score totalMarks startedAt submittedAt timeRemaining duration createdAt updatedAt'
+      )
       .lean();
 
-    // 4) If multiple attempts exist (shouldn’t, but guard anyway), keep the “latest” one
-    //    Prefer the latest submittedAt; if missing, fall back to createdAt.
+    // 4) If multiple attempts exist, keep the latest one
+    //    Prefer submittedAt > updatedAt > createdAt
     const latestAttemptByStudent = new Map();
+
     for (const att of attempts) {
       const sid = String(att.studentId);
       const prev = latestAttemptByStudent.get(sid);
-      const prevTime = prev ? (prev.submittedAt || prev.createdAt) : null;
-      const currTime = att.submittedAt || att.createdAt;
+
+      const prevTime = prev
+        ? (prev.submittedAt || prev.updatedAt || prev.createdAt)
+        : null;
+      const currTime = att.submittedAt || att.updatedAt || att.createdAt;
 
       if (!prev || (currTime && prevTime && new Date(currTime) > new Date(prevTime))) {
-        latestAttemptByStudent.set(sid, att);
-      } else if (!prev) {
         latestAttemptByStudent.set(sid, att);
       }
     }
@@ -531,6 +540,8 @@ const getReportCard = async (req, res) => {
 };
 
 // GET /api/exams/:examId/student/:studentId
+// GET /api/exams/:examId/student/:studentId
+// GET /api/exams/:examId/student/:studentId
 const getStudentAttemptReport = async (req, res) => {
   try {
     const { examId, studentId } = req.params;
@@ -544,17 +555,22 @@ const getStudentAttemptReport = async (req, res) => {
       return res.status(403).json({ error: "Not authorized to view this report" });
     }
 
-    // 2. Find student attempt
+    // 2. Find the *latest* attempt for this student
     const attempt = await StudentAttempt.findOne({ examId, studentId })
       .populate("studentId", "name email")
-      .populate("answers.questionId", "questionText options correctOptionIndex");
+      .populate({
+        path: "answers.questionId",
+        select: "questionText options correctOptionIndex"
+      })
+      .sort({ submittedAt: -1, updatedAt: -1, createdAt: -1 }) // latest attempt first
+      .lean();
 
     if (!attempt) {
       return res.status(404).json({ error: "No attempt found for this student" });
     }
 
     // 3. Build response object
-    const passMark = Math.ceil(exam.totalMarks * 0.4); // 40% threshold
+    const passMark = Math.ceil((exam.totalMarks || 0) * 0.4); // 40% threshold
 
     const response = {
       exam: {
@@ -569,12 +585,17 @@ const getStudentAttemptReport = async (req, res) => {
         studentId: attempt.studentId._id,
         name: attempt.studentId.name,
         email: attempt.studentId.email,
-        score: attempt.score,
-        totalMarks: attempt.totalMarks,
-        percentage: Math.round((attempt.score / attempt.totalMarks) * 100),
-        pass: attempt.score >= passMark,
+        score: attempt.score ?? 0,
+        totalMarks: attempt.totalMarks ?? exam.totalMarks,
+        percentage:
+          (attempt.totalMarks ?? 0) > 0
+            ? Math.round((attempt.score / attempt.totalMarks) * 100)
+            : 0,
+        pass: attempt.score >= passMark && attempt.status !== "cheated",
         grade:
-          attempt.score >= passMark
+          attempt.status === "cheated"
+            ? "Cheated"
+            : attempt.score >= passMark
             ? attempt.score / attempt.totalMarks >= 0.75
               ? "Excellent"
               : "Average"
@@ -584,21 +605,24 @@ const getStudentAttemptReport = async (req, res) => {
         submittedAt: attempt.submittedAt,
         timeSpentMinutes: attempt.submittedAt
           ? Math.round((attempt.submittedAt - attempt.startedAt) / 60000)
-          : null,
+          : (typeof attempt.duration === "number" &&
+             typeof attempt.timeRemaining === "number"
+              ? Math.max(0, attempt.duration - attempt.timeRemaining)
+              : null),
         tabSwitchCount: attempt.tabSwitchCount,
         ipAddress: attempt.ipAddress,
         deviceInfo: attempt.deviceInfo,
-        answers: attempt.answers.map((ans) => {
-          const q = ans.questionId;
+        answers: attempt.answers?.map((ans) => {
+          const q = ans.questionId; // populated question
           return {
-            questionId: q._id,
-            questionText: q.questionText,
+            questionId: q?._id || ans.questionId,
+            questionText: q?.questionText || null,
             selectedOption: ans.selectedOption,
-            correctOption: q.options[q.correctOptionIndex],
+            correctOption: q?.options?.[q?.correctOptionIndex] ?? null,
             isCorrect: ans.isCorrect,
             marksObtained: ans.marksObtained,
           };
-        }),
+        }) ?? [],
       },
     };
 
@@ -609,6 +633,93 @@ const getStudentAttemptReport = async (req, res) => {
   }
 };
 
+const getCompletedExamsByStudent = async (req, res) => {
+  try {
+    const studentId = req.user.userId;
+
+    // 1) Find registrations for this student
+    const registrations = await ExamRegistration.find({ studentId })
+      .populate({
+        path: "examId",
+        populate: { path: "createdBy", select: "name email" }
+      })
+      .lean();
+
+    // 2) Filter only exams that are completed + attempted at least once
+    const completedExams = [];
+
+    for (const reg of registrations) {
+      const exam = reg.examId;
+      if (!exam) continue;
+      if (exam.status !== "Completed") continue;
+
+      // Get latest attempt for this exam
+      const attempt = await StudentAttempt.findOne({
+        examId: exam._id,
+        studentId
+      })
+        .sort({ submittedAt: -1, updatedAt: -1, createdAt: -1 })
+        .lean();
+
+      if (!attempt) continue; // skip if never attempted
+
+      // Pass/Fail calculation
+      const passMark = Math.ceil((exam.totalMarks || 0) * 0.4);
+      const score = attempt.score ?? 0;
+      const percent = exam.totalMarks > 0
+        ? Math.round((score / exam.totalMarks) * 100)
+        : 0;
+
+      const grade =
+        attempt.status === "cheated"
+          ? "Cheated"
+          : score >= passMark
+          ? score / exam.totalMarks >= 0.75
+            ? "Excellent"
+            : "Average"
+          : "Poor";
+
+      // Build student-friendly result object
+      completedExams.push({
+        exam: {
+          examId: exam._id,
+          title: exam.title,
+          duration: exam.duration,
+          totalMarks: exam.totalMarks,
+          createdBy: exam.createdBy?.name || "Unknown Teacher",
+          completedOn: exam.endTime,
+        },
+        result: {
+          score,
+          percentage: percent,
+          grade,
+          pass: score >= passMark && attempt.status !== "cheated",
+          status: attempt.status, // submitted, cheated, etc.
+          submittedAt: attempt.submittedAt,
+          timeSpentMinutes: attempt.submittedAt
+            ? Math.round((attempt.submittedAt - attempt.startedAt) / 60000)
+            : (typeof attempt.duration === "number" &&
+               typeof attempt.timeRemaining === "number"
+                ? Math.max(0, attempt.duration - attempt.timeRemaining)
+                : null),
+        },
+        feedback: attempt.feedback || null // ✅ Optional teacher feedback
+      });
+    }
+
+    // 3) Return sorted results (latest completed first)
+    completedExams.sort((a, b) => new Date(b.exam.completedOn) - new Date(a.exam.completedOn));
+
+    res.status(200).json(completedExams);
+  } catch (err) {
+    console.error("❌ Error fetching student completed exams:", err.message);
+    res.status(500).json({ error: "Server error while fetching completed exams" });
+  }
+};
+
+
+
+
 
 module.exports = { 
   getExamsByTeacher, 
@@ -618,6 +729,7 @@ module.exports = {
   deleteExam,
   startExamAttempt,
   getCompletedExamsByTeacher,
+  getCompletedExamsByStudent,
   getReportCard,
   getStudentAttemptReport
 };

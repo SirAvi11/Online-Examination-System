@@ -68,21 +68,28 @@ examSchema.pre('save', function(next) {
 });
 
 // Add a static method to update status for all exams (useful for batch updates)
-examSchema.statics.updateAllStatuses = async function() {
+examSchema.statics.updateAllStatuses = async function () {
   const now = new Date();
-  const exams = await this.find();
-  
-  for (const exam of exams) {
-    if (now < exam.startTime) {
-      exam.status = "Upcoming";
-    } else if (now >= exam.startTime && now <= exam.endTime) {
-      exam.status = "In Progress";
-    } else if (now > exam.endTime) {
-      exam.status = "Completed";
-    }
-    await exam.save();
-  }
+
+  // Update Upcoming → In Progress
+  await this.updateMany(
+    { startTime: { $lte: now }, endTime: { $gte: now } },
+    { $set: { status: "In Progress" } }
+  );
+
+  // Update In Progress → Completed
+  await this.updateMany(
+    { endTime: { $lt: now } },
+    { $set: { status: "Completed" } }
+  );
+
+  // Update to Upcoming (future exams)
+  await this.updateMany(
+    { startTime: { $gt: now } },
+    { $set: { status: "Upcoming" } }
+  );
 };
+
 
 // Add a virtual for checking if exam is active
 examSchema.virtual('isActive').get(function() {

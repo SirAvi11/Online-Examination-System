@@ -8,10 +8,8 @@ const teacherRoutes = require('./routes/teacherRoutes');
 const moduleRoutes = require('./routes/moduleRoutes.js');
 const questionRoutes = require("./routes/questionRoutes.js");
 const examRoutes = require('./routes/examRoutes.js');
-const examRegistrationRoutes = require('./routes/examRegistrationRoutes.js')
-const cron = require('node-cron');
-const Exam = require('./models/Exam');
-
+const examRegistrationRoutes = require('./routes/examRegistrationRoutes.js');
+const studentAttemptRoutes = require('./routes/studentAttemptRoutes.js');
 
 
 dotenv.config();
@@ -19,16 +17,6 @@ connectDB();
 
 const app = express();
 app.use(express.json());
-
-// Start cron job after successful DB connection
-cron.schedule('* * * * *', async () => {
-  try {
-    await Exam.updateAllStatuses();
-    console.log('Exam statuses updated at', new Date().toISOString());
-  } catch (error) {
-    console.error('Error updating exam statuses:', error);
-  }
-});
 
 // CORS Configuration
 const corsOptions = {
@@ -48,6 +36,7 @@ app.use('/api/modules', moduleRoutes);
 app.use("/api/questions", questionRoutes);
 app.use("/api/exams", examRoutes);
 app.use("/api/exam-registration", examRegistrationRoutes);
+app.use("/api/attempt", studentAttemptRoutes);
 app.use("/uploads", express.static("uploads"));
 
 

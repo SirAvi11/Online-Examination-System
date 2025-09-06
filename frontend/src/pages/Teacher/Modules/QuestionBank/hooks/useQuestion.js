@@ -156,7 +156,7 @@ const useQuestion = (moduleId) => {
         });
       }, 3000);
       
-      return true;
+      return savedQuestion;
     } catch (err) {
       console.error("Failed to save question:", err);
       setDuplicateInfo({

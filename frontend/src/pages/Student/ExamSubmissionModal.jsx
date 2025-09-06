@@ -1,7 +1,7 @@
 import { Button, Modal, Alert } from "react-bootstrap";
 import { useState, useEffect } from "react";
 
-const ExamSubmissionModal = ({ show, exam, answers, onClose }) => {
+const ExamSubmissionModal = ({ show, exam, answers, onClose, onConfirm }) => {
   const [alert, setAlert] = useState(null); // { type: 'success' | 'danger' | 'warning', message: string }
 
   const validateAnswers = () => {
@@ -67,7 +67,7 @@ const ExamSubmissionModal = ({ show, exam, answers, onClose }) => {
 
   const onSubmit = () => {
     // 👉 You could still do final validation here if needed
-    console.log("Submitting exam...", exam, answers);
+    onConfirm();
     onClose(); // close after submit
   };
 
