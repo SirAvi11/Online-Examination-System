@@ -1,23 +1,41 @@
 const Module = require('../models/Module.js');
-const Question = require('../models/Question.js')
+const Question = require('../models/Question.js');
+const Exam = require('../models/Exam.js'); // <-- missing import
 
 // GET all modules for logged-in teacher
-exports.getAllModules = async (req, res) => {
+exports.getModules = async (req, res) => {
   try {
-    const teacherId = req.user.userId; // Get teacher ID from auth middleware
-    const modules = await Module.find({ teacherId }).sort({ date: -1 });
-    res.json(modules);
+    const teacherId = req.user.userId;
+    const modules = await Module.find({ teacherId }).lean();
+
+    const updatedModules = await Promise.all(
+      modules.map(async (mod) => {
+        const questions = await Question.find({ moduleId: mod._id }).select('_id');
+        const questionIds = questions.map((q) => q._id);
+
+        const examUsingQuestion = await Exam.exists({
+          'questions.questionRef': { $in: questionIds },
+        });
+
+        return {
+          ...mod,
+          _id: mod._id.toString(),
+          usedInExam: !!examUsingQuestion,
+        };
+      })
+    );
+
+    res.json(updatedModules);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to fetch modules' });
+    res.status(500).json({ message: err.message });
   }
 };
 
-// GET module by ID (only for the authenticated teacher)
+// GET module by ID
 exports.getModuleById = async (req, res) => {
   const { id } = req.params;
   const teacherId = req.user.userId;
-  
+
   try {
     const module = await Module.findOne({ _id: id, teacherId });
     if (!module) return res.status(404).json({ error: 'Module not found' });
@@ -28,20 +46,20 @@ exports.getModuleById = async (req, res) => {
   }
 };
 
-// CREATE module for authenticated teacher
+// CREATE module
 exports.createModule = async (req, res) => {
   const { name, description, color } = req.body;
   const teacherId = req.user.userId;
-  
+
   if (!name) return res.status(400).json({ error: 'Name is required' });
 
   try {
-    const module = new Module({ 
-      name, 
-      description, 
-      teacherId, 
-      color, 
-      questionCount: 0 
+    const module = new Module({
+      name,
+      description,
+      teacherId,
+      color,
+      questionCount: 0,
     });
     const savedModule = await module.save();
     res.status(201).json(savedModule);
@@ -51,34 +69,51 @@ exports.createModule = async (req, res) => {
   }
 };
 
-// UPDATE module (only for the authenticated teacher)
+// UPDATE module (blocked if used in exam)
 exports.updateModule = async (req, res) => {
-  const { id } = req.params;
-  const { name, description, color } = req.body;
-  const teacherId = req.user.userId;
-
   try {
-    const updatedModule = await Module.findOneAndUpdate(
-      { _id: id, teacherId },
-      { ...(name && { name }), ...(description && { description }), ...(color && { color }) },
-      { new: true, runValidators: true }
+    const { id } = req.params;
+    const { name, description } = req.body;
+
+    const questions = await Question.find({ moduleId: id }).select('_id');
+    const questionIds = questions.map((q) => q._id);
+
+    const examUsingQuestion = await Exam.exists({
+      'questions.questionRef': { $in: questionIds },
+    });
+
+    if (examUsingQuestion) {
+      return res.status(400).json({
+        message:
+          'Module cannot be edited because its questions are already used in an exam.',
+      });
+    }
+
+    const updated = await Module.findByIdAndUpdate(
+      id,
+      { name, description },
+      { new: true }
     );
-    if (!updatedModule) return res.status(404).json({ error: 'Module not found' });
-    res.json(updatedModule);
+
+    if (!updated) {
+      return res.status(404).json({ message: 'Module not found' });
+    }
+
+    res.json(updated);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to update module' });
+    res.status(500).json({ message: err.message });
   }
 };
 
-// DELETE module (only for the authenticated teacher)
+// DELETE single module
 exports.deleteModule = async (req, res) => {
   const { id } = req.params;
   const teacherId = req.user.userId;
-  
+
   try {
     const deletedModule = await Module.findOneAndDelete({ _id: id, teacherId });
-    if (!deletedModule) return res.status(404).json({ error: 'Module not found' });
+    if (!deletedModule)
+      return res.status(404).json({ error: 'Module not found' });
     res.json({ message: 'Module deleted successfully' });
   } catch (err) {
     console.error(err);
@@ -86,17 +121,18 @@ exports.deleteModule = async (req, res) => {
   }
 };
 
-// DELETE multiple modules (only for the authenticated teacher)
+// DELETE multiple modules
 exports.deleteModulesBulk = async (req, res) => {
   const { ids } = req.body;
   const teacherId = req.user.userId;
-  
-  if (!ids || !Array.isArray(ids)) return res.status(400).json({ error: "Invalid ids array" });
+
+  if (!ids || !Array.isArray(ids))
+    return res.status(400).json({ error: 'Invalid ids array' });
 
   try {
-    const result = await Module.deleteMany({ 
-      _id: { $in: ids }, 
-      teacherId 
+    const result = await Module.deleteMany({
+      _id: { $in: ids },
+      teacherId,
     });
     res.json({ message: `Deleted ${result.deletedCount} module(s)` });
   } catch (err) {
@@ -105,28 +141,21 @@ exports.deleteModulesBulk = async (req, res) => {
   }
 };
 
-// GET questions by module (only for the authenticated teacher)
+// GET questions by module
 exports.getQuestionsByModule = async (req, res) => {
   try {
     const moduleId = req.params.id;
     const teacherId = req.user.userId;
 
-    // Verify the module belongs to the teacher
     const module = await Module.findOne({ _id: moduleId, teacherId });
     if (!module) {
-      return res.status(404).json({ error: "Module not found" });
+      return res.status(404).json({ error: 'Module not found' });
     }
 
-    // Fetch questions for this module
-    const questions = await Question.find({ moduleId: moduleId });
-
-    if (!questions || questions.length === 0) {
-      return res.status(404).json({ message: "No questions found for this module" });
-    }
-
+    const questions = await Question.find({ moduleId });
     res.json(questions);
   } catch (err) {
-    console.error("Error fetching questions:", err);
-    res.status(500).json({ error: "Server error fetching questions" });
+    console.error('Error fetching questions:', err);
+    res.status(500).json({ error: 'Server error fetching questions' });
   }
 };

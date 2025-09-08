@@ -171,7 +171,7 @@ export default function AuthPage() {
           height="280"
           className="img-fluid"
         />
-        <h2 className="mt-4 fw-semibold text-dark" style={{ fontSize: '1.5rem' }}>Skills Lab</h2>
+        <h2 className="mt-4 fw-semibold text-dark" style={{ fontSize: '1.5rem' }}>Skills Check</h2>
         <p className="abc text-secondary small mt-2 px-3">
           Unleash Your Academic Success with Exam Mastery Hub's Exam Excellence Platform
         </p>
@@ -186,7 +186,7 @@ export default function AuthPage() {
           <h1 className="logo-text">
             <i className="fas fa-graduation-cap"></i>
             <span>SKILLS</span>
-            <span className="green-text">LAB</span>
+            <span className="green-text">CHECK</span>
           </h1>
         </div>
 

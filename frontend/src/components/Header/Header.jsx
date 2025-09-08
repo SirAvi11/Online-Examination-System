@@ -21,7 +21,7 @@ const Header = ({
         <h6 className="header-logo-text">
           <i className="fas fa-graduation-cap"></i>
           <span>SKILLS</span>
-          <span className="green-text">LAB</span>
+          <span className="green-text">CHECK</span>
         </h6>
       </div>
       

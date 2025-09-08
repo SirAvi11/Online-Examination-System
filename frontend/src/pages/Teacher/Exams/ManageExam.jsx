@@ -71,6 +71,8 @@ const ManageExam = ({ onCreate, onEdit }) => {
             id: exam._id,
             title: exam.title,
             totalMarks: exam.totalMarks,
+            startTime: exam.startTime,   // keep for filters
+            endTime: exam.endTime,       // keep for filters
             dateRange,
             timeRange,
             status,
@@ -102,7 +104,7 @@ const ManageExam = ({ onCreate, onEdit }) => {
   };
 
   const handleCardClick = (examId) => {
-    const exam = exams.find(e => e.id === examId);
+    const exam = data.find(e => e.id === examId);
     setSelectedExam(exam);
 
     const rawExamData = data.find(e => e._id === examId);

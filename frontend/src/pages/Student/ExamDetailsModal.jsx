@@ -17,8 +17,6 @@ const ExamDetailsModal = ({
   const [checkingAttempt, setCheckingAttempt] = useState(false);
   const [hasAttempted, setHasAttempted] = useState(null); // null = not checked yet
 
-
-
   // 🔎 Fetch attempt status whenever modal opens
   useEffect(() => {
     const fetchAttemptStatus = async () => {
@@ -53,8 +51,6 @@ const ExamDetailsModal = ({
 
   if (!exam) return null;
   const { title, description, status, id } = exam;
-
-
 
   // 🔎 Unregister
   const unRegister = async (examId) => {
@@ -111,17 +107,27 @@ const ExamDetailsModal = ({
 
     // Completed but not attempted → Absent
     if (status === "Completed" && hasAttempted === false) {
-      return null;
+      return (
+        <div className="w-100 d-flex justify-content-end">
+          <Button variant="secondary" onClick={handleClose}>
+            Close
+          </Button>
+        </div>
+      );
     }
 
     if (status === "Upcoming") {
+      const now = new Date();
+      const startTime = exam.startTime ? new Date(exam.startTime) : null;
+      const canStart = startTime && now >= startTime;
+
       if (confirmUnregister) {
         return (
-          <div className="d-flex justify-content-between w-100">
+          <div className="d-flex justify-content-between w-100 align-items-center">
             <span className="text-danger fw-semibold">
               Are you sure you want to unregister?
             </span>
-            <div className="d-flex flex-row justify-content-center align-items-center">
+            <div className="d-flex flex-row align-items-center">
               <Button
                 variant="outline-secondary"
                 onClick={() => setConfirmUnregister(false)}
@@ -145,8 +151,9 @@ const ExamDetailsModal = ({
       }
 
       return (
-        <div className="d-flex w-100 justify-content-between">
-          <div>
+        <div className="d-flex w-100 justify-content-between align-items-start">
+          {/* Left buttons */}
+          <div className="d-flex">
             <Button
               variant="outline-danger"
               onClick={() => setConfirmUnregister(true)}
@@ -157,9 +164,23 @@ const ExamDetailsModal = ({
               Close
             </Button>
           </div>
-          <Button variant="primary" onClick={() => onStartExam?.(id)}>
-            Start
-          </Button>
+
+          {/* Right start button */}
+          <div className="d-flex flex-column align-items-end">
+            <Button
+              variant={canStart ? "primary" : "outline-secondary"}
+              disabled={!canStart}
+              className={!canStart ? "opacity-75 fw-semibold" : ""}
+              onClick={() => canStart && onStartExam?.(id)}
+            >
+              {canStart ? "Start" : "Not Available"}
+            </Button>
+            {!canStart && (
+              <small className="text-muted mt-1">
+                Starts at {startTime?.toLocaleString() || "N/A"}
+              </small>
+            )}
+          </div>
         </div>
       );
     }
@@ -171,7 +192,7 @@ const ExamDetailsModal = ({
             Close
           </Button>
           <Button variant="primary" onClick={() => onStartExam?.(exam, true)}>
-            Start Late
+            Start
           </Button>
         </div>
       );

@@ -1,8 +1,16 @@
 import { useEffect, useState } from "react";
 import ExamStatusCard from "../../../components/Exam/ExamStatusCard";
 import StudentResultInsight from "./StudentResultInsight";
+import ResultHeader from "./ResultHeader";
 
-const StudentResultView = ({searchTerm}) => {
+const StudentResultView = () => {
+
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const role = user.role;
+
+  const [showFilterPane, setShowFilterPane] = useState(false);
+  const [filters, setFilters] = useState({});
+
   const [exams, setExams] = useState([]);
   const [selectedExam, setSelectedExam] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -57,15 +65,52 @@ const StudentResultView = ({searchTerm}) => {
     fetchStudentExams();
   }, []);
 
-  const filteredExams = exams.filter((exam) => {
-    const lower = searchTerm.toLowerCase();
-    return (
-      exam.title.toLowerCase().includes(lower) ||
-      exam.createdBy.toLowerCase().includes(lower) ||
-      String(exam.score).includes(lower) ||
-      String(exam.grade).toLowerCase().includes(lower)
-    );
+    const filteredExams = exams.filter((exam) => {
+    // Filter by title
+    if (
+      filters.title &&
+      !exam.title.toLowerCase().includes(filters.title.toLowerCase())
+    ) {
+      return false;
+    }
+
+    // Filter by start date
+    if (filters.startDate) {
+      const examStart = new Date(exam.dateRange.split(" - ")[0]); // take start of date range
+      if (examStart < new Date(filters.startDate)) {
+        return false;
+      }
+    }
+
+    // Filter by end date
+    if (filters.endDate) {
+      const examEnd = new Date(exam.dateRange.split(" - ").pop()); // take end of date range
+      if (examEnd > new Date(filters.endDate)) {
+        return false;
+      }
+    }
+
+    // Filter by marks
+    if (filters.minMarks !== null && exam.totalMarks < filters.minMarks) {
+      return false;
+    }
+    if (filters.maxMarks !== null && exam.totalMarks > filters.maxMarks) {
+      return false;
+    }
+
+    // Filter by status
+    if (filters.status && exam.status !== filters.status) {
+      return false;
+    }
+
+    return true;
   });
+
+  // Handle applying filters
+  const handleApplyFilters = (newFilters) => {
+    setFilters(newFilters);
+    setShowFilterPane(false);
+  };
 
   if (loading) return <p>Loading your results...</p>;
   if (error) return <p className="text-danger">{error}</p>;
@@ -73,6 +118,13 @@ const StudentResultView = ({searchTerm}) => {
   return (
      
     <>
+      <ResultHeader
+          role={role}
+          filters={filters}
+          showFilterPane={showFilterPane}
+          setShowFilterPane={setShowFilterPane}
+          handleApplyFilters={handleApplyFilters}
+        />
       <div className="d-flex flex-wrap gap-3">
         {filteredExams.length > 0 ? (
           filteredExams.map((exam) => (

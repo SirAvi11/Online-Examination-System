@@ -1,6 +1,6 @@
 const express = require('express');
 const { 
-  getAllModules, 
+  getModules, 
   createModule, 
   updateModule, 
   deleteModule, 
@@ -11,7 +11,7 @@ const authMiddleware = require('../middleware/authMiddleware');
 const router = express.Router();
 
 // All routes now require authentication
-router.get('/', authMiddleware, getAllModules);
+router.get('/', authMiddleware, getModules);
 router.post('/', authMiddleware, createModule);
 router.put('/:id', authMiddleware, updateModule);
 router.delete('/:id', authMiddleware, deleteModule);

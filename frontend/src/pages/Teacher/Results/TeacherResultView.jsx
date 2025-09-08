@@ -1,8 +1,15 @@
 import { useEffect, useState } from "react";
 import ResultInsight from "./ResultInsight";
 import ExamStatusCard from "../../../components/Exam/ExamStatusCard";
+import ResultHeader from "./ResultHeader";
 
-const TeacherResultView = ({searchTerm}) => {
+const TeacherResultView = () => {
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const role = user.role;
+
+  const [showFilterPane, setShowFilterPane] = useState(false);
+  const [filters, setFilters] = useState({});
+
   const [rawExamData, setRawExamData] = useState([]);
   const [uiExamData, setUiExamData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -14,12 +21,15 @@ const TeacherResultView = ({searchTerm}) => {
       setLoading(true);
       setError(null);
 
-      const response = await fetch("http://localhost:5000/api/exams/completed", {
-        headers: {
-          "Content-Type": "application/json",
-          "x-auth-token": localStorage.getItem("token"),
-        },
-      });
+      const response = await fetch(
+        "http://localhost:5000/api/exams/completed",
+        {
+          headers: {
+            "Content-Type": "application/json",
+            "x-auth-token": localStorage.getItem("token"),
+          },
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to fetch completed exams");
@@ -104,23 +114,72 @@ const TeacherResultView = ({searchTerm}) => {
   };
 
   const filteredExams = uiExamData.filter((exam) => {
-    const lower = searchTerm.toLowerCase();
-    return (
-      exam.title.toLowerCase().includes(lower) ||
-      String(exam.totalMarks).includes(lower) ||
-      exam.status.toLowerCase().includes(lower)
-    );
+    // Filter by title
+    if (
+      filters.title &&
+      !exam.title.toLowerCase().includes(filters.title.toLowerCase())
+    ) {
+      return false;
+    }
+
+    // Filter by start date
+    if (filters.startDate) {
+      const examStart = new Date(exam.dateRange.split(" - ")[0]); // take start of date range
+      if (examStart < new Date(filters.startDate)) {
+        return false;
+      }
+    }
+
+    // Filter by end date
+    if (filters.endDate) {
+      const examEnd = new Date(exam.dateRange.split(" - ").pop()); // take end of date range
+      if (examEnd > new Date(filters.endDate)) {
+        return false;
+      }
+    }
+
+    // Filter by marks
+    if (filters.minMarks !== null && exam.totalMarks < filters.minMarks) {
+      return false;
+    }
+    if (filters.maxMarks !== null && exam.totalMarks > filters.maxMarks) {
+      return false;
+    }
+
+    // Filter by status
+    if (filters.status && exam.status !== filters.status) {
+      return false;
+    }
+
+    return true;
   });
 
-  if (loading) return <p className="text-center py-5">Loading completed exams...</p>;
+  // Handle applying filters
+  const handleApplyFilters = (newFilters) => {
+    setFilters(newFilters);
+    setShowFilterPane(false);
+  };
+
+  if (loading)
+    return <p className="text-center py-5">Loading completed exams...</p>;
   if (error) return <p className="text-center text-danger py-5">{error}</p>;
 
   return (
     <>
       {selectedExam ? (
-        <ResultInsight examId={selectedExam._id} onBack={() => setSelectedExam(null)} />
+        <ResultInsight
+          examId={selectedExam._id}
+          onBack={() => setSelectedExam(null)}
+        />
       ) : (
         <>
+          <ResultHeader
+            role={role}
+            filters={filters}
+            showFilterPane={showFilterPane}
+            setShowFilterPane={setShowFilterPane}
+            handleApplyFilters={handleApplyFilters}
+          />
           <section className="d-flex flex-wrap gap-3">
             {filteredExams.length > 0 ? (
               filteredExams.map((exam) => (
@@ -146,7 +205,9 @@ const TeacherResultView = ({searchTerm}) => {
               ))
             ) : (
               <div className="text-center py-5" style={{ width: "100%" }}>
-                <h5 className="text-muted mb-2">No completed exams available</h5>
+                <h5 className="text-muted mb-2">
+                  No completed exams available
+                </h5>
                 <p className="text-muted small">
                   Once you’ve conducted exams, they will appear here for review.
                 </p>

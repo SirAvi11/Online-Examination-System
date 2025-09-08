@@ -8,4 +8,7 @@ const moduleSchema = new mongoose.Schema({
   date: { type: Date, default: Date.now }
 });
 
+moduleSchema.set('toJSON', { virtuals: true });
+moduleSchema.set('toObject', { virtuals: true });
+
 module.exports = mongoose.model('Module', moduleSchema);
