@@ -3,6 +3,8 @@ const dotenv = require('dotenv');
 const connectDB = require('./config/db');
 const path = require('path');
 const cors = require('cors');
+const cron = require('node-cron');
+const Exam = require('./models/Exam.js');
 const userRoutes = require('./routes/userRoutes');
 const teacherRoutes = require('./routes/teacherRoutes');
 const moduleRoutes = require('./routes/moduleRoutes.js');
@@ -52,6 +54,16 @@ app.use(express.static(path.join(__dirname, "../frontend/build")));
 // IMPORTANT: Catch-all route for client-side routing
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../frontend/build/index.html'));
+});
+
+// 🔹 CRON JOB - Run every 1 minute to update exam statuses
+cron.schedule('* * * * *', async () => {
+  try {
+    await Exam.updateAllStatuses();
+    console.log("✅ Exam statuses updated");
+  } catch (err) {
+    console.error("❌ Error updating exam statuses:", err.message);
+  }
 });
 
 const PORT = process.env.PORT || 5000;

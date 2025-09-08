@@ -3,6 +3,9 @@ import { InputGroup, FormControl, Button } from "react-bootstrap";
 import { Search, Funnel } from "react-bootstrap-icons";
 import StudentResultView from "./StudentResultView";
 import TeacherResultView from "./TeacherResultView";
+import ResultViewFilterPane from "./ResultViewFilterPane";
+
+import "./ResultView.css";
 
 const ResultView = () => {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -13,10 +16,16 @@ const ResultView = () => {
   const [showFilterPane, setShowFilterPane] = useState(false);
   const [filters, setFilters] = useState({});
 
+  // Handle applying filters
+  const handleApplyFilters = (newFilters) => {
+    setFilters(newFilters);
+    setShowFilterPane(false);
+  };
+
   return (
-    <div className="container p-4">
+    <div className="container p-4" style={{position: "relative"}}>
       {/* 🏷️ Shared Header */}
-      <div className="mb-4 d-flex flex-row gap-2 justify-content-between align-items-center">
+      <div className="mb-4 d-flex flex-row gap-2 justify-content-between align-items-start" style={{position: "relative"}}>
         <div className="left-header">
           <h3>Exam Results</h3>
           <p className="text-muted">
@@ -25,20 +34,9 @@ const ResultView = () => {
               : "View completed exams you have conducted."}
           </p>
         </div>
-          {/* Search Bar */}
-          <InputGroup style={{ maxWidth: "400px", flexGrow: 1 }}>
-            <InputGroup.Text>
-              <Search />
-            </InputGroup.Text>
-            <FormControl
-              placeholder="Search exams..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </InputGroup>
-          
-          
-          {/* Filter Button - Updated */}
+
+        {/* Filter Button - Updated */}
+        <div className='d-flex' style={{position: "relative"}}>
           <div ref={filterButtonRef}>
             <Button
               variant={Object.keys(filters).length > 0 ? "primary" : "outline-secondary"}
@@ -51,10 +49,17 @@ const ResultView = () => {
               )}
             </Button>
           </div>
+        </div>
+        
+        {/* (Optional) Right-side buttons in future */}
 
-          
-
-          {/* (Optional) Right-side buttons in future */}
+        {/* Filter Pane */}
+        {showFilterPane && (
+          <ResultViewFilterPane
+            onApply={handleApplyFilters}
+            onClose={() => setShowFilterPane(false)}
+          />
+        )}
       </div>
 
       {/* 🔄 Role-specific Views */}

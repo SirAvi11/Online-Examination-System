@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import ExamSubmissionModal from "./ExamSubmissionModal";
 import './ExamWindow.css'
@@ -12,25 +12,23 @@ const ExamWindow = () => {
   const query = useQuery();
   const examId = query.get("examId");
   const token = query.get("token");
-
   const [loading, setLoading] = useState(true);
   const [exam, setExam] = useState(null);
   const [currentQ, setCurrentQ] = useState(0);
   const [showSubmitModal, setShowSubmitModal] = useState(false);
+  const hasStartedAttempt = useRef(false);
 
   // ✅ Track answers and statuses
   const [answers, setAnswers] = useState([]);
 
   // Timer state
-  const [timeLeft, setTimeLeft] = useState({
-    hours: 1,
-    minutes: 30,
-    seconds: 0
-  });
+  const [timeLeft, setTimeLeft] = useState(null);
 
   // Fetch exam data
   useEffect(() => {
     const fetchExam = async () => {
+      if (hasStartedAttempt.current) return; // prevent double call
+      hasStartedAttempt.current = true;
       try {
         const res = await fetch(`http://localhost:5000/api/exams/${examId}`, {
           headers: { 'x-auth-token': token },
@@ -60,6 +58,18 @@ const ExamWindow = () => {
           state: i === 0 ? 'active' : 'not-attempted'
         }));
         setAnswers(initialAnswers);
+
+        // ✅ Compute time left from server's endTime
+        const now = new Date();
+        const end = new Date(data.endTime);
+        let diff = Math.max(0, end - now); // ms left (no negatives)
+
+        const totalSeconds = Math.floor(diff / 1000);
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+
+        setTimeLeft({ hours, minutes, seconds });
       } catch (err) {
         console.error(err);
         setExam(null);
@@ -73,7 +83,9 @@ const ExamWindow = () => {
  // Timer effect
   useEffect(() => {
     const timer = setInterval(() => {
+      
       setTimeLeft(prev => {
+        if (!prev) return prev;
         let { hours, minutes, seconds } = prev;
 
         if (seconds > 0) {

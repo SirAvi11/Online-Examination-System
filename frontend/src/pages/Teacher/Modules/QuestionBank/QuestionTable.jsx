@@ -3,7 +3,7 @@ import "./QuestionTable.css";
 
 const QuestionTable = ({ questions, selectedQuestionIds, onSelect, onSelectAll, onExpand, expandedRow }) => {
   return (
-    <div className="table-scroll-container h-100">
+    <div className="table-scroll-container">
       <table className="custom-table">
         <thead>
           <tr>

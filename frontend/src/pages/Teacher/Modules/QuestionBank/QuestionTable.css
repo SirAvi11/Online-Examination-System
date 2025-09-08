@@ -1,5 +1,5 @@
 .table-scroll-container {
-  min-height: 500px;
+  height: 600px;
   overflow-y: auto;
   overflow-x: hidden;
   position: relative;

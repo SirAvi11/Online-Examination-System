@@ -38,11 +38,26 @@ const StudentExamView = () => {
   const handleCardClick = (exam) => setSelectedExam(exam);
 
   // ✅ Open Exam in a new window
-  const handleStartExam = (exam) => {
+  const handleStartExam = (exam, isLate = false) => {
     setSelectedExam(null);
     const token = localStorage.getItem("token");
 
-    const url = `/exam-window?examId=${exam.id}&token=${encodeURIComponent(token)}`;
+    let timeLeft = exam.duration * 60 * 1000; // default: full duration in ms
+
+    if (isLate) {
+      const now = new Date();
+      const examEnd = new Date(exam.endTime);
+
+      // Remaining time = examEnd - now
+      timeLeft = examEnd - now;
+
+      if (timeLeft <= 0) {
+        alert("Exam has already ended.");
+        return;
+      }
+    }
+
+    const url = `/exam-window?examId=${exam.id}&token=${encodeURIComponent(token)}&timeLeft=${timeLeft}`;
     window.open(
       url,
       "_blank",
@@ -76,7 +91,7 @@ const StudentExamView = () => {
       totalQuestions: exam.totalQuestions,
       status:
         exam.status === "In Progress"
-          ? "Active"
+          ? "In Progress"
           : exam.status === "Completed"
           ? "Completed"
           : "Upcoming",
@@ -182,7 +197,7 @@ const StudentExamView = () => {
         show={!!selectedExam}
         handleClose={() => setSelectedExam(null)}
         exam={selectedExam}
-        onStartExam={() => handleStartExam(selectedExam)}
+        onStartExam={handleStartExam}
         onUnregisterSuccess={fetchExams}
         onShowInsights={(id) => console.log("Show Insights:", id)}
       />

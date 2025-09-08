@@ -4,7 +4,6 @@ const Exam = require("../models/Exam");
 const Question = require("../models/Question");
 
 // Start attempt (called when exam window is opened)
-// Start attempt (called when exam window is opened)
 const startAttempt = async (req, res) => {
   try {
     const { examId } = req.body;
@@ -66,8 +65,6 @@ const startAttempt = async (req, res) => {
     res.status(500).json({ error: "Could not start attempt" });
   }
 };
-
-
 
 // Update attempt (save progress, tab switches, etc.)
 const updateAttempt = async (req, res) => {
@@ -136,4 +133,21 @@ const submitAttempt = async (req, res) => {
   }
 };
 
-module.exports = { startAttempt, updateAttempt, submitAttempt };
+//Check if exam paper was already attempted
+const checkAttempt = async (req, res) => {
+  try {
+    const { examId } = req.params;
+    const studentId = req.user.userId;
+
+    const attempt = await StudentAttempt.findOne({ examId, studentId });
+    if (attempt) {
+      return res.json({ attempted: true });
+    }
+    res.json({ attempted: false });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+module.exports = { startAttempt, updateAttempt, submitAttempt, checkAttempt };
