@@ -121,6 +121,7 @@ const StudentResultView = () => {
       <ResultHeader
           role={role}
           filters={filters}
+          setFilters={setFilters}
           showFilterPane={showFilterPane}
           setShowFilterPane={setShowFilterPane}
           handleApplyFilters={handleApplyFilters}
