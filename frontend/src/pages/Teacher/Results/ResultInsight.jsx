@@ -45,6 +45,30 @@ const ResultInsight = ({ examId, onBack }) => {
     }
   }, [examId]);
 
+  const publishResults = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`http://localhost:5000/api/exams/${examId}/publish`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "x-auth-token": token,
+        },
+      });
+
+      if (!res.ok) throw new Error("Failed to publish");
+
+      const data = await res.json();
+      alert("✅ " + data.message);
+
+      // Refresh data to reflect published status
+      setRawData({ ...rawData, exam: data.exam });
+    } catch (err) {
+      console.error(err);
+      alert("❌ Could not publish results");
+    }
+  };
+
   
   // calculate average score
   const avgScore =
@@ -86,16 +110,28 @@ const ResultInsight = ({ examId, onBack }) => {
       {rawData && <ExamResultCard exam={rawData.exam} counts={rawData.counts} attemptedStudents={attemptedStudents} avgScore={avgScore}/>}
 
       {/* Alert to publish results */}
-      <div className="alert alert-warning d-flex justify-content-between align-items-center" role="alert">
+      <div className={`alert ${rawData.exam.resultPublished ? "alert-success" : "alert-warning"} d-flex justify-content-between align-items-center`} role="alert">
         <div className="d-flex align-items-center">
           <i className="bi bi-exclamation-circle-fill me-2"></i>
-          <span>Exam results aren’t published yet.</span>
+          <span>
+            {rawData.exam.resultPublished
+              ? "Exam results are published."
+              : "Exam results aren’t published yet."}
+          </span>
         </div>
-        <div className="d-flex">
-          <button type="button" className="btn btn-outline-primary btn-sm me-2">Publish without Feedback</button>
-          <button type="button" className="btn btn-primary btn-sm">Publish with Feedback</button>
-        </div>
+        {!rawData.exam.resultPublished && (
+          <div className="d-flex">
+            <button
+              type="button"
+              className="btn btn-primary btn-sm"
+              onClick={publishResults}
+            >
+              Publish Results
+            </button>
+          </div>
+        )}
       </div>
+
 
       {/* ✅ Pass student lists */}
       <StudentTable students={[...attemptedStudents, ...absentStudents]} examId={examId} avgScore={avgScore} />

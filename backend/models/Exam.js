@@ -50,6 +50,10 @@ const examSchema = new mongoose.Schema({
   },
 
   createdAt: { type: Date, default: Date.now },
+  resultPublished: { 
+    type: Boolean, 
+    default: false 
+  },
 });
 
 // Add a pre-save middleware to automatically update status based on current time

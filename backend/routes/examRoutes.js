@@ -10,7 +10,8 @@ const {
   getCompletedExamsByTeacher,
   getCompletedExamsByStudent,
   getReportCard,
-  getStudentAttemptReport
+  getStudentAttemptReport,
+  publishResult
 } = require("../controllers/examController");
 const authMiddleware = require("../middleware/authMiddleware");
 
@@ -42,6 +43,8 @@ router.get("/:examId/student/:studentId", authMiddleware, getStudentAttemptRepor
 
 // GET /api/exams/student/completed - Get completed exams for logged-in student
 router.get("/student/completed", authMiddleware, getCompletedExamsByStudent);
+
+router.put("/:id/publish", authMiddleware, publishResult);
 
 
 

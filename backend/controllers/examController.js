@@ -516,6 +516,7 @@ const getReportCard = async (req, res) => {
         numberOfQuestions: exam.totalQuestions ?? (exam.questions?.length || 0),
         duration: exam.duration,              // minutes
         totalMarks: exam.totalMarks || 0,
+        resultPublished: exam.resultPublished,
         passMark,                             // 40% rule
       },
       counts: {
@@ -688,6 +689,7 @@ const getCompletedExamsByStudent = async (req, res) => {
           totalMarks: exam.totalMarks,
           createdBy: exam.createdBy?.name || "Unknown Teacher",
           completedOn: exam.endTime,
+          resultPublished: exam.resultPublished
         },
         result: {
           score,
@@ -717,9 +719,19 @@ const getCompletedExamsByStudent = async (req, res) => {
   }
 };
 
+const publishResult = async (req, res) => {
+  try {
+    const exam = await Exam.findById(req.params.id);
+    if (!exam) return res.status(404).json({ message: "Exam not found" });
 
+    exam.resultPublished = true;
+    await exam.save();
 
-
+    res.json({ message: "Results published", exam });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+}
 
 module.exports = { 
   getExamsByTeacher, 
@@ -731,5 +743,6 @@ module.exports = {
   getCompletedExamsByTeacher,
   getCompletedExamsByStudent,
   getReportCard,
-  getStudentAttemptReport
+  getStudentAttemptReport,
+  publishResult
 };

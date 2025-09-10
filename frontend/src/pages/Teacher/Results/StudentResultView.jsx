@@ -33,6 +33,20 @@ const StudentResultView = () => {
 
       const mapped = data.map((entry) => {
         const { exam, result, feedback } = entry;
+
+        const start = new Date(exam.completedOn);
+        const startDateStr = start.toLocaleDateString(undefined, {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        });
+        const startTimeStr = start.toLocaleTimeString(undefined, {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+        });
+
+
         return {
           id: exam.examId,
           title: exam.title,
@@ -40,6 +54,8 @@ const StudentResultView = () => {
           totalMarks: exam.totalMarks,
           duration: exam.duration,
           completedOn: new Date(exam.completedOn).toLocaleString(),
+          dateRange: startDateStr,
+          timeRange: startTimeStr,
           score: result.score,
           percentage: result.percentage,
           grade: result.grade,
@@ -49,6 +65,7 @@ const StudentResultView = () => {
             ? new Date(result.submittedAt).toLocaleString()
             : null,
           timeSpent: result.timeSpentMinutes,
+          resultPublished: exam.resultPublished,
           feedback,
         };
       });
@@ -65,7 +82,7 @@ const StudentResultView = () => {
     fetchStudentExams();
   }, []);
 
-    const filteredExams = exams.filter((exam) => {
+  const filteredExams = exams.filter((exam) => {
     // Filter by title
     if (
       filters.title &&
@@ -133,8 +150,8 @@ const StudentResultView = () => {
               key={exam.id}
               title={exam.title}
               subtitle={`By ${exam.createdBy}`}
-              dateRange={exam.completedOn}
-              timeRange={exam.timeSpent ? `${exam.timeSpent} mins spent` : "—"}
+              dateRange={exam.dateRange}
+              timeRange={exam.timeRange}
               totalMarks={exam.totalMarks}
               status={`${exam.score}/${exam.totalMarks} (${exam.percentage}%)`}
               statusVariant={exam.pass ? "success" : "danger"}
