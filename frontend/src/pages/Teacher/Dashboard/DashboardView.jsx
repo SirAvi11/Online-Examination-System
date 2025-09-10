@@ -52,10 +52,10 @@ const DashboardView = ({ username }) => {
       },
       {
         title: "Pending Evaluations",
-        value: `${stats.averageScoresPercentage || 0}%`,
+        value: `${stats.pendingEvaluations || 0}`,
         subtitle:
-          stats.percentChangeBetweenLastTwoExams != null
-            ? `${stats.percentChangeBetweenLastTwoExams > 0 ? "+" : ""}${stats.percentChangeBetweenLastTwoExams}% from last exam`
+          stats.pendingEvaluationsPercentage != null
+            ? `${stats.pendingEvaluationsPercentage > 0 ? "" : ""}${stats.pendingEvaluationsPercentage}% of all exams`
             : "No previous data",
         icon: "fa-clipboard-list",
         tooltip: "Exams awaiting grading."

@@ -16,8 +16,8 @@ const DashboardCard = ({
   const cardContent = (
     <div className={cardClassName}>
       <div className="d-flex justify-content-between align-items-center mb-1">
-        {icon && <i className={`fa ${icon} fa-lg`}></i>}
         <span className={titleClassName}>{title}</span>
+        {icon && <i className={`fas ${icon} fa-lg`}></i>}
       </div>
       <div className={valueClassName}>{value}</div>
       <div className={subtitleClassName}>{subtitle}</div>

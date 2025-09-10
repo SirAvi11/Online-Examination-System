@@ -16,6 +16,10 @@ const TeacherResultView = () => {
   const [error, setError] = useState(null);
   const [selectedExam, setSelectedExam] = useState(null);
 
+  // ✅ Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 15; // adjust as needed
+
   const fetchExams = async () => {
     try {
       setLoading(true);
@@ -114,50 +118,48 @@ const TeacherResultView = () => {
   };
 
   const filteredExams = uiExamData.filter((exam) => {
-    // Filter by title
     if (
       filters.title &&
       !exam.title.toLowerCase().includes(filters.title.toLowerCase())
     ) {
       return false;
     }
-
-    // Filter by start date
     if (filters.startDate) {
-      const examStart = new Date(exam.dateRange.split(" - ")[0]); // take start of date range
-      if (examStart < new Date(filters.startDate)) {
-        return false;
-      }
+      const examStart = new Date(exam.dateRange.split(" - ")[0]);
+      if (examStart < new Date(filters.startDate)) return false;
     }
-
-    // Filter by end date
     if (filters.endDate) {
-      const examEnd = new Date(exam.dateRange.split(" - ").pop()); // take end of date range
-      if (examEnd > new Date(filters.endDate)) {
-        return false;
-      }
+      const examEnd = new Date(exam.dateRange.split(" - ").pop());
+      if (examEnd > new Date(filters.endDate)) return false;
     }
-
-    // Filter by marks
     if (filters.minMarks !== null && exam.totalMarks < filters.minMarks) {
       return false;
     }
     if (filters.maxMarks !== null && exam.totalMarks > filters.maxMarks) {
       return false;
     }
-
-    // Filter by status
     if (filters.status && exam.status !== filters.status) {
       return false;
     }
-
     return true;
   });
+
+  // ✅ Pagination logic
+  const totalPages = Math.ceil(filteredExams.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const currentExams = filteredExams.slice(startIndex, startIndex + itemsPerPage);
+
+  const goToPage = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
 
   // Handle applying filters
   const handleApplyFilters = (newFilters) => {
     setFilters(newFilters);
     setShowFilterPane(false);
+    setCurrentPage(1); // ✅ reset to first page on filter change
   };
 
   if (loading)
@@ -181,15 +183,20 @@ const TeacherResultView = () => {
             setShowFilterPane={setShowFilterPane}
             handleApplyFilters={handleApplyFilters}
           />
-          <section className="d-flex flex-wrap gap-3">
-            {filteredExams.length > 0 ? (
-              filteredExams.map((exam) => (
+
+          <section style={{
+            display: 'flex',
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            gap: '1rem'
+          }}>
+            {currentExams.length > 0 ? (
+              currentExams.map((exam) => (
                 <div
                   key={exam.id}
                   style={{
-                    flex: "1 1 calc(25% - 1rem)",
-                    minWidth: "16rem",
-                    maxWidth: "20rem",
+                    flex: '1 1 calc(33.333% - 1rem)',
+                    maxWidth: '15rem'
                   }}
                 >
                   <ExamStatusCard
@@ -206,15 +213,54 @@ const TeacherResultView = () => {
               ))
             ) : (
               <div className="text-center py-5" style={{ width: "100%" }}>
-                <h5 className="text-muted mb-2">
-                  No completed exams available
-                </h5>
+                <h5 className="text-muted mb-2">No completed exams available</h5>
                 <p className="text-muted small">
                   Once you’ve conducted exams, they will appear here for review.
                 </p>
               </div>
             )}
           </section>
+
+          {/* ✅ Pagination Controls */}
+          {filteredExams.length > itemsPerPage && (
+            <div className="d-flex justify-content-center mt-4">
+              <nav>
+                <ul className="pagination mb-0">
+                  <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
+                    <button
+                      className="page-link"
+                      onClick={() => goToPage(currentPage - 1)}
+                    >
+                      Previous
+                    </button>
+                  </li>
+
+                  {Array.from({ length: totalPages }, (_, index) => (
+                    <li
+                      key={index}
+                      className={`page-item ${currentPage === index + 1 ? "active" : ""}`}
+                    >
+                      <button
+                        className="page-link"
+                        onClick={() => goToPage(index + 1)}
+                      >
+                        {index + 1}
+                      </button>
+                    </li>
+                  ))}
+
+                  <li className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}>
+                    <button
+                      className="page-link"
+                      onClick={() => goToPage(currentPage + 1)}
+                    >
+                      Next
+                    </button>
+                  </li>
+                </ul>
+              </nav>
+            </div>
+          )}
         </>
       )}
     </>

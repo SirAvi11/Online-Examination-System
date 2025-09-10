@@ -20,7 +20,7 @@ const ResultHeader = ({
   return (
     <>
       <div
-        className="mb-4 d-flex flex-row gap-2 justify-content-between align-items-start"
+        className="mb-2 d-flex flex-row gap-2 justify-content-between align-items-start"
         style={{ position: "relative" }}
       >
         {/* Left Header */}
