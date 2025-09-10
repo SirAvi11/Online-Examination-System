@@ -7,6 +7,7 @@ const cron = require('node-cron');
 const Exam = require('./models/Exam.js');
 const userRoutes = require('./routes/userRoutes');
 const teacherRoutes = require('./routes/teacherRoutes');
+const studentRoutes = require('./routes/studentRoutes');
 const moduleRoutes = require('./routes/moduleRoutes.js');
 const questionRoutes = require("./routes/questionRoutes.js");
 const examRoutes = require('./routes/examRoutes.js');
@@ -34,6 +35,7 @@ app.use(cors(corsOptions));
 // API Routes
 app.use('/api/users', userRoutes);
 app.use('/api/teachers', teacherRoutes);
+app.use('/api/student', studentRoutes);
 app.use('/api/modules', moduleRoutes);
 app.use("/api/questions", questionRoutes);
 app.use("/api/exams", examRoutes);

@@ -39,6 +39,7 @@ const DashboardView = ({ username }) => {
         value: stats.upcomingExams,
         subtitle: `Total Exams: ${stats.totalExams}`,
         icon: "fa-file-alt",
+        tooltip: "Total exams scheduled ahead."
       },
       {
         title: "Students Registered",
@@ -47,21 +48,24 @@ const DashboardView = ({ username }) => {
           : 0,
         subtitle: "In upcoming exams",
         icon: "fa-users",
+        tooltip: "Students enrolled in upcoming exams."
       },
       {
-        title: "Average Scores",
+        title: "Pending Evaluations",
         value: `${stats.averageScoresPercentage || 0}%`,
         subtitle:
           stats.percentChangeBetweenLastTwoExams != null
             ? `${stats.percentChangeBetweenLastTwoExams > 0 ? "+" : ""}${stats.percentChangeBetweenLastTwoExams}% from last exam`
             : "No previous data",
-        icon: "fa-chart-line",
+        icon: "fa-clipboard-list",
+        tooltip: "Exams awaiting grading."
       },
       {
         title: "Modules",
         value: stats.totalModules,
         subtitle: `Total Questions: ${stats.totalQuestions}`,
         icon: "fa-layer-group",
+        tooltip:"Total subjects and question banks."
       },
     ];
   }, [dashboardData]);
@@ -262,11 +266,11 @@ const DashboardView = ({ username }) => {
             </div>
           </div>
         </div>
-        <div className="main-right-side">
+        {/* <div className="main-right-side">
           <DashboardInfoPane title="Upcoming Exams" subtitle="Interactive Calendar">
             <DashboardCalendar events={upcomingEvents} />
           </DashboardInfoPane>
-        </div>
+        </div> */}
       </div>
     </div>
   );

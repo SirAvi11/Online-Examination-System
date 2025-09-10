@@ -3,7 +3,7 @@ import Dashboard from '../../components/Dashboard/Dashboard';
 import Sidebar from '../../components/Dashboard/Sidebar/Sidebar';
 import MainContent from '../../components/Dashboard/MainContent';
 import Header from '../../components/Header/Header';
-import StudentDashboardView from './StudentDashboardView';
+import DashboardView from './Dashboard/DashboardView';
 import StudentExamView from './StudentExamView';
 import ResultsView from '../Teacher/Results/ResultView';
 import { useNavigate } from 'react-router-dom';
@@ -27,14 +27,14 @@ const StudentView = () => {
   const renderView = () => {
     switch (activeView) {
       case 'dashboard':
-        return <StudentDashboardView username={user?.name} />;
+        return <DashboardView username={user?.name} />;
       case 'exams':
         return <StudentExamView />;
       case 'results':
         return <ResultsView />;
       // Add more cases as needed
       default:
-        return <StudentDashboardView />;
+        return <DashboardView />;
     }
   };
 
