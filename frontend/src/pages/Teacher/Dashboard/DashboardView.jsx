@@ -266,11 +266,11 @@ const DashboardView = ({ username }) => {
             </div>
           </div>
         </div>
-        {/* <div className="main-right-side">
+        <div className="main-right-side">
           <DashboardInfoPane title="Upcoming Exams" subtitle="Interactive Calendar">
             <DashboardCalendar events={upcomingEvents} />
           </DashboardInfoPane>
-        </div> */}
+        </div>
       </div>
     </div>
   );

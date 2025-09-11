@@ -17,17 +17,14 @@ const localizer = dateFnsLocalizer({
 
 const DashboardCalendar = ({ events }) => {
   return (
-    <div style={{ height: "400px" }}>
-      <Calendar
-        localizer={localizer}
-        events={events}
-        startAccessor="start"
-        endAccessor="end"
-        style={{ height: 400 }}
-        views={["month", "week", "day"]}
-        popup
-      />
-    </div>
+    <Calendar
+      localizer={localizer}
+      events={events}
+      startAccessor="start"
+      endAccessor="end"
+      views={["month", "week", "day"]}
+      popup
+    />
   );
 };
 
