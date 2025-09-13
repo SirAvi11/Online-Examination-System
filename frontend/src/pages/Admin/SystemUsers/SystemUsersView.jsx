@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Dropdown, DropdownButton, Table, Button, Nav } from "react-bootstrap";
 import SuccessNotification from "../../Teacher/Modules/QuestionBank/SuccessNotification";
+import RejectModal from "./RejectModal";
 import "./SystemUsersView.css";
 
 const SystemUsersView = () => {
@@ -9,6 +10,9 @@ const SystemUsersView = () => {
   const [users, setUsers] = useState([]);   // <-- fetched data
   const [loading, setLoading] = useState(true);
   const [successInfo, setSuccessInfo] = useState({ show: false, message: "" });
+
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
 
 
   // Fetch users from backend
@@ -88,6 +92,20 @@ const SystemUsersView = () => {
     }
   };
 
+  const statusBadge = (status) => {
+    switch (status) {
+      case "Active":
+        return "success";   // green
+      case "Under Review":
+        return "warning text-dark"; // yellow
+      case "Rejected":
+        return "danger";    // red
+      default:
+        return "secondary"; // gray for unknown
+    }
+  };
+
+
   return (
     <div className="teacher-dashboard container-fluid flex-grow-1">
       {/* Header */}
@@ -95,6 +113,7 @@ const SystemUsersView = () => {
         <h1 className="h3 fw-bold m-0">System Users</h1>
         <DropdownButton
           id="role-filter"
+          variant="outline-secondary"
           title={roleFilter}
           onSelect={(val) => {
             if (val) {
@@ -145,9 +164,9 @@ const SystemUsersView = () => {
               <tr>
                 <th style={{ position: "sticky", top: 0, background: "#f8f9fa", zIndex: 1 }}>Name</th>
                 <th style={{ position: "sticky", top: 0, background: "#f8f9fa", zIndex: 1 }}>Email</th>
-                <th style={{ position: "sticky", top: 0, background: "#f8f9fa", zIndex: 1 }}>Role</th>
-                <th style={{ position: "sticky", top: 0, background: "#f8f9fa", zIndex: 1 }}>Status</th>
-                <th style={{ position: "sticky", top: 0, background: "#f8f9fa", zIndex: 1 }}>Registered On</th>
+                <th style={{ position: "sticky", top: 0, background: "#f8f9fa", zIndex: 1, textAlign: "center" }}>Role</th>
+                <th style={{ position: "sticky", top: 0, background: "#f8f9fa", zIndex: 1, textAlign: "center" }}>Status</th>
+                <th style={{ position: "sticky", top: 0, background: "#f8f9fa", zIndex: 1, textAlign: "center" }}>Registered On</th>
                 <th style={{ position: "sticky", top: 0, background: "#f8f9fa", zIndex: 1, textAlign: "center" }}>Actions</th>
               </tr>
             </thead>
@@ -157,13 +176,13 @@ const SystemUsersView = () => {
                   <tr key={user._id}>
                     <td>{user.name}</td>
                     <td>{user.email}</td>
-                    <td>{user.role}</td>
-                    <td>
-                      <span className="badge bg-warning text-dark">
+                    <td style={{ textAlign: "center" }}>{user.role}</td>
+                    <td style={{ textAlign: "center" }}>
+                      <span className={`badge bg-${statusBadge(user.status)}`}>
                         {user.status || "Under Review"}
                       </span>
                     </td>
-                    <td>{new Date(user.createdAt).toLocaleDateString("en-GB")}</td>
+                    <td style={{ textAlign: "center" }}>{new Date(user.createdAt).toLocaleDateString("en-GB")}</td>
                     <td style={{ textAlign: "center" }}>
                       {roleFilter === "Teachers" &&
                       (user.status === "Under Review" || !user.status) ? (
@@ -179,7 +198,10 @@ const SystemUsersView = () => {
                           <Button
                             size="sm"
                             variant="danger"
-                            onClick={() => handleReject(user._id)}
+                            onClick={() => {
+                              setSelectedUser(user);
+                              setShowRejectModal(true);
+                            }}
                           >
                             Reject
                           </Button>
@@ -207,6 +229,30 @@ const SystemUsersView = () => {
       <SuccessNotification 
         successInfo={successInfo} 
         onClose={() => setSuccessInfo({ show: false, message: "" })} 
+      />
+
+      <RejectModal
+        show={showRejectModal}
+        onClose={() => setShowRejectModal(false)}
+        userName={selectedUser?.name}
+        onSubmit={async (reason) => {
+          try {
+            await fetch(`http://localhost:5000/api/users/${selectedUser._id}/reject`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ reason }),
+            });
+
+            setSuccessInfo({ show: true, message: "Teacher rejected successfully!" });
+            setShowRejectModal(false);
+
+            // Refresh users
+            const res = await fetch("http://localhost:5000/api/users");
+            setUsers(await res.json());
+          } catch (err) {
+            console.error(err);
+          }
+        }}
       />
 
     </div>
