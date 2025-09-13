@@ -7,13 +7,12 @@ import "./SystemUsersView.css";
 const SystemUsersView = () => {
   const [roleFilter, setRoleFilter] = useState("Teachers");
   const [statusTab, setStatusTab] = useState("Active");
-  const [users, setUsers] = useState([]);   // <-- fetched data
+  const [users, setUsers] = useState([]); // <-- fetched data
   const [loading, setLoading] = useState(true);
   const [successInfo, setSuccessInfo] = useState({ show: false, message: "" });
 
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
-
 
   // Fetch users from backend
   useEffect(() => {
@@ -43,17 +42,25 @@ const SystemUsersView = () => {
   });
 
   const counts = {
-    activeTeachers: users.filter((u) => u.role === "Teacher" && u.status === "Active").length,
-    underReviewTeachers: users.filter((u) => u.role === "Teacher" && u.status === "Under Review").length,
-    rejectedTeachers: users.filter((u) => u.role === "Teacher" && u.status === "Rejected").length,
-    activeStudents: users.filter((u) => u.role === "Student" && u.status === "Active").length,
+    activeTeachers: users.filter(
+      (u) => u.role === "Teacher" && u.status === "Active"
+    ).length,
+    underReviewTeachers: users.filter(
+      (u) => u.role === "Teacher" && u.status === "Under Review"
+    ).length,
+    rejectedTeachers: users.filter(
+      (u) => u.role === "Teacher" && u.status === "Rejected"
+    ).length,
+    activeStudents: users.filter(
+      (u) => u.role === "Student" && u.status === "Active"
+    ).length,
   };
 
- const handleApprove = async (id) => {
+  const handleApprove = async (id) => {
     try {
       await fetch(`http://localhost:5000/api/users/${id}/approve`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" }
+        headers: { "Content-Type": "application/json" },
       });
 
       // Show notification
@@ -63,7 +70,7 @@ const SystemUsersView = () => {
       setTimeout(async () => {
         const res = await fetch("http://localhost:5000/api/users");
         setUsers(await res.json());
-      }, 500); 
+      }, 500);
     } catch (err) {
       console.error(err);
     }
@@ -77,7 +84,7 @@ const SystemUsersView = () => {
       await fetch(`http://localhost:5000/api/users/${id}/reject`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reason })
+        body: JSON.stringify({ reason }),
       });
 
       // Show notification
@@ -95,13 +102,52 @@ const SystemUsersView = () => {
   const statusBadge = (status) => {
     switch (status) {
       case "Active":
-        return "success";   // green
+        return "success"; // green
       case "Under Review":
         return "warning text-dark"; // yellow
       case "Rejected":
-        return "danger";    // red
+        return "danger"; // red
       default:
         return "secondary"; // gray for unknown
+    }
+  };
+
+  const handleSuspend = async (id) => {
+    try {
+      await fetch(`http://localhost:5000/api/users/${id}/suspend`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "Under Review" }),
+      });
+
+      setSuccessInfo({
+        show: true,
+        message: "Teacher suspended successfully!",
+      });
+
+      // Refresh users
+      const res = await fetch("http://localhost:5000/api/users");
+      setUsers(await res.json());
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleMoveToReview = async (id) => {
+    try {
+      await fetch(`http://localhost:5000/api/users/${id}/reconsider`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" }
+      });
+
+      // Show success notification
+      setSuccessInfo({ show: true, message: "Teacher moved back to Under Review!" });
+
+      // Refresh user list
+      const res = await fetch("http://localhost:5000/api/users");
+      setUsers(await res.json());
+    } catch (err) {
+      console.error("Error moving teacher to Under Review:", err);
     }
   };
 
@@ -136,19 +182,27 @@ const SystemUsersView = () => {
             onSelect={(k) => setStatusTab(k)}
           >
             <Nav.Item>
-              <Nav.Link eventKey="Active">Active ({counts.activeTeachers})</Nav.Link>
+              <Nav.Link eventKey="Active">
+                Active ({counts.activeTeachers})
+              </Nav.Link>
             </Nav.Item>
             <Nav.Item>
-              <Nav.Link eventKey="Under Review">Under Review ({counts.underReviewTeachers})</Nav.Link>
+              <Nav.Link eventKey="Under Review">
+                Under Review ({counts.underReviewTeachers})
+              </Nav.Link>
             </Nav.Item>
             <Nav.Item>
-              <Nav.Link eventKey="Rejected">Rejected ({counts.rejectedTeachers})</Nav.Link>
+              <Nav.Link eventKey="Rejected">
+                Rejected ({counts.rejectedTeachers})
+              </Nav.Link>
             </Nav.Item>
           </Nav>
         ) : (
           <Nav variant="tabs" activeKey="Active">
             <Nav.Item>
-              <Nav.Link eventKey="Active">Active ({counts.activeStudents})</Nav.Link>
+              <Nav.Link eventKey="Active">
+                Active ({counts.activeStudents})
+              </Nav.Link>
             </Nav.Item>
           </Nav>
         )}
@@ -162,12 +216,70 @@ const SystemUsersView = () => {
           <Table bordered hover responsive>
             <thead className="table-light">
               <tr>
-                <th style={{ position: "sticky", top: 0, background: "#f8f9fa", zIndex: 1 }}>Name</th>
-                <th style={{ position: "sticky", top: 0, background: "#f8f9fa", zIndex: 1 }}>Email</th>
-                <th style={{ position: "sticky", top: 0, background: "#f8f9fa", zIndex: 1, textAlign: "center" }}>Role</th>
-                <th style={{ position: "sticky", top: 0, background: "#f8f9fa", zIndex: 1, textAlign: "center" }}>Status</th>
-                <th style={{ position: "sticky", top: 0, background: "#f8f9fa", zIndex: 1, textAlign: "center" }}>Registered On</th>
-                <th style={{ position: "sticky", top: 0, background: "#f8f9fa", zIndex: 1, textAlign: "center" }}>Actions</th>
+                <th
+                  style={{
+                    position: "sticky",
+                    top: 0,
+                    background: "#f8f9fa",
+                    zIndex: 1,
+                  }}
+                >
+                  Name
+                </th>
+                <th
+                  style={{
+                    position: "sticky",
+                    top: 0,
+                    background: "#f8f9fa",
+                    zIndex: 1,
+                  }}
+                >
+                  Email
+                </th>
+                <th
+                  style={{
+                    position: "sticky",
+                    top: 0,
+                    background: "#f8f9fa",
+                    zIndex: 1,
+                    textAlign: "center",
+                  }}
+                >
+                  Role
+                </th>
+                <th
+                  style={{
+                    position: "sticky",
+                    top: 0,
+                    background: "#f8f9fa",
+                    zIndex: 1,
+                    textAlign: "center",
+                  }}
+                >
+                  Status
+                </th>
+                <th
+                  style={{
+                    position: "sticky",
+                    top: 0,
+                    background: "#f8f9fa",
+                    zIndex: 1,
+                    textAlign: "center",
+                  }}
+                >
+                  Registered On
+                </th>
+                <th
+                  style={{
+                    position: "sticky",
+                    top: 0,
+                    background: "#f8f9fa",
+                    zIndex: 1,
+                    textAlign: "center",
+                  }}
+                >
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -182,29 +294,46 @@ const SystemUsersView = () => {
                         {user.status || "Under Review"}
                       </span>
                     </td>
-                    <td style={{ textAlign: "center" }}>{new Date(user.createdAt).toLocaleDateString("en-GB")}</td>
                     <td style={{ textAlign: "center" }}>
-                      {roleFilter === "Teachers" &&
-                      (user.status === "Under Review" || !user.status) ? (
+                      {new Date(user.createdAt).toLocaleDateString("en-GB")}
+                    </td>
+                    <td style={{ textAlign: "center" }}>
+                      {roleFilter === "Teachers" ? (
                         <>
-                          <Button
-                            size="sm"
-                            variant="success"
-                            className="me-2"
-                            onClick={() => handleApprove(user._id)}
-                          >
-                            Approve
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="danger"
-                            onClick={() => {
-                              setSelectedUser(user);
-                              setShowRejectModal(true);
-                            }}
-                          >
-                            Reject
-                          </Button>
+                          {user.status === "Under Review" || !user.status ? (
+                            <>
+                              <Button
+                                size="sm"
+                                variant="success"
+                                className="me-2"
+                                onClick={() => handleApprove(user._id)}
+                              >
+                                Approve
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="danger"
+                                onClick={() => {
+                                  setSelectedUser(user);
+                                  setShowRejectModal(true);
+                                }}
+                              >
+                                Reject
+                              </Button>
+                            </>
+                          ) : user.status === "Active" ? (
+                            <Button
+                              size="sm"
+                              variant="warning"
+                              onClick={() => handleSuspend(user._id)}
+                            >
+                              Suspend
+                            </Button>
+                          ) : (
+                            <Button size="sm" variant="outline-primary" onClick={() => handleMoveToReview(user._id)}>
+                              Move to Review
+                            </Button>
+                          )}
                         </>
                       ) : (
                         <Button size="sm" variant="outline-primary">
@@ -226,9 +355,9 @@ const SystemUsersView = () => {
         </div>
       )}
 
-      <SuccessNotification 
-        successInfo={successInfo} 
-        onClose={() => setSuccessInfo({ show: false, message: "" })} 
+      <SuccessNotification
+        successInfo={successInfo}
+        onClose={() => setSuccessInfo({ show: false, message: "" })}
       />
 
       <RejectModal
@@ -237,13 +366,19 @@ const SystemUsersView = () => {
         userName={selectedUser?.name}
         onSubmit={async (reason) => {
           try {
-            await fetch(`http://localhost:5000/api/users/${selectedUser._id}/reject`, {
-              method: "PATCH",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ reason }),
-            });
+            await fetch(
+              `http://localhost:5000/api/users/${selectedUser._id}/reject`,
+              {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ reason }),
+              }
+            );
 
-            setSuccessInfo({ show: true, message: "Teacher rejected successfully!" });
+            setSuccessInfo({
+              show: true,
+              message: "Teacher rejected successfully!",
+            });
             setShowRejectModal(false);
 
             // Refresh users
@@ -254,7 +389,6 @@ const SystemUsersView = () => {
           }
         }}
       />
-
     </div>
   );
 };

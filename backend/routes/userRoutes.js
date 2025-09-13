@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { body } = require('express-validator');
-const { getUsers, addUser, approveUser, rejectUser } = require('../controllers/userController');
+const { getUsers, addUser, approveUser, rejectUser, suspendUser, reconsiderUser } = require('../controllers/userController');
 const { registerUser, loginUser } = require('../controllers/authController');
 
 // Public routes
@@ -18,5 +18,9 @@ router.get('/', getUsers);
 router.post('/', addUser);
 router.patch("/:id/approve", approveUser);
 router.patch("/:id/reject", rejectUser);
+router.patch("/:id/suspend", suspendUser);
+router.patch("/:id/reconsider", reconsiderUser);
+
+
 
 module.exports = router;

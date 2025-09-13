@@ -63,4 +63,40 @@ const rejectUser = async (req, res) => {
   }
 };
 
-module.exports = { getUsers, addUser, approveUser, rejectUser };
+// Suspend teacher
+const suspendUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    user.status = "Under Review";
+    await user.save();
+
+    res.json({ message: "User suspended successfully", user });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// Reconsider teacher (Rejected → Under Review)
+const reconsiderUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    if (user.status !== "Rejected") {
+      return res.status(400).json({ message: "Only rejected users can be reconsidered" });
+    }
+
+    user.status = "Under Review";
+    user.rejectionReason = null;
+    await user.save();
+
+    res.json({ message: "User moved back to Under Review", user });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+
+module.exports = { getUsers, addUser, approveUser, rejectUser, suspendUser, reconsiderUser };
