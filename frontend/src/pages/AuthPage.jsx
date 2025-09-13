@@ -130,8 +130,10 @@ export default function AuthPage() {
         setTimeout(() => {
             if (response.user.role === 'Teacher') {
             window.location.href = '/teacher-dashboard';
-            } else {
+            } else if(response.user.role === 'Student') {
             window.location.href = '/student-dashboard';
+            }else if(response.user.role === 'Admin') {
+            window.location.href = '/admin-dashboard';
             }
         }, 200);
       } else {

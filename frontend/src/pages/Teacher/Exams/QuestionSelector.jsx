@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button} from "react-bootstrap";
 import "./QuestionSelector.css";
-import AddQuestionModal from "../Modules/QuestionBank/AddQuestionModal";
+import QuestionFormModal from "../Modules/QuestionBank/QuestionFormModal";
 import useQuestion from '../Modules/QuestionBank/hooks/useQuestion';
 
 const QuestionSelector = ({ modules, examQuestions, onChange }) => {
@@ -219,7 +219,7 @@ const QuestionSelector = ({ modules, examQuestions, onChange }) => {
       </div>
 
       {/* Modals */}
-      <AddQuestionModal
+      <QuestionFormModal
         show={showModal}
         onHide={() => setShowModal(false)}
         onSave={handleAddQuestion}

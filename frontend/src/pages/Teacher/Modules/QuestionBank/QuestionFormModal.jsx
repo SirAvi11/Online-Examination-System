@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Button,
   Modal,
@@ -9,7 +9,7 @@ import {
   InputGroup
 } from "react-bootstrap";
 
-const AddQuestionModal = ({ show, onHide, onSave, isSaving, successInfo, modules}) => {
+const QuestionFormModal = ({ show, onHide, onSave, isSaving, successInfo, modules, initialData = null, isEdit = false, isEditable = true}) => {
   const [newQuestion, setNewQuestion] = useState({
     questionText: "",
     imageFile: null,
@@ -21,6 +21,11 @@ const AddQuestionModal = ({ show, onHide, onSave, isSaving, successInfo, modules
   });
   const [preview, setPreview] = useState(null);
   const [activeTab, setActiveTab] = useState("question");
+
+  // Create refs for sections
+  const questionRef = useRef(null);
+  const optionsRef = useRef(null);
+  const settingsRef = useRef(null);
 
   // Reset form when modal is opened/closed or when question is successfully added
   useEffect(() => {
@@ -38,6 +43,15 @@ const AddQuestionModal = ({ show, onHide, onSave, isSaving, successInfo, modules
       setActiveTab("question");
     }
   }, [show, successInfo?.show]);
+
+    useEffect(() => {
+    if (initialData) {
+      setNewQuestion({
+        ...initialData,
+        imageFile: null, // reset file
+      });
+    }
+  }, [initialData]);
 
   const handleAddQuestion = async () => {
     await onSave(newQuestion);
@@ -93,12 +107,17 @@ const AddQuestionModal = ({ show, onHide, onSave, isSaving, successInfo, modules
     }
   };
 
+   const handleTabClick = (tab, ref) => {
+    setActiveTab(tab);
+    ref.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   return (
     <Modal show={show} onHide={onHide} centered size="lg" backdrop="static">
       <Modal.Header closeButton className="bg-primary text-white">
         <Modal.Title>
           <i className="bi bi-plus-circle me-2"></i>
-          Add New Question
+          {isEdit ? "Edit Question" : "Add New Question"}
         </Modal.Title>
       </Modal.Header>
 
@@ -113,21 +132,21 @@ const AddQuestionModal = ({ show, onHide, onSave, isSaving, successInfo, modules
           <div className="d-flex border-bottom">
             <button
               className={`btn btn-link text-decoration-none px-3 py-2 ${activeTab === "question" ? "border-bottom border-primary border-3 text-primary fw-bold" : "text-secondary"}`}
-              onClick={() => setActiveTab("question")}
+              onClick={() => handleTabClick("question", questionRef)}
             >
               <i className="bi bi-question-circle me-2"></i>
               Question
             </button>
             <button
               className={`btn btn-link text-decoration-none px-3 py-2 ${activeTab === "options" ? "border-bottom border-primary border-3 text-primary fw-bold" : "text-secondary"}`}
-              onClick={() => setActiveTab("options")}
+              onClick={() => handleTabClick("options", optionsRef)}
             >
               <i className="bi bi-list-check me-2"></i>
               Options
             </button>
             <button
               className={`btn btn-link text-decoration-none px-3 py-2 ${activeTab === "settings" ? "border-bottom border-primary border-3 text-primary fw-bold" : "text-secondary"}`}
-              onClick={() => setActiveTab("settings")}
+              onClick={() => handleTabClick("settings", settingsRef)}
             >
               <i className="bi bi-gear me-2"></i>
               Settings
@@ -137,7 +156,7 @@ const AddQuestionModal = ({ show, onHide, onSave, isSaving, successInfo, modules
 
         <Form>
           {/* Question Details - Always visible but highlighted when active */}
-          <div className={activeTab !== "question" ? "opacity-75" : ""}>
+          <div ref={questionRef} className={activeTab !== "question" ? "opacity-75" : ""}>
             <h6 className="fw-bold mb-3 text-primary">
               <i className="bi bi-question-circle me-2"></i>
               Question Details
@@ -255,7 +274,7 @@ const AddQuestionModal = ({ show, onHide, onSave, isSaving, successInfo, modules
           </div>
 
           {/* Options Section */}
-          <div className={activeTab !== "options" ? "opacity-75" : ""}>
+          <div ref={optionsRef} className={activeTab !== "options" ? "opacity-75" : ""}>
             <div className="d-flex justify-content-between align-items-center mb-3">
               <h6 className="fw-bold text-primary mb-0">
                 <i className="bi bi-list-check me-2"></i>
@@ -330,7 +349,7 @@ const AddQuestionModal = ({ show, onHide, onSave, isSaving, successInfo, modules
           </div>
 
           {/* Correct Answer & Marks - Always visible but highlighted when active */}
-          <div className={activeTab !== "settings" ? "opacity-75" : ""}>
+          <div ref={settingsRef} className={activeTab !== "settings" ? "opacity-75" : ""}>
             <h6 className="fw-bold mt-4 mb-3 text-primary">
               <i className="bi bi-gear me-2"></i>
               Settings
@@ -428,4 +447,4 @@ const AddQuestionModal = ({ show, onHide, onSave, isSaving, successInfo, modules
   );
 };
 
-export default AddQuestionModal;
+export default QuestionFormModal;

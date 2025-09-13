@@ -18,7 +18,7 @@ const QuestionRow = ({ question, index, isSelected, onSelect, onExpand, isExpand
         </td>
         <td style={{ textAlign:"center" }}>{index + 1}</td>
         <td>{question.questionText}</td>
-        <td>{question.options[question.correctOptionIndex]}</td>
+        <td>{question.options[question.correctOptionIndex] || question.answer}</td>
         <td style={{textAlign:"center" }}>
           <Button
             size="sm"

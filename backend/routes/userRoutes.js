@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { body } = require('express-validator');
-const { getUsers, addUser } = require('../controllers/userController');
+const { getUsers, addUser, approveUser, rejectUser } = require('../controllers/userController');
 const { registerUser, loginUser } = require('../controllers/authController');
 
 // Public routes
@@ -16,5 +16,7 @@ router.post('/login', loginUser);
 // Basic user routes (you might want to protect these later)
 router.get('/', getUsers);
 router.post('/', addUser);
+router.patch("/:id/approve", approveUser);
+router.patch("/:id/reject", rejectUser);
 
 module.exports = router;

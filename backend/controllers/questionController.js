@@ -1,20 +1,38 @@
 // controllers/questionController.js
 const Question = require("../models/Question.js");
 const Module = require("../models/Module.js");
+const Exam = require("../models/Exam.js");
 
-// GET questions by moduleId
+// GET questions by moduleId with exam usage info
 const getQuestions = async (req, res) => {
   const { moduleId } = req.query;
-  if (!moduleId) return res.status(400).json({ message: "moduleId is required" });
+  if (!moduleId) {
+    return res.status(400).json({ message: "moduleId is required" });
+  }
 
   try {
-    const questions = await Question.find({ moduleId });
-    res.json(questions);
+    const questions = await Question.find({ moduleId }).lean();
+
+    // Get all exams that use questions from this module
+    const usedQuestionIds = await Exam.distinct("questions.questionRef", {
+      "questions.type": "existing"
+    });
+
+    // Attach `isUsedInExam` flag
+    const questionsWithUsage = questions.map(q => ({
+      ...q,
+      isUsedInExam: usedQuestionIds.some(
+        id => id && id.toString() === q._id.toString()
+      )
+    }));
+
+    res.json(questionsWithUsage);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error fetching questions" });
   }
 };
+
 // POST new question
 const createQuestion = async (req, res) => {
   try {

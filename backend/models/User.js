@@ -18,23 +18,34 @@ const userSchema = new mongoose.Schema({
   passwordHash: { 
     type: String, 
     required: [true, 'Password is required'],
-    select: false  // Won't be returned in queries by default
+    select: false
   },
   role: { 
     type: String, 
     enum: {
-      values: ['Student', 'Teacher', 'Admin'], // Added admin role
-      message: 'Role must be either student, teacher, or admin'
+      values: ['Student', 'Teacher', 'Admin'],
+      message: 'Role must be either Student, Teacher, or Admin'
     },
     required: [true, 'Role is required'],
-    default: 'student'
+    default: 'Student'
+  },
+  status: {
+    type: String,
+    enum: ['Active', 'Under Review', 'Rejected'],
+    default: function() {
+      return this.role === 'Teacher' ? 'Under Review' : 'Active';
+    }
+  },
+  rejectionReason: {
+    type: String,
+    default: null
   }
 }, { 
   timestamps: true,
   toJSON: {
     virtuals: true,
     transform: function(doc, ret) {
-      delete ret.passwordHash;  // Never send passwordHash in responses
+      delete ret.passwordHash;
       delete ret.__v;
       return ret;
     }
@@ -49,10 +60,9 @@ const userSchema = new mongoose.Schema({
   }
 });
 
-// Password hashing middleware
+// Hash password before save
 userSchema.pre('save', async function(next) {
   if (!this.isModified('passwordHash')) return next();
-  
   try {
     const salt = await bcrypt.genSalt(10);
     this.passwordHash = await bcrypt.hash(this.passwordHash, salt);
@@ -62,12 +72,10 @@ userSchema.pre('save', async function(next) {
   }
 });
 
-// Instance method to compare passwords
 userSchema.methods.comparePassword = async function(candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.passwordHash);
 };
 
-// Virtual for cleaner response (optional)
 userSchema.virtual('id').get(function() {
   return this._id.toHexString();
 });

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import {Button} from "react-bootstrap";
 import "./TransferList.css";
 import useQuestion from "../../pages/Teacher/Modules/QuestionBank/hooks/useQuestion";
-import AddQuestionModal from "../../pages/Teacher/Modules/QuestionBank/AddQuestionModal";
+import QuestionFormModal from "../../pages/Teacher/Modules/QuestionBank/QuestionFormModal";
 
 const TransferList = ({
   availableQuestions,
@@ -219,7 +219,7 @@ const TransferList = ({
       </div>
 
       {/* Modals */}
-      <AddQuestionModal
+      <QuestionFormModal
         show={showModal}
         onHide={() => setShowModal(false)}
         onSave={handleAddQuestion}

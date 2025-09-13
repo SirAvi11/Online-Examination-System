@@ -2,7 +2,7 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { Button } from "react-bootstrap";
 import QuestionTable from './QuestionTable';
-import AddQuestionModal from './AddQuestionModal';
+import QuestionFormModal from './QuestionFormModal';
 import DuplicateWarningModal from './DuplicateWarningModal';
 import SuccessNotification from './SuccessNotification';
 import FilterPane from './FilterPane';
@@ -300,7 +300,7 @@ export default function QuestionBank({ selectedModule, onBack }) {
       )}
 
       {/* Modals */}
-      <AddQuestionModal
+      <QuestionFormModal
         show={showModal}
         onHide={() => setShowModal(false)}
         onSave={handleAddQuestion}

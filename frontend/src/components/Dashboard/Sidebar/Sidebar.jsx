@@ -22,15 +22,25 @@ const Sidebar = ({ setActiveView, userRole }) => {
     { icon: 'fa-calendar-alt', label: 'Schedules', view: 'schedules' }
   ];
 
+  //Admin-specific links
+  const adminLinks = [
+        { icon: 'fa-th-large', label: 'Dashboard', view: 'dashboard' },
+    { icon: 'fa-users', label: 'System Users', view: 'users', testId:"users-option" }
+  ]
+
+  // Determine which main links to show based on role
+  let mainLinks = [...commonLinks]; // start with common
+
+  if (userRole === 'Teacher') {
+    mainLinks = [...commonLinks, ...teacherLinks];
+  } else if (userRole === 'Admin') {
+    mainLinks = [...adminLinks];
+  }
+
   const secondaryLinks = [
     { icon: 'fa-cog', label: 'Settings', view: 'settings' },
     { icon: 'fa-sign-out-alt', label: 'Log out', action: 'logout' }
   ];
-
-  // Determine which main links to show based on role
-  const mainLinks = userRole === 'Teacher' 
-    ? [...commonLinks, ...teacherLinks] 
-    : commonLinks;
 
   const handleLinkClick = (view) => {
     if (view === 'logout') {
