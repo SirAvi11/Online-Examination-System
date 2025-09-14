@@ -69,6 +69,35 @@ const ResultInsight = ({ examId, onBack }) => {
     }
   };
 
+  const exportToExcel = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`http://localhost:5000/api/exams/${examId}/report-card?export=excel`, {
+        headers: {
+          "x-auth-token": token
+        }
+      });
+
+      if (!res.ok) throw new Error("Failed to export Excel");
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(new Blob([blob]));
+      const link = document.createElement("a");
+      link.href = url;
+
+      // Use exam title as file name
+      const fileName = rawData?.exam?.title?.replace(/\s+/g, "_") || "ExamReport";
+      link.setAttribute("download", `${fileName}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+    } catch (err) {
+      console.error("❌ Excel export failed:", err);
+      alert("Could not export Excel report");
+    }
+  };
+
+
   
   // calculate average score
   const avgScore =
@@ -101,7 +130,7 @@ const ResultInsight = ({ examId, onBack }) => {
           </Button>
           <h3>Report Card</h3>
         </div>
-        <Button variant="outline-secondary" onClick={() => window.print()}>
+        <Button variant="outline-secondary" onClick={exportToExcel}>
           <i class="fa fa-file-alt me-2"></i>Generate Report
         </Button>
       </div>

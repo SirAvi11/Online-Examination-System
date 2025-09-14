@@ -1,9 +1,9 @@
 const Exam = require("../models/Exam");
 const Question = require("../models/Question");
+const ExcelJS = require("exceljs");
 const ExamRegistration = require('../models/ExamRegistration');
 const StudentAttempt = require('../models/StudentAttempt');
 const mongoose = require('mongoose');
-
 
 // --- helpers ---
 const gradeFromPercent = (p) => {
@@ -262,7 +262,6 @@ const getExamById = async (req, res) => {
   }
 };
 
-
 // UPDATE exam
 const updateExam = async (req, res) => {
   try {
@@ -388,17 +387,16 @@ const startExamAttempt = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
-
 // --- GET report card ---
 /**
  * GET /api/exams/:examId/report-card
- * Returns a comprehensive report for the given exam
+ * Returns a comprehensive report for the given exam or Excel if ?export=excel
  */
 const getReportCard = async (req, res) => {
   try {
     const { examId } = req.params;
     const teacherId = req.user.userId;
+    const exportExcel = req.query.export === "excel";
 
     if (!mongoose.Types.ObjectId.isValid(examId)) {
       return res.status(400).json({ error: "Invalid examId" });
@@ -533,6 +531,104 @@ const getReportCard = async (req, res) => {
         .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
     };
 
+    // 7) Excel export
+    if (exportExcel) {
+      const workbook = new ExcelJS.Workbook();
+      workbook.creator = "OES System";
+      workbook.created = new Date();
+
+      // --- Sheet 1: Exam Summary ---
+      const summarySheet = workbook.addWorksheet("Exam Summary");
+      summarySheet.columns = [
+        { header: "Field", key: "field", width: 30 },
+        { header: "Value", key: "value", width: 30 },
+      ];
+      summarySheet.addRows([
+        { field: "Exam Title", value: response.exam.title },
+        { field: "Number of Questions", value: response.exam.numberOfQuestions },
+        { field: "Duration (minutes)", value: response.exam.duration },
+        { field: "Total Marks", value: response.exam.totalMarks },
+        { field: "Pass Mark", value: response.exam.passMark },
+        { field: "Registered Students", value: response.counts.totalRegistered },
+        { field: "Present", value: response.counts.totalPresent },
+        { field: "Absent", value: response.counts.totalAbsent },
+        { field: "Pass", value: response.counts.totalPass },
+        { field: "Fail", value: response.counts.totalFail },
+      ]);
+      // Styling
+      summarySheet.getRow(1).font = { bold: true };
+      summarySheet.getRow(1).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFD9D9D9" } };
+      summarySheet.views = [{ state: "frozen", ySplit: 1 }];
+
+      // --- Sheet 2: Attempted Students ---
+      const attemptedSheet = workbook.addWorksheet("Attempted Students");
+      attemptedSheet.columns = [
+        { header: "Student Name", key: "name", width: 25 },
+        { header: "Score", key: "score", width: 10 },
+        { header: "Total Marks", key: "totalMarks", width: 12 },
+        { header: "Percentage", key: "percentage", width: 12 },
+        { header: "Grade", key: "grade", width: 8 },
+        { header: "Pass", key: "pass", width: 8 },
+        { header: "Status", key: "status", width: 15 },
+        { header: "Time Spent (mins)", key: "timeSpentMinutes", width: 15 },
+        { header: "Started At", key: "startedAt", width: 20 },
+        { header: "Submitted At", key: "submittedAt", width: 20 },
+      ];
+      response.attemptedStudents.forEach((s) => {
+        attemptedSheet.addRow({
+          ...s,
+          percentage: s.percentage / 100, // Excel percentage format
+        });
+      });
+      attemptedSheet.getRow(1).font = { bold: true };
+      attemptedSheet.getRow(1).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFB0C4DE" } };
+      attemptedSheet.views = [{ state: "frozen", ySplit: 1 }];
+      attemptedSheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+        row.eachCell({ includeEmpty: true }, (cell) => {
+          cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+        });
+      });
+      attemptedSheet.getColumn("percentage").numFmt = "0%";
+
+      // --- Sheet 3: Absent Students ---
+      const absentSheet = workbook.addWorksheet("Absent Students");
+      absentSheet.columns = [
+        { header: "Student Name", key: "name", width: 25 },
+        { header: "Status", key: "status", width: 12 },
+        { header: "Score", key: "score", width: 10 },
+        { header: "Total Marks", key: "totalMarks", width: 12 },
+        { header: "Percentage", key: "percentage", width: 12 },
+        { header: "Grade", key: "grade", width: 8 },
+      ];
+      response.absentStudents.forEach((s) => {
+        absentSheet.addRow({
+          ...s,
+          percentage: s.percentage / 100,
+        });
+      });
+      absentSheet.getRow(1).font = { bold: true };
+      absentSheet.getRow(1).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFB0C4DE" } };
+      absentSheet.views = [{ state: "frozen", ySplit: 1 }];
+      absentSheet.eachRow({ includeEmpty: false }, (row) => {
+        row.eachCell({ includeEmpty: true }, (cell) => {
+          cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+        });
+      });
+      absentSheet.getColumn("percentage").numFmt = "0%";
+
+      // Send workbook
+      res.setHeader(
+        "Content-Type",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      );
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename=ExamReport_${exam.title.replace(/\s+/g, "_")}.xlsx`
+      );
+      await workbook.xlsx.write(res);
+      return res.end();
+    }
+
     return res.status(200).json(response);
   } catch (err) {
     console.error("❌ Error building report card:", err);
@@ -540,8 +636,6 @@ const getReportCard = async (req, res) => {
   }
 };
 
-// GET /api/exams/:examId/student/:studentId
-// GET /api/exams/:examId/student/:studentId
 // GET /api/exams/:examId/student/:studentId
 const getStudentAttemptReport = async (req, res) => {
   try {

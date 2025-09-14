@@ -204,7 +204,7 @@ const DashboardView = ({ username }) => {
           <div className="main-columns">
             <DashboardInfoPane
               title="Average Exam Scores By Module"
-              subtitle="January - June 2024"
+              subtitle="June - December 2025"
             >
               <div style={{ height: "250px" }}>
                 <Bar data={modulesData} options={chartOptions} />
