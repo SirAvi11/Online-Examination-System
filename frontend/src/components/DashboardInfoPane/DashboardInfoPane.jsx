@@ -8,7 +8,7 @@ const DashboardInfoPane = ({
   bodyClassName = ""
 }) => {
   return (
-    <div className={`bg-white d-flex justify-content-center align-items-start ${containerClassName}`}>
+    <div className={`bg-white d-flex justify-content-center align-items-start ${containerClassName} h-100`}>
       <div 
         className={`card rounded-3 border-light shadow ${cardClassName}`} 
         style={{ width: maxWidth, height:"100%" }}

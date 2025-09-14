@@ -25,7 +25,7 @@ exports.getDashboard = async (req, res) => {
       startTime: { $gte: now },
     })
       .sort({ startTime: 1 })
-      .select('_id title date')
+      .select('_id title startTime totalMarks examCode')
       .lean();
 
     let studentsRegisteredForClosestUpcomingExam = 0;
@@ -70,7 +70,9 @@ exports.getDashboard = async (req, res) => {
           ? {
               id: closestUpcomingExam._id,
               title: closestUpcomingExam.title,
-              date: closestUpcomingExam.date,
+              date: closestUpcomingExam.startTime,
+              totalMarks: closestUpcomingExam.totalMarks,
+              examCode: closestUpcomingExam.examCode,
               studentsRegistered: studentsRegisteredForClosestUpcomingExam,
             }
           : null,

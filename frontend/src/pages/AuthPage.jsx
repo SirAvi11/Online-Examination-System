@@ -226,7 +226,7 @@ export default function AuthPage() {
           
           <div className="mb-3 d-flex flex-column align-items-start">
             <label htmlFor="username" className="form-label text-secondary small">
-              {isLoginView ? 'Username or email' : 'Username'}
+              {isLoginView ? 'Username' : 'Username'}
             </label>
             <input
               type="text"
@@ -235,7 +235,7 @@ export default function AuthPage() {
               name="username"
               value={formData.username}
               onChange={handleChange}
-              placeholder={isLoginView ? 'Enter username or email' : 'Choose a username'}
+              placeholder={isLoginView ? 'Enter username' : 'Choose a username'}
               data-cy="login-email"
 
             />

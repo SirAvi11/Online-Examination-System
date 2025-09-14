@@ -39,7 +39,7 @@ const DashboardView = ({ username }) => {
         value: stats.upcomingExams,
         subtitle: `Total Exams: ${stats.totalExams}`,
         icon: "fa-file-alt",
-        tooltip: "Total exams scheduled ahead."
+        tooltip: "Total exams scheduled ahead.",
       },
       {
         title: "Students Registered",
@@ -48,24 +48,26 @@ const DashboardView = ({ username }) => {
           : 0,
         subtitle: "In upcoming exams",
         icon: "fa-users",
-        tooltip: "Students enrolled in upcoming exams."
+        tooltip: "Students enrolled in upcoming exams.",
       },
       {
         title: "Pending Evaluations",
         value: `${stats.pendingEvaluations || 0}`,
         subtitle:
           stats.pendingEvaluationsPercentage != null
-            ? `${stats.pendingEvaluationsPercentage > 0 ? "" : ""}${stats.pendingEvaluationsPercentage}% of all exams`
+            ? `${stats.pendingEvaluationsPercentage > 0 ? "" : ""}${
+                stats.pendingEvaluationsPercentage
+              }% of all exams`
             : "No previous data",
         icon: "fa-clipboard-list",
-        tooltip: "Exams awaiting grading."
+        tooltip: "Exams awaiting grading.",
       },
       {
         title: "Modules",
         value: stats.totalModules,
         subtitle: `Total Questions: ${stats.totalQuestions}`,
         icon: "fa-layer-group",
-        tooltip:"Total subjects and question banks."
+        tooltip: "Total subjects and question banks.",
       },
     ];
   }, [dashboardData]);
@@ -267,8 +269,103 @@ const DashboardView = ({ username }) => {
           </div>
         </div>
         <div className="main-right-side">
-          <DashboardInfoPane title="Upcoming Exams" subtitle="Interactive Calendar">
-            <DashboardCalendar events={upcomingEvents} />
+          <DashboardInfoPane
+            title="Upcoming Exams"
+            subtitle="Interactive Calendar"
+          >
+            <div>
+              <DashboardCalendar upcomingEvents={upcomingEvents} />
+            </div>
+
+            <div style={{ marginTop: "1.75rem" }}>
+              {upcomingEvents.length > 0 ? (
+                <div
+                  style={{
+                    padding: "1rem 1.25rem",
+                    borderRadius: "12px",
+                    backgroundColor: "#ffffff",
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+                    border: "1px solid #e5e7eb",
+                    transition: "transform 0.2s ease, box-shadow 0.2s ease",
+                    cursor: "pointer",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "translateY(-3px)";
+                    e.currentTarget.style.boxShadow =
+                      "0 6px 16px rgba(0,0,0,0.12)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow =
+                      "0 4px 12px rgba(0,0,0,0.08)";
+                  }}
+                >
+                  <h3
+                    style={{
+                      margin: "0 0 0.5rem 0",
+                      fontSize: "1.1rem",
+                      fontWeight: "600",
+                      color: "#111827",
+                    }}
+                  >
+                    {upcomingEvents[0].title}
+                  </h3>
+                  <p
+                    style={{
+                      margin: "0.25rem 0",
+                      fontSize: "0.9rem",
+                      color: "#374151",
+                    }}
+                  >
+                    <strong>Date:</strong>{" "}
+                    {new Date(upcomingEvents[0].start).toDateString()}
+                  </p>
+                  <p
+                    style={{
+                      margin: "0.25rem 0",
+                      fontSize: "0.9rem",
+                      color: "#374151",
+                    }}
+                  >
+                    <strong>Total Marks:</strong> {upcomingEvents[0].totalMarks}
+                  </p>
+                  <p
+                    style={{
+                      margin: "0.25rem 0",
+                      fontSize: "0.9rem",
+                      color: "#374151",
+                    }}
+                  >
+                    <strong>Exam Code:</strong> {upcomingEvents[0].examCode}
+                  </p>
+                  <p
+                    style={{
+                      margin: "0.25rem 0",
+                      fontSize: "0.9rem",
+                      color: "#374151",
+                    }}
+                  >
+                    <strong>Students Registered:</strong>{" "}
+                    {upcomingEvents[0].studentsRegistered}
+                  </p>
+                </div>
+              ) : (
+                <div
+                  style={{
+                    padding: "1rem",
+                    borderRadius: "8px",
+                    backgroundColor: "#f3f4f6",
+                    textAlign: "center",
+                    color: "#6b7280",
+                    fontStyle: "italic",
+                    border: "1px dashed #d1d5db",
+                  }}
+                >
+                  No upcoming exams scheduled. Stay tuned — new exams will
+                  appear here when published.
+                </div>
+              )}
+            </div>
           </DashboardInfoPane>
         </div>
       </div>
