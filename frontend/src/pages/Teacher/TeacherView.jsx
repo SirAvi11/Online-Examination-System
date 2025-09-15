@@ -8,6 +8,7 @@ import ExamView from './Exams/ExamView';
 import TeacherScheduleView from './TeacherScheduleView';
 import ResultsView from "./Results/ResultView";
 import ModulesView from './Modules/ModulesView';
+import ProgressView from './Progress/ProgressView';
 import { useNavigate } from 'react-router-dom';
 
 const TeacherView = () => {
@@ -38,6 +39,8 @@ const TeacherView = () => {
         return <TeacherScheduleView />;
       case 'results':
         return <ResultsView />;
+      case 'progress':
+        return <ProgressView />;
       // Add more cases as needed
       default:
         return <DashboardView />;

@@ -19,7 +19,8 @@ const Sidebar = ({ setActiveView, userRole }) => {
   // Teacher-specific links
   const teacherLinks = [
     { icon: 'fa-layer-group', label: 'Modules', view: 'modules', testId:"modules-option" },
-    { icon: 'fa-calendar-alt', label: 'Schedules', view: 'schedules' }
+    { icon: 'fa-calendar-alt', label: 'Schedules', view: 'schedules' },
+    {icon: 'fa-line-chart', label:"Progress", view: 'progress'}
   ];
 
   //Admin-specific links
