@@ -12,6 +12,7 @@ const moduleRoutes = require('./routes/moduleRoutes.js');
 const questionRoutes = require("./routes/questionRoutes.js");
 const examRoutes = require('./routes/examRoutes.js');
 const examRegistrationRoutes = require('./routes/examRegistrationRoutes.js');
+const templateRoutes = require('./routes/templateRoutes.js');
 const studentAttemptRoutes = require('./routes/studentAttemptRoutes.js');
 
 
@@ -41,6 +42,7 @@ app.use("/api/questions", questionRoutes);
 app.use("/api/exams", examRoutes);
 app.use("/api/exam-registration", examRegistrationRoutes);
 app.use("/api/attempt", studentAttemptRoutes);
+app.use("/api/template", templateRoutes);
 app.use("/uploads", express.static("uploads"));
 
 

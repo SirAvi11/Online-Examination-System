@@ -9,19 +9,23 @@ import "./ImportModal.css";
 export default function ImportModal({
   disabled,
   selectedModule,
-  onImport,            // callback when user confirms import
-  addQuestion,         // API hook
+  onImport, // callback when user confirms import
+  addQuestion, // API hook
 }) {
   const [selectedQuestionIds, setSelectedQuestionIds] = useState([]);
   const [expandedRow, setExpandedRow] = useState(null);
   const [importedQuestions, setImportedQuestions] = useState([]);
   const [invalidQuestions, setInvalidQuestions] = useState([]);
   const [showImportModal, setShowImportModal] = useState(false);
-  const [successInfo, setSuccessInfo] = useState({show: false, message: "", questionCount: 0});
-  
+  const [successInfo, setSuccessInfo] = useState({
+    show: false,
+    message: "",
+    questionCount: 0,
+  });
+
   const [alert, setAlert] = useState(null); // { type: 'success' | 'danger' | 'warning', message: string }
 
-    // For file input ref
+  // For file input ref
   const fileInputRef = useRef(null);
 
   // Reset when modal opens
@@ -36,8 +40,8 @@ export default function ImportModal({
           message: (
             <div>
               <p>
-                ✅ {importedQuestions.length} question(s) loaded successfully<br />
-                ❌ {invalidQuestions.length} question(s) failed:
+                ✅ {importedQuestions.length} question(s) loaded successfully
+                <br />❌ {invalidQuestions.length} question(s) failed:
               </p>
               <ul style={{ marginBottom: 0 }}>
                 {invalidQuestions.map((err, i) => (
@@ -47,24 +51,22 @@ export default function ImportModal({
                 ))}
               </ul>
             </div>
-          )
+          ),
         });
       } else {
         setAlert({
           type: "success",
-          message: `✅ Successfully loaded ${importedQuestions.length} question(s) from Excel`
+          message: `✅ Successfully loaded ${importedQuestions.length} question(s) from Excel`,
         });
       }
     }
   }, [showImportModal]);
 
-
-
   // ✅ Select/deselect a single question
   const toggleSelectQuestion = (questionId) => {
-    setSelectedQuestionIds(prev =>
+    setSelectedQuestionIds((prev) =>
       prev.includes(questionId)
-        ? prev.filter(id => id !== questionId)
+        ? prev.filter((id) => id !== questionId)
         : [...prev, questionId]
     );
   };
@@ -99,7 +101,10 @@ export default function ImportModal({
       if (q.correctOptionIndex === null) {
         rowErrors.push("Invalid or missing correct option");
       }
-      if (!q.options || q.options.filter(opt => opt && opt.trim() !== "").length < 2) {
+      if (
+        !q.options ||
+        q.options.filter((opt) => opt && opt.trim() !== "").length < 2
+      ) {
         rowErrors.push("At least 2 options required");
       }
 
@@ -110,11 +115,10 @@ export default function ImportModal({
       }
     });
 
-    return {validQuestions, invalidQuestions}
+    return { validQuestions, invalidQuestions };
   };
 
   const handleImport = async () => {
-    
     try {
       for (const q of selectedQuestions) {
         await addQuestion(q);
@@ -129,69 +133,38 @@ export default function ImportModal({
     } catch (err) {
       setAlert({
         type: "danger",
-        message: "An unexpected error occurred while importing questions."
+        message: "An unexpected error occurred while importing questions.",
       });
     }
   };
 
-  const handleDownloadTemplate = () => {
-    // --- Instructions Sheet Data ---
-    const instructionsData = [
-      ["Column Name", "Description", "Example"],
-      ["Question Text", "The text of the question. (Required)", "What is 2+2?"],
-      ["Option A", "First answer choice. (Required and Unique)", "2"],
-      ["Option B", "Second answer choice. (Required and Unique)", "4"],
-      ["Option C", "Third answer choice. (Optional)", "5 / blank"],
-      ["Option D", "Fourth answer choice. (Optional)", "2 / blank"],
-      [
-        "Correct Option",
-        "Correct option (starting from A for the first option). (Required)",
-        "B (means '4' is correct from options above)"
-      ],
-      ["Marks", "Marks awarded for this question. Must be a number. (Required)", "2"],
-      [
-        "ImageUrl",
-        "Optional. URL to an image for the question. Leave blank if none.",
-        "https://example.com/image.png"
-      ]
-    ];
-    const wsInstructions = XLSX.utils.aoa_to_sheet(instructionsData);
+  const handleDownloadTemplate = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`http://localhost:5000/api/template/download-template`, {
+        headers: {
+          "x-auth-token": token,
+        },
+      });
 
-    // Set column widths for readability
-    wsInstructions["!cols"] = [
-      { wch: 20 }, // Column Name
-      { wch: 60 }, // Description
-      { wch: 40 }  // Example
-    ];
+      if (!res.ok) throw new Error("Failed to download template");
 
-    // --- Template Sheet Data ---
-    const templateHeaders = [
-      ["Question Text", "Option A", "Option B", "Option C", "Option D", "Correct Option", "Marks", "ImageUrl"]
-    ];
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
 
-    const wsTemplate = XLSX.utils.aoa_to_sheet(templateHeaders);
-
-    // Set column widths
-    wsTemplate["!cols"] = [
-      { wch: 40 }, // Question Text
-      { wch: 20 }, // Option A
-      { wch: 20 }, // Option B
-      { wch: 20 }, // Option C
-      { wch: 20 }, // Option D
-      { wch: 20 }, // Correct Option
-      { wch: 10 }, // Marks
-      { wch: 40 }  // ImageUrl
-    ];
-
-    // --- Workbook ---
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, wsInstructions, "Instructions");
-    XLSX.utils.book_append_sheet(wb, wsTemplate, "Template");
-
-    // --- Export File ---
-    const wbout = XLSX.write(wb, { type: "array", bookType: "xlsx" });
-    saveAs(new Blob([wbout], { type: "application/octet-stream" }), "QuestionTemplate.xlsx");
+      // Fixed filename since it’s a template
+      link.setAttribute("download", "QuestionTemplate.xlsx");
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+    } catch (err) {
+      console.error("❌ Template download failed:", err);
+      alert("Could not download question template");
+    }
   };
+
 
   const handleFileChange = async (event) => {
     const file = event.target.files[0];
@@ -200,40 +173,48 @@ export default function ImportModal({
     const data = await file.arrayBuffer();
     const workbook = XLSX.read(data);
 
-    // Use the 2nd sheet (index 1) since the first is instructions
-    const sheet = workbook.Sheets[workbook.SheetNames[1]];
+    // Use the 1st sheet (index 0) since the second is instructions
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
     const rows = XLSX.utils.sheet_to_json(sheet);
 
     // Map rows to Question objects
     const parsedQuestions = rows.map((row, idx) => {
       const options = [
-        row["Option A"] || "",
-        row["Option B"] || "",
+        row["Option A *"] || "",
+        row["Option B *"] || "",
         row["Option C"] || "",
         row["Option D"] || "",
       ];
 
       const correctOptionIndex = (() => {
-        const letter = (row["Correct Option"] || "").toString().trim().toUpperCase();
+        const letter = (row["Correct Option *"] || "")
+          .toString()
+          .trim()
+          .toUpperCase();
         switch (letter) {
-          case "A": return 0;
-          case "B": return 1;
-          case "C": return 2;
-          case "D": return 3;
-          default: return 0; // fallback
+          case "A":
+            return 0;
+          case "B":
+            return 1;
+          case "C":
+            return 2;
+          case "D":
+            return 3;
+          default:
+            return 0; // fallback
         }
       })();
 
-      const correctAnswer = correctOptionIndex >= 0 ? options[correctOptionIndex] : "";
-
+      const correctAnswer =
+        correctOptionIndex >= 0 ? options[correctOptionIndex] : "";
 
       return {
         _id: idx, // temp ID for UI
-        questionText: row["Question Text"] || "",
+        questionText: row["Question Text *"] || "",
         options,
         answer: correctAnswer,
         marks: Number(row["Marks"]) || 1,
-        imageUrl: row["Image URL"] || "",
+        imageUrl: row["ImageUrl"] || "",
         moduleId: selectedModule._id,
       };
     });
@@ -258,7 +239,11 @@ export default function ImportModal({
         </Button>
 
         {/* Dropdown arrow */}
-        <Dropdown.Toggle split variant="outline-secondary" id="upload-dropdown" />
+        <Dropdown.Toggle
+          split
+          variant="outline-secondary"
+          id="upload-dropdown"
+        />
 
         <Dropdown.Menu>
           <Dropdown.Item onClick={handleDownloadTemplate}>
@@ -278,7 +263,11 @@ export default function ImportModal({
           e.target.value = "";
         }}
       />
-      <Modal show={showImportModal} onHide={() => setShowImportModal(false)} size="xl">
+      <Modal
+        show={showImportModal}
+        onHide={() => setShowImportModal(false)}
+        size="xl"
+      >
         <Modal.Header closeButton>
           <Modal.Title>Import Questions from Excel</Modal.Title>
         </Modal.Header>
@@ -318,8 +307,6 @@ export default function ImportModal({
           </Button>
         </Modal.Footer>
       </Modal>
-
     </>
-    
   );
 }
