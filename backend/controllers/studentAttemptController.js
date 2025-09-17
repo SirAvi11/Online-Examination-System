@@ -90,10 +90,13 @@ const updateAttempt = async (req, res) => {
 const submitAttempt = async (req, res) => {
   try {
     const { attemptId } = req.params;
-    const { answers } = req.body;
+    const { answers, tabSwitchCount } = req.body;
 
     const attempt = await StudentAttempt.findById(attemptId).populate("examId");
     if (!attempt) return res.status(404).json({ error: "Attempt not found" });
+
+    const exam = attempt.examId;
+    if (!exam) return res.status(404).json({ error: "Exam not found" });
 
     let totalScore = 0;
     let totalMarks = 0;
@@ -119,11 +122,28 @@ const submitAttempt = async (req, res) => {
       totalMarks += q.marks;
     }
 
+    const now = new Date();
+    const examStart = new Date(exam.startTime);
+    const examEnd = new Date(exam.endTime);
+
+    // ⏱️ Calculate duration and remaining time
+    const duration = Math.max(0, Math.floor((now - examStart) / 1000)); // in seconds
+    const timeRemaining = Math.max(0, Math.floor((examEnd - now) / 1000)); // in seconds
+
 
     attempt.score = totalScore;
     attempt.totalMarks = totalMarks;
-    attempt.submittedAt = new Date();
-    attempt.status = "submitted";
+    attempt.submittedAt = now;
+    attempt.tabSwitchCount = tabSwitchCount;
+    attempt.duration = duration;
+    attempt.timeRemaining = timeRemaining;
+
+    // 🚨 Check for cheating
+    if (tabSwitchCount >= exam.tabSwitchLimit) {
+      attempt.status = "cheated";
+    } else {
+      attempt.status = "submitted";
+    }
 
     await attempt.save();
     res.status(200).json(attempt);

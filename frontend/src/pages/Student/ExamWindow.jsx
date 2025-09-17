@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import ExamSubmissionModal from "./ExamSubmissionModal";
+import ExamGuard from './ExamGuard';
 import './ExamWindow.css'
 
 // Utility to parse query params
@@ -17,6 +18,7 @@ const ExamWindow = () => {
   const [currentQ, setCurrentQ] = useState(0);
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const hasStartedAttempt = useRef(false);
+  const [ tabSwitchCount, setTabSwitchCount] = useState(0);
 
   // ✅ Track answers and statuses
   const [answers, setAnswers] = useState([]);
@@ -117,6 +119,21 @@ const ExamWindow = () => {
 
     return () => clearInterval(timer);
   }, []);
+
+  useEffect(()=>{
+    if(exam && (tabSwitchCount >= exam?.tabSwitchLimit)) {
+      handleFinalSubmit(true, true);
+    } else {
+      if(tabSwitchCount > 0){
+          alert(
+          `⚠️ You cannot switch away from the exam window. Attempts left: ${
+            exam?.tabSwitchLimit - tabSwitchCount
+          }`
+        );
+      }
+       
+    }
+  },[tabSwitchCount])
 
 
   if (loading) return (
@@ -289,7 +306,7 @@ const ExamWindow = () => {
     setShowSubmitModal(true);
   };
 
-  const handleFinalSubmit = async (isAuto = false) => {
+  const handleFinalSubmit = async (isAuto = false, cheated = false) => {
     try {
       const attemptId = localStorage.getItem("attemptId");
       if (!attemptId) {
@@ -310,7 +327,7 @@ const ExamWindow = () => {
             "Content-Type": "application/json",
             "x-auth-token": token
           },
-          body: JSON.stringify({ answers: formattedAnswers })
+          body: JSON.stringify({ answers: formattedAnswers, tabSwitchCount: tabSwitchCount })
         }
       );
 
@@ -318,10 +335,14 @@ const ExamWindow = () => {
       if (!res.ok) throw new Error(data.error || "Submission failed");
 
       if (isAuto) {
-        alert("⏰ Time is up! Exam auto-submitted.");
+        cheated ? alert("❌ Maximum tab switch attempts reached. Exam will be submitted.") : alert("⏰ Time is up! Exam auto-submitted.");
       } else {
         alert("✅ Exam submitted successfully!");
       }
+      // close window after 2 seconds
+      setTimeout(() => {
+        window.close();
+      }, 2000);
 
       setShowSubmitModal(false);
       // optional redirect
@@ -332,12 +353,15 @@ const ExamWindow = () => {
     }
   };
 
-
   // Check if current question has an image
   const hasImage = question.imageUrl;
 
   return (
     <div className="exam-container">
+      {/* ✅ Exam Guard */}
+      <ExamGuard 
+        setTabSwitchCount = {setTabSwitchCount}
+      />
       <div className="exam-content-wrapper">
         
         {/* Left main content */}
