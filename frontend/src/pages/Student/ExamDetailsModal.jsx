@@ -47,7 +47,7 @@ const ExamDetailsModal = ({
     };
 
     fetchAttemptStatus();
-  }, [show, exam?.id]);
+  }, [show, exam?.id, exam?.status]);
 
   if (!exam) return null;
   const { title, description, status, id } = exam;

@@ -12,6 +12,11 @@ const StudentExamView = () => {
   const [loading, setLoading] = useState(true);
   const [selectedExam, setSelectedExam] = useState(null);
 
+  useEffect(() => {
+    // Fetch exams initially
+    fetchExams();
+  }, []);
+
   const fetchExams = async () => {
       try {
         const token = localStorage.getItem("token");
@@ -29,11 +34,74 @@ const StudentExamView = () => {
       }
   };
 
-  // Fetch exams from API
   useEffect(() => {
-  
-    fetchExams();
-  }, []);
+    if (!exams || exams.length === 0) return;
+
+    const now = new Date();
+
+    const upcomingExams = exams
+      .filter((exam) => new Date(exam.startTime) > now)
+      .sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+
+    const ongoingExams = exams.filter(
+      (exam) => new Date(exam.startTime) <= now && new Date(exam.endTime) > now
+    );
+
+    let startTimer;
+    let endTimer;
+    let fallbackTimer;
+
+    if (upcomingExams.length > 0) {
+      const closestExam = upcomingExams[0];
+      const startTime = new Date(closestExam.startTime).getTime();
+      const endTime = new Date(closestExam.endTime).getTime();
+      const diff = startTime - now.getTime();
+
+      if (diff <= 10 * 60 * 1000) {
+        // refresh at start
+        startTimer = setTimeout(() => fetchExams(), diff);
+
+        // refresh at end
+        const msUntilEnd = endTime - Date.now();
+        if (msUntilEnd > 0) {
+          endTimer = setTimeout(() => {
+            fetchExams();
+          }, msUntilEnd);
+        }
+      } else {
+        // no exam soon → fallback
+        fallbackTimer = setTimeout(() => fetchExams(), 10 * 60 * 1000);
+      }
+    }
+
+    // 🔥 Handle ongoing exams: only need endTimer
+    if (ongoingExams.length > 0) {
+      const ongoing = ongoingExams[0];
+      const msUntilEnd = new Date(ongoing.endTime).getTime() - Date.now();
+      if (msUntilEnd > 0) {
+        endTimer = setTimeout(() => {
+          fetchExams();
+        }, msUntilEnd);
+      }
+    }
+
+    return () => {
+      if (startTimer) clearTimeout(startTimer);
+      if (endTimer) clearTimeout(endTimer);
+      if (fallbackTimer) clearTimeout(fallbackTimer);
+    };
+  }, [exams]);
+
+
+  // sync selected exam whenever exams update
+  useEffect(() => {
+    if (selectedExam && exams.length > 0) {
+      const latest = exams.find((e) => e._id === selectedExam.id);
+      if (latest) {
+        setSelectedExam((prev) => ({ ...prev, ...latest }));
+      }
+    }
+  }, [exams, selectedExam?.id]);
 
   const handleCardClick = (exam) => setSelectedExam(exam);
 
@@ -56,7 +124,6 @@ const StudentExamView = () => {
         return;
       }
     }
-
     const url = `/exam-window?examId=${exam.id}&token=${encodeURIComponent(token)}&timeLeft=${timeLeft}`;
     window.open(
       url,
