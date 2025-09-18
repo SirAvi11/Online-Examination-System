@@ -62,9 +62,7 @@ const TeacherResultView = () => {
           day: "numeric",
         });
         const dateRange =
-          startDateStr === endDateStr
-            ? startDateStr
-            : `${startDateStr} - ${endDateStr}`;
+          startDateStr;
 
         const startTimeStr = start.toLocaleTimeString(undefined, {
           hour: "2-digit",

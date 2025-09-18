@@ -57,9 +57,7 @@ const ManageExam = ({ onCreate, onEdit }) => {
           // ✅ Format dates
           const startDateStr = start.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
           const endDateStr = end.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
-          const dateRange = (startDateStr === endDateStr)
-            ? startDateStr
-            : `${startDateStr} - ${endDateStr}`;
+          const dateRange = startDateStr;
 
           // ✅ Format times
           const startTimeStr = start.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false });

@@ -141,9 +141,7 @@ const StudentExamView = () => {
     const dateOptions = { day: "2-digit", month: "short", year: "numeric" };
     const timeOptions = { hour: "2-digit", minute: "2-digit" };
 
-    const dateRange = sameDay
-      ? startDate.toLocaleDateString("en-GB", dateOptions)
-      : `${startDate.toLocaleDateString("en-GB", dateOptions)} - ${endDate.toLocaleDateString("en-GB", dateOptions)}`;
+    const dateRange = startDate.toLocaleDateString("en-GB", dateOptions);
 
     const timeRange = `${startDate.toLocaleTimeString([], timeOptions)} - ${endDate.toLocaleTimeString([], timeOptions)}`;
 

@@ -1,8 +1,9 @@
 import { useEffect, useState, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import ExamSubmissionModal from "./ExamSubmissionModal";
-import ExamGuard from './ExamGuard';
-import './ExamWindow.css'
+import ExamGuard from "./ExamGuard";
+import CustomAlert from "./CustomAlert";
+import "./ExamWindow.css";
 
 // Utility to parse query params
 const useQuery = () => {
@@ -18,7 +19,9 @@ const ExamWindow = () => {
   const [currentQ, setCurrentQ] = useState(0);
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const hasStartedAttempt = useRef(false);
-  const [ tabSwitchCount, setTabSwitchCount] = useState(0);
+  const [tabSwitchCount, setTabSwitchCount] = useState(0);
+  // state for generic alert
+  const [alertConfig, setAlertConfig] = useState({ message: "" });
 
   // ✅ Track answers and statuses
   const [answers, setAnswers] = useState([]);
@@ -33,21 +36,24 @@ const ExamWindow = () => {
       hasStartedAttempt.current = true;
       try {
         const res = await fetch(`http://localhost:5000/api/exams/${examId}`, {
-          headers: { 'x-auth-token': token },
+          headers: { "x-auth-token": token },
         });
         if (!res.ok) throw new Error("Failed to load exam");
         const data = await res.json();
         setExam(data);
 
         // ✅ Start attempt
-        const attemptRes = await fetch(`http://localhost:5000/api/attempt/start`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-auth-token": token
-          },
-          body: JSON.stringify({ examId })
-        });
+        const attemptRes = await fetch(
+          `http://localhost:5000/api/attempt/start`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-auth-token": token,
+            },
+            body: JSON.stringify({ examId }),
+          }
+        );
         const attemptData = await attemptRes.json();
         console.log("Attempt started:", attemptData);
 
@@ -56,8 +62,8 @@ const ExamWindow = () => {
 
         // ✅ Initialize states: Q1 active, rest not-attempted
         const initialAnswers = data.questions.map((q, i) => ({
-          answer: '',
-          state: i === 0 ? 'active' : 'not-attempted'
+          answer: "",
+          state: i === 0 ? "active" : "not-attempted",
         }));
         setAnswers(initialAnswers);
 
@@ -82,11 +88,10 @@ const ExamWindow = () => {
     fetchExam();
   }, [examId, token]);
 
- // Timer effect
+  // Timer effect
   useEffect(() => {
     const timer = setInterval(() => {
-      
-      setTimeLeft(prev => {
+      setTimeLeft((prev) => {
         if (!prev) return prev;
         let { hours, minutes, seconds } = prev;
 
@@ -120,59 +125,70 @@ const ExamWindow = () => {
     return () => clearInterval(timer);
   }, []);
 
-  useEffect(()=>{
-    if(exam && (tabSwitchCount >= exam?.tabSwitchLimit)) {
+  useEffect(() => {
+    if (exam && tabSwitchCount >= exam?.tabSwitchLimit) {
       handleFinalSubmit(true, true);
     } else {
-      if(tabSwitchCount > 0){
-          alert(
-          `⚠️ You cannot switch away from the exam window. Attempts left: ${
+      if (tabSwitchCount > 0) {
+        // ⚠️ Warning (tab switch)
+        setAlertConfig({
+          message: `You cannot switch away. Attempts left: ${
             exam?.tabSwitchLimit - tabSwitchCount
-          }`
-        );
+          }`,
+          type: "warning",
+          autoClose: false,
+          duration: 3,
+          closeWindow: false,
+        });
       }
-       
     }
-  },[tabSwitchCount])
+  }, [tabSwitchCount]);
 
+  if (loading)
+    return (
+      <div className="exam-loading-container">
+        <div className="exam-loading-spinner" role="status">
+          <span className="visually-hidden">Loading exam...</span>
+        </div>
+        <p className="exam-loading-text">Preparing your exam...</p>
+      </div>
+    );
 
-  if (loading) return (
-    <div className="exam-loading-container">
-      <div className="exam-loading-spinner" role="status">
-        <span className="visually-hidden">Loading exam...</span>
+  if (!exam)
+    return (
+      <div className="exam-error-container">
+        <div className="exam-error-alert">
+          <i className="exam-error-icon fas fa-exclamation-circle"></i>
+          <p>
+            Failed to load exam. Please check your connection and try again.
+          </p>
+        </div>
       </div>
-      <p className="exam-loading-text">Preparing your exam...</p>
-    </div>
-  );
-  
-  if (!exam) return (
-    <div className="exam-error-container">
-      <div className="exam-error-alert">
-        <i className="exam-error-icon fas fa-exclamation-circle"></i>
-        <p>Failed to load exam. Please check your connection and try again.</p>
-      </div>
-    </div>
-  );
+    );
 
   const question = exam.questions[currentQ].questionRef;
 
   // ✅ Selecting an option (preserves review state)
   const handleAnswer = (index, option) => {
-    setAnswers(prev => {
+    setAnswers((prev) => {
       const updated = [...prev];
       // Toggle the answer if the same option is clicked again
-      const newAnswer = updated[index].answer === option ? '' : option;
-      
+      const newAnswer = updated[index].answer === option ? "" : option;
+
       // Preserve the review state if it exists
       const currentState = updated[index].state;
-      const newState = newAnswer 
-        ? (currentState === 'review' ? 'review' : 'answered') 
-        : (currentState === 'review' ? 'review' : 'not-answered');
-      
-      updated[index] = { 
-        ...updated[index], 
+      const newState = newAnswer
+        ? currentState === "review"
+          ? "review"
+          : "answered"
+        : currentState === "review"
+        ? "review"
+        : "not-answered";
+
+      updated[index] = {
+        ...updated[index],
         answer: newAnswer,
-        state: newState
+        state: newState,
       };
       return updated;
     });
@@ -180,18 +196,18 @@ const ExamWindow = () => {
 
   // ✅ Toggle Mark for Review - now toggles between review and answered states
   const handleMarkReview = (index) => {
-    setAnswers(prev => {
+    setAnswers((prev) => {
       const updated = [...prev];
       // Toggle between review and answered states
-      if (updated[index].state === 'review') {
+      if (updated[index].state === "review") {
         updated[index] = {
           ...updated[index],
-          state: updated[index].answer ? 'answered' : 'not-answered'
+          state: updated[index].answer ? "answered" : "not-answered",
         };
       } else {
         updated[index] = {
           ...updated[index],
-          state: 'review'
+          state: "review",
         };
       }
       return updated;
@@ -205,42 +221,49 @@ const ExamWindow = () => {
 
   // ✅ Get button text based on current state
   const getMarkReviewButtonText = () => {
-    return answers[currentQ]?.state === 'review' ? 'Unmark Review' : 'Mark for Review';
+    return answers[currentQ]?.state === "review"
+      ? "Unmark Review"
+      : "Mark for Review";
   };
 
   // ✅ Navigation button colors - active state takes priority
   const getButtonColor = (idx) => {
     const state = answers[idx]?.state;
-    
+
     // If this is the current question, always show as active (blue)
     if (idx === currentQ) {
-      return 'legend-current';
+      return "legend-current";
     }
-    
+
     // For other questions, use their actual state
     switch (state) {
-      case 'answered': return 'legend-answered';
-      case 'not-answered': return 'legend-not-answered';
-      case 'review': return 'legend-review';
-      case 'not-attempted': return 'legend-not-attempted';
-      default: return 'legend-not-attempted';
+      case "answered":
+        return "legend-answered";
+      case "not-answered":
+        return "legend-not-answered";
+      case "review":
+        return "legend-review";
+      case "not-attempted":
+        return "legend-not-attempted";
+      default:
+        return "legend-not-attempted";
     }
   };
 
-  const formatTime = (value) => value < 10 ? `0${value}` : value;
+  const formatTime = (value) => (value < 10 ? `0${value}` : value);
 
   // ✅ Handle clicking a question box (preserves review state)
   const handleQuestionNavigation = (index) => {
-    setAnswers(prev => {
+    setAnswers((prev) => {
       const updated = prev.map((ans, i) => {
         if (i === currentQ) {
           // Update state based on whether an answer is selected, but preserve review state
-          if (ans.state !== 'review') {
-            ans.state = ans.answer ? 'answered' : 'not-answered';
+          if (ans.state !== "review") {
+            ans.state = ans.answer ? "answered" : "not-answered";
           }
         }
-        if (i === index && ans.state != 'review') {
-          ans.state = 'active';
+        if (i === index && ans.state != "review") {
+          ans.state = "active";
         }
         return ans;
       });
@@ -253,23 +276,23 @@ const ExamWindow = () => {
   const handleNextQuestion = () => {
     if (currentQ < exam.questions.length - 1) {
       // Update the current question state before moving
-      setAnswers(prev => {
+      setAnswers((prev) => {
         const updated = [...prev];
-        if (updated[currentQ].state !== 'review') {
+        if (updated[currentQ].state !== "review") {
           updated[currentQ] = {
             ...updated[currentQ],
-            state: updated[currentQ].answer ? 'answered' : 'not-answered'
+            state: updated[currentQ].answer ? "answered" : "not-answered",
           };
         }
         return updated;
       });
-      
+
       // Move to next question and set it as active
       setCurrentQ(currentQ + 1);
-      setAnswers(prev => {
+      setAnswers((prev) => {
         const updated = [...prev];
-        if(updated[currentQ + 1].state != 'review'){
-          updated[currentQ + 1].state = 'active';
+        if (updated[currentQ + 1].state != "review") {
+          updated[currentQ + 1].state = "active";
         }
         return updated;
       });
@@ -279,23 +302,23 @@ const ExamWindow = () => {
   const handlePrevQuestion = () => {
     if (currentQ > 0) {
       // Update the current question state before moving
-      setAnswers(prev => {
+      setAnswers((prev) => {
         const updated = [...prev];
-        if (updated[currentQ].state !== 'review') {
+        if (updated[currentQ].state !== "review") {
           updated[currentQ] = {
             ...updated[currentQ],
-            state: updated[currentQ].answer ? 'answered' : 'not-answered'
+            state: updated[currentQ].answer ? "answered" : "not-answered",
           };
         }
         return updated;
       });
-      
+
       // Move to previous question and set it as active
       setCurrentQ(currentQ - 1);
-      setAnswers(prev => {
+      setAnswers((prev) => {
         const updated = [...prev];
-        if(updated[currentQ - 1].state != 'review'){
-          updated[currentQ - 1].state = 'active';
+        if (updated[currentQ - 1].state != "review") {
+          updated[currentQ - 1].state = "active";
         }
         return updated;
       });
@@ -316,7 +339,7 @@ const ExamWindow = () => {
 
       const formattedAnswers = exam.questions.map((q, idx) => ({
         questionId: q.questionRef._id,
-        selectedOption: answers[idx]?.answer || null
+        selectedOption: answers[idx]?.answer || null,
       }));
 
       const res = await fetch(
@@ -325,9 +348,12 @@ const ExamWindow = () => {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            "x-auth-token": token
+            "x-auth-token": token,
           },
-          body: JSON.stringify({ answers: formattedAnswers, tabSwitchCount: tabSwitchCount })
+          body: JSON.stringify({
+            answers: formattedAnswers,
+            tabSwitchCount: tabSwitchCount,
+          }),
         }
       );
 
@@ -335,51 +361,90 @@ const ExamWindow = () => {
       if (!res.ok) throw new Error(data.error || "Submission failed");
 
       if (isAuto) {
-        cheated ? alert("❌ Maximum tab switch attempts reached. Exam will be submitted.") : alert("⏰ Time is up! Exam auto-submitted.");
+        cheated // ❌ Cheating limit exceeded
+          ? setAlertConfig({
+              message:
+                "Maximum tab switch attempts reached. Submitting exam...",
+              type: "error",
+              autoClose: true,
+              duration: 5,
+              closeWindow: true,
+            }) // ⏰ Auto-submit
+          : setAlertConfig({
+              message: "Time is up! Exam auto-submitted.",
+              type: "info",
+              autoClose: true,
+              duration: 5,
+              closeWindow: true,
+            });
       } else {
-        alert("✅ Exam submitted successfully!");
+        setAlertConfig({
+          message: "Exam submitted successfully!",
+          type: "success",
+          autoClose: true,
+          duration: 5,
+          closeWindow: true,
+        });
       }
-      // close window after 2 seconds
+      // close window after 5 seconds
       setTimeout(() => {
         window.close();
-      }, 2000);
+      }, 5000);
 
       setShowSubmitModal(false);
       // optional redirect
       // navigate(`/exam-result/${exam._id}`);
     } catch (err) {
       console.error("❌ Error submitting exam:", err);
-      alert("Failed to submit exam. Try again.");
+      setAlertConfig({
+        message: "Failed to submit exam. Try again.",
+        type: "success",
+        autoClose: false,
+        duration: 5,
+        closeWindow: false,
+      });
     }
   };
 
   // Check if current question has an image
   const hasImage = question.imageUrl;
 
+  const handleCustomAlertClose = (shouldCloseWindow) => {
+    setAlertConfig({ message: "" }); // clear alert
+    if (shouldCloseWindow) window.close();
+  };
+
   return (
     <div className="exam-container">
-      {/* ✅ Exam Guard */}
-      <ExamGuard 
-        setTabSwitchCount = {setTabSwitchCount}
+      <CustomAlert
+        config={alertConfig}
+        onClose={handleCustomAlertClose}
       />
+      {/* ✅ Exam Guard */}
+      <ExamGuard setTabSwitchCount={setTabSwitchCount} />
       <div className="exam-content-wrapper">
-        
         {/* Left main content */}
         <div className="exam-main-content">
           {/* Header */}
           <div className="exam-header">
             <h4>{exam.title}</h4>
           </div>
-          
+
           {/* Question content */}
           <div className="exam-question-content">
             <div className="question-header">
-              <h2 className="question-title">Question {currentQ + 1} of {exam.questions.length}</h2>
+              <h2 className="question-title">
+                Question {currentQ + 1} of {exam.questions.length}
+              </h2>
               <div className="question-progress">
                 <div className="progress-bar">
-                  <div 
-                    className="progress-fill" 
-                    style={{width: `${((currentQ + 1) / exam.questions.length) * 100}%`}}
+                  <div
+                    className="progress-fill"
+                    style={{
+                      width: `${
+                        ((currentQ + 1) / exam.questions.length) * 100
+                      }%`,
+                    }}
                   ></div>
                 </div>
               </div>
@@ -389,19 +454,19 @@ const ExamWindow = () => {
               {/* Question image if available */}
               {hasImage && (
                 <div className="question-image-container">
-                  <img 
-                    src={question.imageUrl} 
-                    alt="Question illustration" 
+                  <img
+                    src={question.imageUrl}
+                    alt="Question illustration"
                     className="question-image"
                     onError={(e) => {
-                      e.target.style.display = 'none';
+                      e.target.style.display = "none";
                     }}
                   />
                 </div>
               )}
               <form className="options-container">
                 {/* Render binary options (True/False) if specified */}
-                {question.type === 'binary' ? (
+                {question.type === "binary" ? (
                   <div className="binary-options">
                     <label className="option-label binary-option">
                       <input
@@ -438,53 +503,79 @@ const ExamWindow = () => {
                         checked={answers[currentQ]?.answer === opt}
                         onChange={() => handleAnswer(currentQ, opt)}
                       />
-                      <span className="option-text">{String.fromCharCode(65 + idx)}. {opt}</span>
+                      <span className="option-text">
+                        {String.fromCharCode(65 + idx)}. {opt}
+                      </span>
                     </label>
                   ))
                 )}
               </form>
             </div>
           </div>
-          
+
           {/* Footer buttons and legend */}
           <div className="exam-footer">
             <div className="footer-controls">
-              <button 
-                type="button" 
-                className={`btn-mark-review ${isMarkReviewDisabled() ? 'disabled' : ''}`} 
+              <button
+                type="button"
+                className={`btn-mark-review ${
+                  isMarkReviewDisabled() ? "disabled" : ""
+                }`}
                 onClick={() => handleMarkReview(currentQ)}
                 disabled={isMarkReviewDisabled()}
               >
-                <i className={`fas ${answers[currentQ]?.state === 'review' ? 'fa-check-circle' : 'fa-flag'}`}></i>
+                <i
+                  className={`fas ${
+                    answers[currentQ]?.state === "review"
+                      ? "fa-check-circle"
+                      : "fa-flag"
+                  }`}
+                ></i>
                 {getMarkReviewButtonText()}
               </button>
               <div className="navigation-buttons">
-                <button type="button" className="btn-prev" disabled={currentQ === 0} onClick={handlePrevQuestion}>
+                <button
+                  type="button"
+                  className="btn-prev"
+                  disabled={currentQ === 0}
+                  onClick={handlePrevQuestion}
+                >
                   <i className="fas fa-chevron-left"></i> Previous
                 </button>
-                <button type="button" className="btn-next" disabled={currentQ === exam.questions.length - 1} onClick={handleNextQuestion}>
+                <button
+                  type="button"
+                  className="btn-next"
+                  disabled={currentQ === exam.questions.length - 1}
+                  onClick={handleNextQuestion}
+                >
                   Next <i className="fas fa-chevron-right"></i>
                 </button>
               </div>
             </div>
-            <button type="button" className="btn-submit" onClick={handleSubmitTest}>
+            <button
+              type="button"
+              className="btn-submit"
+              onClick={handleSubmitTest}
+            >
               <i className="fas fa-paper-plane"></i> Submit Test
             </button>
           </div>
-          
+
           {/* Legend */}
           <div className="legend-container">
             <div className="legend-item">
               <span className="legend-color legend-current"></span>Current
             </div>
             <div className="legend-item">
-              <span className="legend-color legend-not-attempted"></span>Not Attempted
+              <span className="legend-color legend-not-attempted"></span>Not
+              Attempted
             </div>
             <div className="legend-item">
               <span className="legend-color legend-answered"></span>Answered
             </div>
             <div className="legend-item">
-              <span className="legend-color legend-not-answered"></span>Not Answered
+              <span className="legend-color legend-not-answered"></span>Not
+              Answered
             </div>
             <div className="legend-item">
               <span className="legend-color legend-review"></span>Review
@@ -541,12 +632,12 @@ const ExamWindow = () => {
           </div>
         </div>
 
-        <ExamSubmissionModal 
-          show={showSubmitModal} 
+        <ExamSubmissionModal
+          show={showSubmitModal}
           exam={exam}
-          answers={answers} 
+          answers={answers}
           onClose={() => setShowSubmitModal(false)}
-          onConfirm={handleFinalSubmit} 
+          onConfirm={handleFinalSubmit}
         />
       </div>
     </div>
