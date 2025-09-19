@@ -2,6 +2,7 @@ const Exam = require('../models/Exam');
 const Module = require('../models/Module');
 const Question = require('../models/Question');
 const ExamRegistration = require('../models/ExamRegistration');
+const Subscription = require('../models/Subscription'); 
 
 exports.getDashboard = async (req, res) => {
   try {
@@ -61,6 +62,12 @@ exports.getDashboard = async (req, res) => {
       totalQuestions = await Question.countDocuments({ moduleId: { $in: moduleIds } });
     }
 
+    // 6) Active subscription (if any)
+    const hasActiveSubscription = await Subscription.exists({
+      user: teacherId,
+      status: 'Active',
+    }); // latest active subscription
+
     res.json({
       teacher: { id: teacherId },
       stats: {
@@ -80,6 +87,7 @@ exports.getDashboard = async (req, res) => {
         pendingEvaluationsPercentage,
         totalModules,
         totalQuestions,
+        hasActiveSubscription: !!hasActiveSubscription
       },
     });
   } catch (err) {

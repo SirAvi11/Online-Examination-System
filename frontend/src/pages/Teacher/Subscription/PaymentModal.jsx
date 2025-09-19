@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Modal, Button, Form, Alert, Tab, Nav } from "react-bootstrap";
 
-const PaymentModal = ({ show, handleClose, plan }) => {
+const PaymentModal = ({ show, handleClose, plan, onPaymentSuccess }) => {
   const [paymentMethod, setPaymentMethod] = useState("upi");
   const [paymentStatus, setPaymentStatus] = useState("form"); // form, processing, success, error
   const [formData, setFormData] = useState({
@@ -9,26 +9,43 @@ const PaymentModal = ({ show, handleClose, plan }) => {
     cardNumber: "",
     cardName: "",
     expiryDate: "",
-    cvv: ""
+    cvv: "",
   });
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
-      [name]: value
+      [name]: value,
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setPaymentStatus("processing");
-    
-    // Simulate payment processing
-    setTimeout(() => {
+
+    try {
+      // Simulate payment delay
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      // After success -> call backend to save subscription
+      const response = await fetch("http://localhost:5000/api/subscriptions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-auth-token": localStorage.getItem("token"),
+        },
+        body: JSON.stringify({ plan: plan.name }),
+      });
+
+      if (!response.ok) throw new Error("Failed to create subscription");
+
+      const data = await response.json();
+      console.log("Subscription created:", data);
+
       setPaymentStatus("success");
-      
-      // Reset form after success
+
+      // Auto-close after delay
       setTimeout(() => {
         handleClose();
         setPaymentStatus("form");
@@ -37,10 +54,14 @@ const PaymentModal = ({ show, handleClose, plan }) => {
           cardNumber: "",
           cardName: "",
           expiryDate: "",
-          cvv: ""
+          cvv: "",
         });
+        onPaymentSuccess();
       }, 2000);
-    }, 2000);
+    } catch (err) {
+      console.error("Payment error:", err);
+      setPaymentStatus("error");
+    }
   };
 
   return (
@@ -48,18 +69,34 @@ const PaymentModal = ({ show, handleClose, plan }) => {
       <Modal.Header closeButton>
         <Modal.Title>Complete Your Subscription</Modal.Title>
       </Modal.Header>
-      
+
       <Modal.Body>
         {paymentStatus === "success" ? (
           <div className="text-center py-4">
             <div className="success-animation">
-              <svg className="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
-                <circle className="checkmark__circle" cx="26" cy="26" r="25" fill="none" />
-                <path className="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8" />
+              <svg
+                className="checkmark"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 52 52"
+              >
+                <circle
+                  className="checkmark__circle"
+                  cx="26"
+                  cy="26"
+                  r="25"
+                  fill="none"
+                />
+                <path
+                  className="checkmark__check"
+                  fill="none"
+                  d="M14.1 27.2l7.1 7.2 16.7-16.8"
+                />
               </svg>
             </div>
             <h4 className="text-success mt-3">Payment Successful!</h4>
-            <p>Your subscription to <strong>{plan?.name}</strong> is now active.</p>
+            <p>
+              Your subscription to <strong>{plan?.name}</strong> is now active.
+            </p>
           </div>
         ) : paymentStatus === "processing" ? (
           <div className="text-center py-4">
@@ -82,7 +119,10 @@ const PaymentModal = ({ show, handleClose, plan }) => {
               </div>
             </div>
 
-            <Tab.Container activeKey={paymentMethod} onSelect={(k) => setPaymentMethod(k)}>
+            <Tab.Container
+              activeKey={paymentMethod}
+              onSelect={(k) => setPaymentMethod(k)}
+            >
               <Nav variant="pills" className="justify-content-center mb-4">
                 <Nav.Item>
                   <Nav.Link eventKey="upi">UPI</Nav.Link>
@@ -197,7 +237,7 @@ const PaymentModal = ({ show, handleClose, plan }) => {
         .success-animation {
           margin: 0 auto;
         }
-        
+
         .checkmark {
           width: 80px;
           height: 80px;
@@ -207,10 +247,11 @@ const PaymentModal = ({ show, handleClose, plan }) => {
           stroke: #4bb71b;
           stroke-miterlimit: 10;
           box-shadow: 0 0 15px #4bb71b;
-          animation: fill .4s ease-in-out .4s forwards, scale .3s ease-in-out .9s both;
+          animation: fill 0.4s ease-in-out 0.4s forwards,
+            scale 0.3s ease-in-out 0.9s both;
           margin: 0 auto;
         }
-        
+
         .checkmark__circle {
           stroke-dasharray: 166;
           stroke-dashoffset: 166;
@@ -218,31 +259,32 @@ const PaymentModal = ({ show, handleClose, plan }) => {
           stroke-miterlimit: 10;
           stroke: #4bb71b;
           fill: none;
-          animation: stroke .6s cubic-bezier(0.650, 0.000, 0.450, 1.000) forwards;
+          animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
         }
-        
+
         .checkmark__check {
           transform-origin: 50% 50%;
           stroke-dasharray: 48;
           stroke-dashoffset: 48;
-          animation: stroke .3s cubic-bezier(0.650, 0.000, 0.450, 1.000) .8s forwards;
+          animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;
         }
-        
+
         @keyframes stroke {
           100% {
             stroke-dashoffset: 0;
           }
         }
-        
+
         @keyframes scale {
-          0%, 100% {
+          0%,
+          100% {
             transform: none;
           }
           50% {
             transform: scale3d(1.1, 1.1, 1);
           }
         }
-        
+
         @keyframes fill {
           100% {
             box-shadow: 0 0 0 30px rgba(255, 255, 255, 0) inset;

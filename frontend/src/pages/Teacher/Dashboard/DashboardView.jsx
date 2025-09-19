@@ -12,6 +12,7 @@ import {
 import DashboardCard from "../../../components/DashboardCard/DashboardCard";
 import DashboardInfoPane from "../../../components/DashboardInfoPane/DashboardInfoPane";
 import DashboardCalendar from "../../../components/DashboardCalendar/DashboardCalendar";
+import DashboardHeader from "./DashboardHeader";
 import "./DashboardView.css";
 
 // Register ChartJS components once
@@ -184,12 +185,7 @@ const DashboardView = ({ username }) => {
   return (
     <div className="teacher-dashboard container-fluid flex-grow-1">
       {/* Header with clear separation */}
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h1 className="h3 fw-bold m-0" data-cy="welcome-message">
-          Welcome back {username} 👋
-        </h1>
-        {/* Add any header actions here if needed */}
-      </div>
+      <DashboardHeader username={username} isSubscribed={dashboardData?.stats?.hasActiveSubscription} />
 
       {/* Metrics Grid - Left-aligned cards */}
       <div className="dashboard-main-body">

@@ -1,29 +1,41 @@
-import logo from './logo.svg';
-import './App.css';
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import ProtectedRoute from "./components/ProtectedRoute";
 import AuthPage from './pages/AuthPage';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import TeacherView from './pages/Teacher/TeacherView';
 import StudentView from './pages/Student/StudentView';
 import AdminView from './pages/Admin/AdminView';
-import ExamStatusCard from './components/Exam/ExamStatusCard';
-import Question from './components/Question/Question';
-import ExamWindow from './pages/Student/ExamWindow';
-
 function App() {
   return (
-    <Router>
+    <BrowserRouter>
       <Routes>
         <Route path="/" element={<AuthPage />} />
         <Route path="/login" element={<AuthPage />} />
-        <Route path="/teacher-dashboard" element={<TeacherView />} />
-        <Route path="/student-dashboard" element={<StudentView />} />
-        <Route path="/admin-dashboard" element={<AdminView />} />
-        <Route path="/status-card" element={<ExamStatusCard/>} />
-        <Route path="/question-bank" element={<Question/>} />
-        <Route path="/exam-window" element={<ExamWindow />} />
-        {/* Add other routes as needed */}
+        <Route
+          path="/teacher-dashboard"
+          element={
+            <ProtectedRoute allowedRoles={["Teacher"]}>
+              <TeacherView />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/student-dashboard"
+          element={
+            <ProtectedRoute allowedRoles={["Student"]}>
+              <StudentView />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin-dashboard"
+          element={
+            <ProtectedRoute allowedRoles={["Admin"]}>
+              <AdminView />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
-    </Router>
+    </BrowserRouter>
   );
 }
 

@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import './AuthPage.css';
 
 export default function AuthPage() {
   const [isLoginView, setIsLoginView] = useState(true);
+  const navigate = useNavigate()
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -129,11 +131,11 @@ export default function AuthPage() {
         // Redirect based on role
         setTimeout(() => {
             if (response.user.role === 'Teacher') {
-            window.location.href = '/teacher-dashboard';
+            navigate('/teacher-dashboard');
             } else if(response.user.role === 'Student') {
-            window.location.href = '/student-dashboard';
+            navigate('/student-dashboard');
             }else if(response.user.role === 'Admin') {
-            window.location.href = '/admin-dashboard';
+           navigate('/admin-dashboard');
             }
         }, 200);
       } else {
