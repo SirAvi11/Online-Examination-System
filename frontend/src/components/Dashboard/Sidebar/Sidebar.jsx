@@ -1,12 +1,18 @@
 import SidebarLink from './SidebarLink';
 import { useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect} from 'react';
 
-const Sidebar = ({ setActiveView, userRole }) => {
+const Sidebar = ({ setActiveView, userRole, loadView = null }) => {
   const navigate = useNavigate();
-
   // Track currently active view
   const [activeView, setActiveViewState] = useState('dashboard');
+
+    useEffect(()=>{
+    if(loadView){
+      setActiveView(loadView);
+      setActiveViewState(loadView);
+    }
+  },[loadView])
 
   // Common links for all roles
   const commonLinks = [

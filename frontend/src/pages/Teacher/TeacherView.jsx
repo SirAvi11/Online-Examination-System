@@ -31,7 +31,7 @@ const TeacherView = () => {
   const renderView = () => {
     switch (activeView) {
       case 'dashboard':
-        return <DashboardView username={user?.name} />;
+        return <DashboardView username={user?.name} setActiveView={setActiveView}/>;
       case 'exams':
         return <ExamView />;
       case 'modules':
@@ -54,7 +54,7 @@ const TeacherView = () => {
     <>
       <Header />
       <Dashboard>
-        <Sidebar setActiveView={setActiveView} userRole={user?.role} />
+        <Sidebar setActiveView={setActiveView} userRole={user?.role} loadView={activeView}/>
         <MainContent>
           {renderView()}
         </MainContent>

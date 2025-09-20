@@ -25,7 +25,7 @@ ChartJS.register(
   Legend
 );
 
-const DashboardView = ({ username }) => {
+const DashboardView = ({ username , setActiveView}) => {
   const [loading, setLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState(null);
 
@@ -185,7 +185,7 @@ const DashboardView = ({ username }) => {
   return (
     <div className="teacher-dashboard container-fluid flex-grow-1">
       {/* Header with clear separation */}
-      <DashboardHeader username={username} isSubscribed={dashboardData?.stats?.hasActiveSubscription} />
+      <DashboardHeader username={username} isSubscribed={dashboardData?.stats?.hasActiveSubscription} setActiveView={setActiveView} />
 
       {/* Metrics Grid - Left-aligned cards */}
       <div className="dashboard-main-body">

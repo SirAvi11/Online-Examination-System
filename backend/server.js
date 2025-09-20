@@ -15,6 +15,7 @@ const examRegistrationRoutes = require('./routes/examRegistrationRoutes.js');
 const templateRoutes = require('./routes/templateRoutes.js');
 const studentAttemptRoutes = require('./routes/studentAttemptRoutes.js');
 const subscriptionRoutes = require("./routes/subscriptionRoutes");
+const progressRoutes = require("./routes/progressRoutes");
 
 
 dotenv.config();
@@ -45,6 +46,7 @@ app.use("/api/exam-registration", examRegistrationRoutes);
 app.use("/api/attempt", studentAttemptRoutes);
 app.use("/api/template", templateRoutes);
 app.use("/api/subscriptions", subscriptionRoutes);
+app.use("/api/progress", progressRoutes);
 app.use("/uploads", express.static("uploads"));
 
 

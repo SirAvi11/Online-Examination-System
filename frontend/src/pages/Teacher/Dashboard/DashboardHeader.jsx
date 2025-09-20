@@ -1,6 +1,6 @@
 import { Alert, Button } from "react-bootstrap";
 
-const DashboardHeader = ({ username, isSubscribed = true }) => {
+const DashboardHeader = ({ username, isSubscribed = true, setActiveView }) => {
   return (
     <div className="d-flex justify-content-start align-items-center mb-4 gap-4">
       {/* Welcome Message */}
@@ -27,7 +27,7 @@ const DashboardHeader = ({ username, isSubscribed = true }) => {
             </span>
 
             {/* Inline button */}
-            <Button size="sm" variant="primary" className="me-5">
+            <Button size="sm" variant="primary" className="me-5" onClick={()=>{setActiveView('subscription')}}>
               Subscribe
             </Button>
           </Alert>
