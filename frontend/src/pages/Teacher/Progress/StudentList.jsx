@@ -1,16 +1,19 @@
 import React, { useState, useMemo } from "react";
 import "./StudentList.css";
+import ProgressModal from "./ProgressModal";
 
 const StudentList = ({ students }) => {
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
+  const [selectedStudent, setSelectedStudent] = useState(null);
+  const [showModal, setShowModal] = useState(false);
 
   // Normalize student data for table
   const normalizedStudents = useMemo(
     () =>
       students.map((s) => ({
         ...s,
-        averagePercentageNum: s.averagePercentage || 0, // Keep numeric value for sorting
-        averagePercentage: s.averagePercentage?.toFixed(2) || "0.00", // Display value
+        averagePercentageNum: s.averagePercentage || 0,
+        averagePercentage: s.averagePercentage?.toFixed(2) || "0.00",
       })),
     [students]
   );
@@ -23,7 +26,6 @@ const StudentList = ({ students }) => {
       let valueA = a[sortConfig.key];
       let valueB = b[sortConfig.key];
 
-      // Use numeric value for averagePercentage
       if (sortConfig.key === "averagePercentage") {
         valueA = a.averagePercentageNum;
         valueB = b.averagePercentageNum;
@@ -57,6 +59,16 @@ const StudentList = ({ students }) => {
     ) : (
       <i className="fas fa-chevron-down ms-1 text-primary"></i>
     );
+  };
+
+  const handleViewMore = (student) => {
+    setSelectedStudent(student);
+    setShowModal(true);
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setSelectedStudent(null);
   };
 
   return (
@@ -108,7 +120,12 @@ const StudentList = ({ students }) => {
                 <td className="text-center">{student.averageScore}</td>
                 <td className="text-center">{student.averagePercentage}%</td>
                 <td className="text-center">
-                  <button className="btn btn-outline-secondary btn-sm">View more</button>
+                  <button 
+                    className="btn btn-outline-secondary btn-sm"
+                    onClick={() => handleViewMore(student)}
+                  >
+                    View more
+                  </button>
                 </td>
               </tr>
             ))}
@@ -122,8 +139,35 @@ const StudentList = ({ students }) => {
           </tbody>
         </table>
       </div>
+
+      {/* Student Performance Modal */}
+      {showModal && selectedStudent && (
+        <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className="modal-dialog modal-xl">
+            <div className="modal-content">
+              <div className="modal-header bg-primary text-white">
+                <h5 className="modal-title">
+                  <i className="fas fa-user-graduate me-2"></i>
+                  {selectedStudent.studentName} - Performance Details
+                </h5>
+                <button type="button" className="btn-close btn-close-white" onClick={closeModal}></button>
+              </div>
+              <div className="modal-body">
+                <ProgressModal student={selectedStudent} />
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-secondary" onClick={closeModal}>
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
+
+
 
 export default StudentList;
