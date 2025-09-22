@@ -14,17 +14,17 @@ const ExamResultCard = ({ exam, counts, avgScore }) => {
   const statItems = [
     {
       key: "totalRegistered",
-      title: "Total Students",
+      title: "Total Registered Students",
       icon: "fas fa-user",
       bgClass: "bg-blue",
       value: counts.totalRegistered,
     },
     {
-      key: "averageScore",
-      title: "Average Score",
-      icon: "far fa-star",
-      bgClass: "bg-gray",
-      value: avgScore,
+      key: "totalPresent",
+      title: "Total Present Students",
+      icon: "fas fa-check-circle",
+      bgClass: "bg-cyan",
+      value: counts.totalPresent,
     },
     {
       key: "totalAbsent",
@@ -32,13 +32,6 @@ const ExamResultCard = ({ exam, counts, avgScore }) => {
       icon: "fas fa-info-circle",
       bgClass: "bg-yellow",
       value: counts.totalAbsent,
-    },
-    {
-      key: "totalPresent",
-      title: "Total Finished Students",
-      icon: "fas fa-check-circle",
-      bgClass: "bg-cyan",
-      value: counts.totalPresent,
     },
     {
       key: "totalPass",
@@ -53,6 +46,13 @@ const ExamResultCard = ({ exam, counts, avgScore }) => {
       icon: "fas fa-times-circle",
       bgClass: "bg-red",
       value: counts.totalFail,
+    },
+    {
+      key: "averageScore",
+      title: "Average Score",
+      icon: "far fa-star",
+      bgClass: "bg-gray",
+      value: avgScore,
     },
   ];
 
