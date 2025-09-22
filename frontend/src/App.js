@@ -4,6 +4,7 @@ import AuthPage from './pages/AuthPage';
 import TeacherView from './pages/Teacher/TeacherView';
 import StudentView from './pages/Student/StudentView';
 import AdminView from './pages/Admin/AdminView';
+import ExamWindow from './pages/Student/ExamWindow';
 function App() {
   return (
     <BrowserRouter>
@@ -31,6 +32,14 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={["Admin"]}>
               <AdminView />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/exam-window"
+          element={
+            <ProtectedRoute allowedRoles={["Student"]}>
+              <ExamWindow />
             </ProtectedRoute>
           }
         />

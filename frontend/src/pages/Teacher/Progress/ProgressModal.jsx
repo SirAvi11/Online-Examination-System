@@ -256,17 +256,6 @@ const ProgressModal = ({ student }) => {
               </div>
             </div>
             
-            <h5 className="mb-3">Recommendations</h5>
-            <div className="card">
-              <div className="card-body">
-                {generateRecommendations(student.exams, performanceStats).map((rec, index) => (
-                  <div key={index} className="d-flex mb-2">
-                    <i className="fas fa-lightbulb text-warning me-2 mt-1"></i>
-                    <span>{rec}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
         )}
       </div>
@@ -309,41 +298,5 @@ const getScoreRangeAnalysis = (exams) => {
   });
 };
 
-const generateRecommendations = (exams, stats) => {
-  const recommendations = [];
-  
-  if (stats.avgPercentage < 60) {
-    recommendations.push("Student is struggling with the material. Consider additional support or resources.");
-  }
-  
-  if (stats.statusCounts.cheated > 0) {
-    recommendations.push("Student has instances of cheating. Address academic integrity concerns.");
-  }
-  
-  const timeVariation = exams.map(exam => {
-    const started = new Date(exam.startedAt);
-    const submitted = new Date(exam.submittedAt);
-    return (submitted - started) / (1000 * 60); // minutes
-  });
-  
-  const timeStdDev = Math.sqrt(
-    timeVariation.map(time => Math.pow(time - stats.avgTimeSpent, 2))
-      .reduce((a, b) => a + b) / timeVariation.length
-  );
-  
-  if (timeStdDev > stats.avgTimeSpent * 0.5) {
-    recommendations.push("Inconsistent time spent on exams suggests varying difficulty levels or focus issues.");
-  }
-  
-  if (exams.some(exam => exam.tabSwitchCount > 5)) {
-    recommendations.push("High tab switch count detected in some exams. Monitor for potential distractions or cheating.");
-  }
-  
-  if (recommendations.length === 0) {
-    recommendations.push("Student performance is consistent. Continue with current learning approach.");
-  }
-  
-  return recommendations;
-};
 
 export default ProgressModal;
