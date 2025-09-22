@@ -25,7 +25,7 @@ ChartJS.register(
   Legend
 );
 
-const DashboardView = ({ username , setActiveView}) => {
+const DashboardView = ({ username, setActiveView }) => {
   const [loading, setLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState(null);
 
@@ -83,6 +83,10 @@ const DashboardView = ({ username , setActiveView}) => {
         title: dashboardData.stats.closestUpcomingExam.title,
         start: new Date(dashboardData.stats.closestUpcomingExam.date),
         end: new Date(dashboardData.stats.closestUpcomingExam.date),
+        totalMarks: dashboardData.stats.closestUpcomingExam.totalMarks,
+        examCode: dashboardData.stats.closestUpcomingExam.examCode,
+        studentsRegistered:
+          dashboardData.stats.closestUpcomingExam.studentsRegistered,
       });
     }
 
@@ -91,6 +95,44 @@ const DashboardView = ({ username , setActiveView}) => {
 
     return events;
   }, [dashboardData]);
+
+  const topExams = useMemo(() => {
+    if (!dashboardData || !dashboardData.stats?.topExamsByAverageScore) {
+      return {
+        labels: [],
+        datasets: [
+          {
+            label: "Average Scores",
+            data: [],
+            backgroundColor: "rgba(54, 162, 235, 0.5)",
+            borderColor: "rgba(54, 162, 235, 1)",
+            borderWidth: 1,
+          },
+        ],
+      };
+    }
+
+    const labels = dashboardData.stats.topExamsByAverageScore.map(
+      (exam) => exam.title
+    );
+    const data = dashboardData.stats.topExamsByAverageScore.map(
+      (exam) => Number(exam.averagePercentage.toFixed(2)) // format to 2 decimals
+    );
+
+    return {
+      labels,
+      datasets: [
+        {
+          label: "Average Scores",
+          data,
+          backgroundColor: "rgba(54, 162, 235, 0.5)",
+          borderColor: "rgba(54, 162, 235, 1)",
+          borderWidth: 1,
+        },
+      ],
+    };
+  }, [dashboardData]);
+
 
   // Fetch teacher dashboard data
   useEffect(() => {
@@ -128,23 +170,6 @@ const DashboardView = ({ username , setActiveView}) => {
 
     fetchDashboardData();
   }, []);
-
-  // Memoized data to prevent unnecessary recalculations
-  const modulesData = useMemo(
-    () => ({
-      labels: ["DB Systems", "OOP", "Algorithms", "Networking"],
-      datasets: [
-        {
-          label: "Average Scores",
-          data: [72, 65, 68, 60],
-          backgroundColor: "rgba(54, 162, 235, 0.5)",
-          borderColor: "rgba(54, 162, 235, 1)",
-          borderWidth: 1,
-        },
-      ],
-    }),
-    []
-  );
 
   const chartOptions = useMemo(
     () => ({
@@ -185,7 +210,11 @@ const DashboardView = ({ username , setActiveView}) => {
   return (
     <div className="teacher-dashboard container-fluid flex-grow-1">
       {/* Header with clear separation */}
-      <DashboardHeader username={username} isSubscribed={dashboardData?.stats?.hasActiveSubscription} setActiveView={setActiveView} />
+      <DashboardHeader
+        username={username}
+        isSubscribed={dashboardData?.stats?.hasActiveSubscription}
+        setActiveView={setActiveView}
+      />
 
       {/* Metrics Grid - Left-aligned cards */}
       <div className="dashboard-main-body">
@@ -199,11 +228,11 @@ const DashboardView = ({ username , setActiveView}) => {
           </div>
           <div className="main-columns">
             <DashboardInfoPane
-              title="Average Exam Scores By Module"
+              title="Average Exam Scores"
               subtitle="June - December 2025"
             >
               <div style={{ height: "250px" }}>
-                <Bar data={modulesData} options={chartOptions} />
+                <Bar data={topExams} options={chartOptions} />
               </div>
             </DashboardInfoPane>
             <div className="main-right">

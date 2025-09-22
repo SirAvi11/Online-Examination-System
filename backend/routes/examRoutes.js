@@ -11,7 +11,8 @@ const {
   getCompletedExamsByStudent,
   getReportCard,
   getStudentAttemptReport,
-  publishResult
+  publishResult,
+  getTop4ExamsByAverageScore
 } = require("../controllers/examController");
 const authMiddleware = require("../middleware/authMiddleware");
 
