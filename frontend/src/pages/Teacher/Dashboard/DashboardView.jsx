@@ -231,7 +231,7 @@ const DashboardView = ({ username, setActiveView }) => {
               title="Average Exam Scores"
               subtitle="June - December 2025"
             >
-              <div style={{ height: "250px" }}>
+              <div style={{ height: "350px" }}>
                 <Bar data={topExams} options={chartOptions} />
               </div>
             </DashboardInfoPane>
