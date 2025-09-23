@@ -19,10 +19,10 @@ const useQuestion = (moduleId) => {
     questionNumber: null,
   });
 
- // Fetch questions
- // Get authentication token
+  // Fetch questions
+  // Get authentication token
   const getToken = () => {
-    return localStorage.getItem('token') || sessionStorage.getItem('token');
+    return localStorage.getItem("token") || sessionStorage.getItem("token");
   };
 
   // Extract the fetch logic into a reusable function
@@ -31,23 +31,23 @@ const useQuestion = (moduleId) => {
       setLoading(true);
       const token = getToken();
       if (!token) {
-        throw new Error('No authentication token found');
+        throw new Error("No authentication token found");
       }
 
       const res = await fetch(
         `http://localhost:5000/api/questions?moduleId=${moduleId}`,
         {
           headers: {
-            'x-auth-token': token
-          }
+            "x-auth-token": token,
+          },
         }
       );
-      
+
       if (!res.ok) {
         const errorData = await res.json();
-        throw new Error(errorData.message || 'Failed to fetch questions');
+        throw new Error(errorData.message || "Failed to fetch questions");
       }
-      
+
       const data = await res.json();
       setQuestions(data);
       setError(null);
@@ -64,11 +64,8 @@ const useQuestion = (moduleId) => {
     if (moduleId) fetchQuestionsData();
   }, [moduleId]);
 
-
-  // Add new question
-  // useQuestion.js - Update the addQuestion function
   const addQuestion = async (newQuestionData) => {
-    // Validate the question first
+    // 1️⃣ Basic validation
     if (!newQuestionData.questionText?.trim() || !newQuestionData.answer) {
       setDuplicateInfo({
         show: true,
@@ -77,20 +74,21 @@ const useQuestion = (moduleId) => {
       return false;
     }
 
-    // Normalize new text
-    const normalizeText = (text) => {
-      return text
+    // 2️⃣ Normalize question text for duplicate check
+    const normalizeText = (text) =>
+      text
         ?.toLowerCase()
-        ?.trim()
-        ?.replace(/\s+/g, " ")
-        ?.replace(/[?!.]+$/, "") || "";
-    };
+        .trim()
+        .replace(/\s+/g, " ")
+        .replace(/[?!.]+$/, "") || "";
 
     const newNormalized = normalizeText(newQuestionData.questionText);
 
-    // Check duplicate
+    // 3️⃣ Duplicate check (ignore self if updating)
     const duplicateIndex = questions.findIndex(
-      (q) => normalizeText(q.questionText) === newNormalized
+      (q) =>
+        normalizeText(q.questionText) === newNormalized &&
+        q._id !== newQuestionData.questionId
     );
 
     if (duplicateIndex !== -1) {
@@ -103,11 +101,11 @@ const useQuestion = (moduleId) => {
       return false;
     }
 
-    // Check answer validity
+    // 4️⃣ Check if answer matches one of the options
     const correctOptionIndex = newQuestionData.options.findIndex(
       (opt) => opt === newQuestionData.answer
     );
-    
+
     if (correctOptionIndex === -1) {
       setDuplicateInfo({
         show: true,
@@ -116,46 +114,70 @@ const useQuestion = (moduleId) => {
       return false;
     }
 
-    // If validation passes, save the question
+    // 5️⃣ Prepare FormData for POST or PUT
     try {
       setIsSaving(true);
       const formData = new FormData();
-      formData.append("questionText", newQuestionData.questionText);
-      formData.append("moduleId", moduleId || newQuestionData.moduleId);
-      formData.append("marks", newQuestionData.marks);
-      formData.append("correctOptionIndex", correctOptionIndex);
-      formData.append("options", JSON.stringify(newQuestionData.options));
-      
-      if (newQuestionData.paperId) formData.append("paperId", newQuestionData.paperId);
-      if (newQuestionData.imageFile) formData.append("image", newQuestionData.imageFile);
-      
+      formData.append("questionText", newQuestionData.questionText || "");
+      formData.append("marks", (newQuestionData.marks || 1).toString());
+      formData.append("correctOptionIndex", correctOptionIndex.toString());
+      formData.append("options", JSON.stringify(newQuestionData.options || []));
+      formData.append("moduleId", moduleId || newQuestionData.moduleId || "");
+      if (newQuestionData.paperId)
+        formData.append("paperId", newQuestionData.paperId);
+      if (newQuestionData.imageFile)
+        formData.append("image", newQuestionData.imageFile);
 
-      const res = await fetch("http://localhost:5000/api/questions", {
-        method: "POST",
-        body: formData,
-      });
+      let res;
 
-      if (!res.ok) throw new Error('Failed to save question');
+      if (newQuestionData.questionId) {
+        // UPDATE existing question
+        res = await fetch(
+          `http://localhost:5000/api/questions/${newQuestionData.questionId}`,
+          {
+            method: "PUT",
+            body: formData,
+          }
+        );
+      } else {
+        // ADD new question
+        res = await fetch("http://localhost:5000/api/questions", {
+          method: "POST",
+          body: formData,
+        });
+      }
+
+      if (!res.ok) throw new Error("Failed to save question");
 
       const savedQuestion = await res.json();
-      setQuestions((prev) => [...prev, savedQuestion]);
-      
-      // Show success message
-      setSuccessInfo({
-        show: true,
-        message: "Question added successfully!",
-        questionNumber: questions.length + 1,
+
+      // 6️⃣ Update state
+      setQuestions((prev) => {
+        if (newQuestionData.questionId) {
+          // Replace updated question
+          return prev.map((q) =>
+            q._id === savedQuestion._id ? savedQuestion : q
+          );
+        } else {
+          return [...prev, savedQuestion];
+        }
       });
 
-      // Auto-hide after 3 seconds
+      // 7️⃣ Show success notification
+      setSuccessInfo({
+        show: true,
+        message: newQuestionData.questionId
+          ? "Question updated successfully!"
+          : "Question added successfully!",
+        questionNumber: newQuestionData.questionId
+          ? questions.findIndex((q) => q._id === newQuestionData.questionId) + 1
+          : questions.length + 1,
+      });
+
       setTimeout(() => {
-        setSuccessInfo({
-          show: false,
-          message: "",
-          questionNumber: null,
-        });
+        setSuccessInfo({ show: false, message: "", questionNumber: null });
       }, 3000);
-      
+
       return savedQuestion;
     } catch (err) {
       console.error("Failed to save question:", err);
@@ -198,7 +220,7 @@ const useQuestion = (moduleId) => {
 
   //Toggle Archieved Questions
 
-  const toggleArchiveQuestions = async(questionIds, archive) =>{
+  const toggleArchiveQuestions = async (questionIds, archive) => {
     try {
       const res = await fetch(
         "http://localhost:5000/api/questions/archive-toggle",
@@ -208,21 +230,20 @@ const useQuestion = (moduleId) => {
           body: JSON.stringify({ questionIds, archive }),
         }
       );
-      
+
       if (!res.ok) {
         const errorData = await res.json();
-        throw new Error(errorData.message || 'Error toggling archive status');
+        throw new Error(errorData.message || "Error toggling archive status");
       }
 
       // Refresh questions after archive operation
       await fetchQuestionsData();
       return true;
-
     } catch (err) {
       setError(err.message);
       return false;
     }
-  }
+  };
 
   // Reset duplicate info
   const resetDuplicateInfo = () => {

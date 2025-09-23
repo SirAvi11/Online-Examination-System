@@ -1,7 +1,7 @@
 import QuestionRow from './QuestionRow';
 import "./QuestionTable.css";
 
-const QuestionTable = ({ questions, selectedQuestionIds, onSelect, onSelectAll, onExpand, expandedRow }) => {
+const QuestionTable = ({ questions, selectedQuestionIds, onSelect, onSelectAll, onExpand, expandedRow, addQuestion }) => {
   return (
     <div className="table-scroll-container">
       <table className="custom-table">
@@ -30,6 +30,7 @@ const QuestionTable = ({ questions, selectedQuestionIds, onSelect, onSelectAll, 
               onSelect={onSelect}
               onExpand={onExpand}
               isExpanded={expandedRow === i}
+              addQuestion={addQuestion}
             />
           ))}
         </tbody>

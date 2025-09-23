@@ -296,6 +296,7 @@ export default function QuestionBank({ selectedModule, onBack }) {
           onSelect={toggleSelectQuestion}
           onSelectAll={toggleSelectAll}
           onExpand={setExpandedRow}
+          addQuestion={addQuestion}
         />
       )}
 

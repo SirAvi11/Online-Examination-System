@@ -4,23 +4,22 @@ import {
 } from "react-bootstrap";
 import { useState } from "react";
 import QuestionFormModal from "./QuestionFormModal";
-import useQuestion from "./hooks/useQuestion";
 import { OverlayTrigger, Tooltip, Button } from "react-bootstrap";
 
-
-
-const QuestionDetailRow = ({ question, index }) => {
+const QuestionDetailRow = ({ question, index, addQuestion }) => {
 
   const [showModal, setShowModal] = useState(false);
-  const {saveChangesc} = useQuestion(question.moduleId);
 
   const handleEdit = ()=>{
     setShowModal(true);
   }
 
-  const saveChanges = (data) => {
-
-  }
+  const saveChanges = async(data) => {
+    return await addQuestion({
+      ...data,          // keep all existing fields in `data`
+      questionId: question._id, // add the questionId
+    });
+  };
 
   return (
     <>

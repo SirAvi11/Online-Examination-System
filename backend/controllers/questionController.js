@@ -33,6 +33,73 @@ const getQuestions = async (req, res) => {
   }
 };
 
+const updateQuestion = async (req, res) => {
+  try {
+    const { questionId } = req.params;
+    if (!questionId) {
+      return res.status(400).json({ message: "questionId is required" });
+    }
+
+    const { paperId, moduleId, questionText, options, correctOptionIndex, marks } = req.body;
+
+    // Validate and parse options
+    if (!options) {
+      return res.status(400).json({ error: "Options field is required" });
+    }
+
+    let parsedOptions;
+    try {
+      parsedOptions = JSON.parse(options);
+    } catch (parseError) {
+      return res.status(400).json({ error: "Invalid options format. Must be valid JSON." });
+    }
+
+    if (!Array.isArray(parsedOptions)) {
+      return res.status(400).json({ error: "Options must be an array" });
+    }
+
+    // Find existing question
+    const existingQuestion = await Question.findById(questionId);
+    if (!existingQuestion) {
+      return res.status(404).json({ message: "Question not found" });
+    }
+
+    // Build update object
+    const updateData = {
+      questionText,
+      options: parsedOptions,
+      correctOptionIndex: parseInt(correctOptionIndex) || 0,
+      marks: parseInt(marks) || 1,
+      paperId: paperId || null,
+      moduleId: moduleId && moduleId !== "null" && moduleId !== "undefined" && moduleId !== "" ? moduleId : null,
+    };
+
+    // Handle image upload
+    if (req.file) {
+      // Delete old image if exists
+      if (existingQuestion.imageUrl) {
+        const oldImagePath = path.join(__dirname, "..", existingQuestion.imageUrl);
+        fs.unlink(oldImagePath, (err) => {
+          if (err) console.warn("Failed to delete old image:", err);
+        });
+      }
+      // Set new image URL
+      updateData.imageUrl = `/uploads/questions/${req.file.filename}`;
+    }
+
+    const updatedQuestion = await Question.findByIdAndUpdate(
+      questionId,
+      { $set: updateData },
+      { new: true }
+    );
+
+    res.json(updatedQuestion);
+  } catch (err) {
+    console.error("Error updating question:", err);
+    res.status(500).json({ message: "Failed to update question" });
+  }
+};
+
 // POST new question
 const createQuestion = async (req, res) => {
   try {
@@ -167,5 +234,6 @@ module.exports = {
   createQuestion,
   bulkDeleteQuestions,
   toggleArchiveQuestions,
-  getArchivedQuestions
+  getArchivedQuestions,
+  updateQuestion
 };

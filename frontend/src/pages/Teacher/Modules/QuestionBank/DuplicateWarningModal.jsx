@@ -7,7 +7,7 @@ const DuplicateWarningModal = ({ duplicateInfo, onHide }) => {
   return (
     <Modal show={duplicateInfo.show} onHide={onHide} centered>
       <Modal.Header closeButton className="bg-danger text-white">
-          <Modal.Title>Duplicate Question</Modal.Title>
+          <Modal.Title>Warning</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           {duplicateInfo.message ? (

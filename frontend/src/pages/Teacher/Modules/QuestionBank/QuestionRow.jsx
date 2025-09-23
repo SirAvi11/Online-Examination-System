@@ -5,7 +5,7 @@ import {
   Form
 } from "react-bootstrap";
 
-const QuestionRow = ({ question, index, isSelected, onSelect, onExpand, isExpanded }) => {
+const QuestionRow = ({ question, index, isSelected, onSelect, onExpand, isExpanded, addQuestion }) => {
   return (
     <React.Fragment key={question._id}>
       <tr>
@@ -31,7 +31,7 @@ const QuestionRow = ({ question, index, isSelected, onSelect, onExpand, isExpand
         </td>
       </tr>
       {isExpanded && (
-        <QuestionDetailRow question={question} index={index} />
+        <QuestionDetailRow question={question} index={index} addQuestion={addQuestion}/>
       )}
     </React.Fragment>
   );
