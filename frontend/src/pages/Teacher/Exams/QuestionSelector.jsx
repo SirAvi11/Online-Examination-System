@@ -11,7 +11,7 @@ const QuestionSelector = ({ modules, examQuestions, onChange }) => {
   const [selectedExam, setSelectedExam] = useState([]);
   const [showModal, setShowModal] = useState(false);
 
-  const {isSaving, successInfo, addQuestion} = useQuestion("");
+  const {isSaving, successInfo,resetSuccessInfo, addQuestion} = useQuestion("");
   
   const handleModuleChange = async (moduleId) => {
     setSelectedModule(moduleId);
@@ -225,6 +225,7 @@ const QuestionSelector = ({ modules, examQuestions, onChange }) => {
         onSave={handleAddQuestion}
         isSaving={isSaving}
         successInfo={successInfo}
+        resetSuccessInfo={resetSuccessInfo}
         modules={modules}
       />
     </div>

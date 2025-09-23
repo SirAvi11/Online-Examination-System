@@ -19,7 +19,7 @@ const useQuestion = (moduleId) => {
     questionNumber: null,
   });
 
-  // Fetch questions
+ // Fetch questions
  // Get authentication token
   const getToken = () => {
     return localStorage.getItem('token') || sessionStorage.getItem('token');

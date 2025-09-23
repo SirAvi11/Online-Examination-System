@@ -3,16 +3,16 @@ import React, { useEffect } from 'react';
 
 const SuccessNotification = ({ successInfo, onClose }) => {
   useEffect(() => {
-    if (successInfo.show) {
+    if (successInfo?.show) {
       const timer = setTimeout(() => {
         onClose();
       }, 3000);
       
       return () => clearTimeout(timer);
     }
-  }, [successInfo.show, onClose]);
+  }, [successInfo?.show, onClose]);
 
-  if (!successInfo.show) return null;
+  if (!successInfo?.show) return null;
 
   return (
     <div 

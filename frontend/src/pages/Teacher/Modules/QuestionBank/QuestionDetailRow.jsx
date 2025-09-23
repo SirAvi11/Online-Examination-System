@@ -4,6 +4,7 @@ import {
 } from "react-bootstrap";
 import { useState } from "react";
 import QuestionFormModal from "./QuestionFormModal";
+import useQuestion from "./hooks/useQuestion";
 import { OverlayTrigger, Tooltip, Button } from "react-bootstrap";
 
 
@@ -11,9 +12,14 @@ import { OverlayTrigger, Tooltip, Button } from "react-bootstrap";
 const QuestionDetailRow = ({ question, index }) => {
 
   const [showModal, setShowModal] = useState(false);
+  const {saveChangesc} = useQuestion(question.moduleId);
 
   const handleEdit = ()=>{
     setShowModal(true);
+  }
+
+  const saveChanges = (data) => {
+
   }
 
   return (
@@ -81,7 +87,7 @@ const QuestionDetailRow = ({ question, index }) => {
         <QuestionFormModal
           show={showModal}
           onHide={() => setShowModal(false)}
-          onSave={(data) => console.log("Save/Update", data)}
+          onSave={saveChanges}
           initialData={question}
           isEdit={true}
           isEditable={!question.isUsedInExam}
