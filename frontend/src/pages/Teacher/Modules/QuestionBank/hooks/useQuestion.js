@@ -127,6 +127,7 @@ const useQuestion = (moduleId) => {
         formData.append("paperId", newQuestionData.paperId);
       if (newQuestionData.imageFile)
         formData.append("image", newQuestionData.imageFile);
+      if (newQuestionData.imageUrl) formData.append("imageUrl", newQuestionData.imageUrl);
 
       let res;
 

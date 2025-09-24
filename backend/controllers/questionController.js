@@ -40,7 +40,7 @@ const updateQuestion = async (req, res) => {
       return res.status(400).json({ message: "questionId is required" });
     }
 
-    const { paperId, moduleId, questionText, options, correctOptionIndex, marks } = req.body;
+    const { paperId, moduleId, questionText, options, correctOptionIndex, marks, imageUrl } = req.body;
 
     // Validate and parse options
     if (!options) {
@@ -64,6 +64,18 @@ const updateQuestion = async (req, res) => {
       return res.status(404).json({ message: "Question not found" });
     }
 
+    let url = null;
+    console.log("Incoming image url", imageUrl);
+    if(req.file){
+      url = `/uploads/questions/${req.file.filename}`;
+    } else if(imageUrl && imageUrl.trim() !== ''){
+      url = imageUrl;
+    }else {
+      url = null;
+    }
+    console.log("Outgoing image url", url);
+
+
     // Build update object
     const updateData = {
       questionText,
@@ -72,20 +84,8 @@ const updateQuestion = async (req, res) => {
       marks: parseInt(marks) || 1,
       paperId: paperId || null,
       moduleId: moduleId && moduleId !== "null" && moduleId !== "undefined" && moduleId !== "" ? moduleId : null,
+      imageUrl: url
     };
-
-    // Handle image upload
-    if (req.file) {
-      // Delete old image if exists
-      if (existingQuestion.imageUrl) {
-        const oldImagePath = path.join(__dirname, "..", existingQuestion.imageUrl);
-        fs.unlink(oldImagePath, (err) => {
-          if (err) console.warn("Failed to delete old image:", err);
-        });
-      }
-      // Set new image URL
-      updateData.imageUrl = `/uploads/questions/${req.file.filename}`;
-    }
 
     const updatedQuestion = await Question.findByIdAndUpdate(
       questionId,
