@@ -96,16 +96,15 @@ const StudentList = ({ students }) => {
               <th
                 scope="col"
                 className="text-center"
-                onClick={() => handleSort("averageScore")}
+                onClick={() => handleSort("averagePercentage")}
               >
-                Avg Score {renderSortIcon("averageScore")}
+                Avg Percentage {renderSortIcon("averagePercentage")}
               </th>
               <th
                 scope="col"
                 className="text-center"
-                onClick={() => handleSort("averagePercentage")}
               >
-                Avg Percentage {renderSortIcon("averagePercentage")}
+                Trend
               </th>
               <th scope="col" className="text-center">
                 Action
@@ -117,8 +116,8 @@ const StudentList = ({ students }) => {
               <tr key={student.studentId}>
                 <td className="ps-4">{student.studentName}</td>
                 <td className="text-center">{student.totalExamsAttempted}</td>
-                <td className="text-center">{student.averageScore}</td>
                 <td className="text-center">{student.averagePercentage}%</td>
+                <td className="text-center">{student.trend}</td>
                 <td className="text-center">
                   <button 
                     className="btn btn-outline-secondary btn-sm"

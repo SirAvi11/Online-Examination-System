@@ -486,7 +486,7 @@ const QuestionFormModal = ({
                       value={opt}
                       onChange={(e) => {
                         const updated = [...newQuestion.options];
-                        const newValue = e.target.value.trim();
+                        const newValue = e.target.value;
 
                         const isDuplicate =
                           newValue &&
