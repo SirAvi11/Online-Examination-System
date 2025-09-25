@@ -1,4 +1,3 @@
-// routes/questionRoutes.js
 const express = require("express");
 const router = express.Router();
 const {
@@ -9,17 +8,17 @@ const {
   getArchivedQuestions,
   updateQuestion
 } = require("../controllers/questionController.js");
-const upload = require("../middleware/uploadMiddleware.js"); 
-
+const upload = require("../middleware/uploadMiddleware.js");
+const auth = require("../middleware/authMiddleware.js"); // <-- import here
 
 // Basic
-router.get("/", getQuestions); // ?moduleId=xxx
-router.post("/", upload.single('image'), createQuestion); // Add multer middleware here
-router.put("/:questionId", upload.single('image'), updateQuestion); // Update existing question with optional image
-router.delete("/bulk", bulkDeleteQuestions);
+router.get("/", auth, getQuestions); // ?moduleId=xxx
+router.post("/", auth, upload.single("image"), createQuestion); 
+router.put("/:questionId", auth, upload.single("image"), updateQuestion); 
+router.delete("/bulk", auth, bulkDeleteQuestions);
 
 // Archive management
-router.put("/archive-toggle", toggleArchiveQuestions);
-router.get("/archived", getArchivedQuestions);
+router.put("/archive-toggle", auth, toggleArchiveQuestions);
+router.get("/archived", auth, getArchivedQuestions);
 
 module.exports = router;

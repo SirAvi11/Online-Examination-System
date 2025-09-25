@@ -3,6 +3,7 @@ const Question = require("../models/Question");
 const ExcelJS = require("exceljs");
 const ExamRegistration = require('../models/ExamRegistration');
 const StudentAttempt = require('../models/StudentAttempt');
+const logActivity = require("../middleware/activityMiddleware");
 const mongoose = require('mongoose');
 
 // --- helpers ---
@@ -200,6 +201,15 @@ const createExam = async (req, res) => {
       { path: 'createdBy', select: 'name email' }
     ]);
 
+    // log activity
+    await logActivity({
+      userId: teacherId,
+      role: "Teacher",
+      action: "created",
+      entityType: "exam",
+      entityName: savedExam.title
+    });
+
     res.status(201).json({
       message: "Exam created successfully",
       exam: savedExam
@@ -295,6 +305,15 @@ const updateExam = async (req, res) => {
       updateData,
       { new: true, runValidators: true }
     ).populate('questions.questionRef');
+
+    // log activity
+    await logActivity({
+      userId: req.user._id,
+      role: "Teacher",
+      action: "updated",
+      entityType: "exam",
+      entityName: updatedExam.title
+    });
 
     res.status(200).json({
       message: "Exam updated successfully",

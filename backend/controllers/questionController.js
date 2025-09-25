@@ -2,6 +2,7 @@
 const Question = require("../models/Question.js");
 const Module = require("../models/Module.js");
 const Exam = require("../models/Exam.js");
+const logActivity = require("../middleware/activityMiddleware.js");
 
 // GET questions by moduleId with exam usage info
 const getQuestions = async (req, res) => {
@@ -93,6 +94,24 @@ const updateQuestion = async (req, res) => {
       { new: true }
     );
 
+    // ✅ Log activity
+    if (req.user && req.user.userId) {
+      let moduleName = null;
+      if (updateData.moduleId) {
+        const mod = await Module.findById(updateData.moduleId).select("name");
+        moduleName = mod ? mod.name : null;
+      }
+
+      await logActivity({
+        userId: req.user.userId,
+        role: "Teacher",
+        action: "updated",
+        entityType: "question",
+        entityName: questionText,
+        extraInfo: moduleName ? `in module "${moduleName}"` : null,
+      });
+    }
+
     res.json(updatedQuestion);
   } catch (err) {
     console.error("Error updating question:", err);
@@ -146,11 +165,24 @@ const createQuestion = async (req, res) => {
 
     const saved = await question.save();
 
+    let savedModule = null;
     if (validatedModuleId) {
-      await Module.findByIdAndUpdate(
+      savedModule = await Module.findByIdAndUpdate(
         validatedModuleId,
-        { $inc: { questionCount: 1 } }
+        { $inc: { questionCount: 1 } },
+        { new: true } // get updated module doc
       );
+    }
+
+    // Log activity
+    if (req.user) {
+      await logActivity({
+        userId: req.user.userId,
+        role: "Teacher",
+        action: "added a question",
+        entityType: "module",
+        entityName: savedModule ? savedModule.name : "Unknown module"
+      });
     }
 
     res.json(saved);

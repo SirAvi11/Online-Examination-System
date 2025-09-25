@@ -4,6 +4,7 @@ const Module = require('../models/Module');
 const Question = require('../models/Question');
 const ExamRegistration = require('../models/ExamRegistration');
 const Subscription = require('../models/Subscription');
+const Activity = require("../models/Activity");
 const mongoose = require('mongoose');
 
 exports.getDashboard = async(req, res) => {
@@ -124,6 +125,11 @@ exports.getDashboard = async(req, res) => {
             }
         ]);
 
+        // 8) Get recent activities
+        const activities = await Activity.find({ userId: teacherId })
+            .sort({ timestamp: -1 })
+            .limit(10);
+
         res.json({
             teacher: { id: teacherId },
             stats: {
@@ -146,6 +152,7 @@ exports.getDashboard = async(req, res) => {
                 hasActiveSubscription: !!hasActiveSubscription,
                 topExamsByAverageScore: topExams
             },
+            recentActivities: activities
         });
     } catch (err) {
         console.error('Dashboard error:', err);

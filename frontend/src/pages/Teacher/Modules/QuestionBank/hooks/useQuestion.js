@@ -127,7 +127,8 @@ const useQuestion = (moduleId) => {
         formData.append("paperId", newQuestionData.paperId);
       if (newQuestionData.imageFile)
         formData.append("image", newQuestionData.imageFile);
-      if (newQuestionData.imageUrl) formData.append("imageUrl", newQuestionData.imageUrl);
+      if (newQuestionData.imageUrl)
+        formData.append("imageUrl", newQuestionData.imageUrl);
 
       let res;
 
@@ -137,6 +138,9 @@ const useQuestion = (moduleId) => {
           `http://localhost:5000/api/questions/${newQuestionData.questionId}`,
           {
             method: "PUT",
+            headers: {
+             "x-auth-token": localStorage.getItem('token'), // replace with your actual token
+            },
             body: formData,
           }
         );
@@ -144,6 +148,9 @@ const useQuestion = (moduleId) => {
         // ADD new question
         res = await fetch("http://localhost:5000/api/questions", {
           method: "POST",
+          headers: {
+            "x-auth-token": localStorage.getItem('token'), // replace with your actual token
+          },
           body: formData,
         });
       }
@@ -199,7 +206,7 @@ const useQuestion = (moduleId) => {
         "http://localhost:5000/api/questions/bulk-delete",
         {
           method: "DELETE",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", "x-auth-token": localStorage.getItem('token') },
           body: JSON.stringify({ ids: questionIds }),
         }
       );
@@ -227,7 +234,7 @@ const useQuestion = (moduleId) => {
         "http://localhost:5000/api/questions/archive-toggle",
         {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", "x-auth-token": localStorage.get('token') },
           body: JSON.stringify({ questionIds, archive }),
         }
       );

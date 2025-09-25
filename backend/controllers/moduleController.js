@@ -1,6 +1,7 @@
 const Module = require('../models/Module.js');
 const Question = require('../models/Question.js');
-const Exam = require('../models/Exam.js'); // <-- missing import
+const Exam = require('../models/Exam.js');
+const logActivity = require("../middleware/activityMiddleware.js")
 
 // GET all modules for logged-in teacher
 exports.getModules = async (req, res) => {
@@ -62,6 +63,16 @@ exports.createModule = async (req, res) => {
       questionCount: 0,
     });
     const savedModule = await module.save();
+
+    // log activity
+    await logActivity({
+      userId: teacherId,
+      role: "Teacher",
+      action: "created",
+      entityType: "module",
+      entityName: savedModule.name
+    });
+
     res.status(201).json(savedModule);
   } catch (err) {
     console.error(err);
@@ -100,6 +111,16 @@ exports.updateModule = async (req, res) => {
     }
 
     res.json(updated);
+
+    // log activity
+    await logActivity({
+      userId: teacherId,
+      role: "Teacher",
+      action: "updated",
+      entityType: "module",
+      entityName: updated.name
+    });
+
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

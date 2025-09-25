@@ -13,6 +13,7 @@ import DashboardCard from "../../../components/DashboardCard/DashboardCard";
 import DashboardInfoPane from "../../../components/DashboardInfoPane/DashboardInfoPane";
 import DashboardCalendar from "../../../components/DashboardCalendar/DashboardCalendar";
 import DashboardHeader from "./DashboardHeader";
+import RecentActivity from "../../../components/Activity/RecentActivity";
 import "./DashboardView.css";
 
 // Register ChartJS components once
@@ -133,7 +134,6 @@ const DashboardView = ({ username, setActiveView }) => {
     };
   }, [dashboardData]);
 
-
   // Fetch teacher dashboard data
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -180,33 +180,6 @@ const DashboardView = ({ username, setActiveView }) => {
     []
   );
 
-  const activities = useMemo(
-    () => [
-      {
-        id: 1,
-        action: "created",
-        type: "exam",
-        title: "Midterm Exam - SFSD",
-        time: "just now",
-      },
-      {
-        id: 2,
-        action: "edited",
-        type: "module",
-        title: "Advanced Database Systems",
-        time: "just now",
-      },
-      {
-        id: 3,
-        action: "deleted",
-        type: "exam",
-        title: "Quiz 1 - OOP",
-        time: "just now",
-      },
-    ],
-    []
-  );
-
   return (
     <div className="teacher-dashboard container-fluid flex-grow-1">
       {/* Header with clear separation */}
@@ -238,29 +211,9 @@ const DashboardView = ({ username, setActiveView }) => {
             <div className="main-right">
               <DashboardInfoPane
                 title="Recent Activities"
-                subtitle="January - June 2024"
+                subtitle="Latest changes in your account"
               >
-                <div
-                  className="activity-feed"
-                  style={{ maxHeight: "300px", overflowY: "auto" }}
-                >
-                  {activities.map((activity) => (
-                    <div
-                      key={activity.id}
-                      className="activity-item border-bottom pb-3 mb-3"
-                    >
-                      <div className="d-flex justify-content-between">
-                        <span className="fw-semibold">
-                          You {activity.action} the {activity.type}: "
-                          {activity.title}"
-                        </span>
-                        <span className="text-muted small">
-                          {activity.time}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <RecentActivity activities={dashboardData?.recentActivities} />
               </DashboardInfoPane>
               <DashboardInfoPane
                 title="Quick Actions"

@@ -153,8 +153,10 @@ const StudentResultView = () => {
               dateRange={exam.dateRange}
               timeRange={exam.timeRange}
               totalMarks={exam.totalMarks}
-              status={`${exam.score}/${exam.totalMarks} (${exam.percentage}%)`}
-              statusVariant={exam.pass ? "success" : "danger"}
+              status = {exam.resultPublished ? `${exam.score}/${exam.totalMarks} (${exam.percentage}%)` : `Not Published Yet`}
+              statusVariant={exam.resultPublished ? "success" : "danger"}
+              showFooter={exam.resultPublished}
+              showChevron = {false}
               onCardClick={() => setSelectedExam(exam)}
             />
           ))
