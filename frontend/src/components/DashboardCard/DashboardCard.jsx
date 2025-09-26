@@ -1,4 +1,5 @@
-import './DashboardCard.css'
+import './DashboardCard.css';
+import {useRef, useState, useEffect} from "react";
 import { OverlayTrigger, Tooltip } from 'react-bootstrap';
 
 const DashboardCard = ({
@@ -13,13 +14,26 @@ const DashboardCard = ({
   containerClassName = 'container-center',
   cardClassName = 'card-custom',
 }) => {
+
+  const ref = useRef(null);
+  const [isOverflowing, setIsOverflowing] = useState(false);
+
+  useEffect(() => {
+    if (ref.current) {
+      setIsOverflowing(ref.current.scrollWidth > ref.current.clientWidth);
+    }
+  }, [value]);
+
+
   const cardContent = (
     <div className={cardClassName}>
       <div className="d-flex justify-content-between align-items-center mb-1">
         <span className={titleClassName}>{title}</span>
         {icon && <i className={`fas ${icon} fa-lg`}></i>}
       </div>
-      <div className={valueClassName}>{value}</div>
+      <div className={`${valueClassName} marquee-container`} ref={ref}>
+        <span className={isOverflowing ? "marquee-text" : ""}>{value}</span>
+      </div>
       <div className={subtitleClassName}>{subtitle}</div>
     </div>
   );

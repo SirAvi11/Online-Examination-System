@@ -1,96 +1,179 @@
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
+import { Line } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+} from "chart.js";
 import DashboardCard from "../../../components/DashboardCard/DashboardCard";
 import DashboardInfoPane from "../../../components/DashboardInfoPane/DashboardInfoPane";
 import DashboardCalendar from "../../../components/DashboardCalendar/DashboardCalendar";
-
+import DashboardHeader from "../../Teacher/Dashboard/DashboardHeader";
+import RecentActivity from "../../../components/Activity/RecentActivity";
 import "./DashboardView.css";
 
+// Register ChartJS for line chart
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+);
+
 const DashboardView = ({ username }) => {
-  // Static metric cards
+  const [loading, setLoading] = useState(true);
+  const [dashboardData, setDashboardData] = useState(null);
+
+  // Metric cards stay same (from API stats)
   const metricCards = useMemo(() => {
+    if (!dashboardData) return [];
+
+    const stats = dashboardData.stats;
     return [
       {
         title: "Total Exams Attempted",
-        value: 8,
+        value: stats.totalExamsAttempted,
         subtitle: "All-time attempts",
         icon: "fa-file-alt",
+        tooltip: "Number of exams you have attempted.",
       },
       {
         title: "Average Score (%)",
-        value: "72%",
+        value: `${stats.averageScore}%`,
         subtitle: "Across all exams",
         icon: "fa-chart-line",
+        tooltip: "Your average exam percentage.",
       },
       {
         title: "Pass Rate (%)",
-        value: "85%",
+        value: `${stats.passRate}%`,
         subtitle: "Exams passed vs attempted",
         icon: "fa-check-circle",
+        tooltip: "Percentage of exams where you passed.",
       },
       {
         title: "Best Subject",
-        value: "Algorithms",
-        subtitle: "Highest average: 78%",
+        value: stats.highestExam.title || "N/A",
+        subtitle: stats.highestExam.percentage
+          ? `Highest avg: ${stats.highestExam.percentage}%`
+          : "No data yet",
         icon: "fa-star",
+        tooltip: "Subject in which you perform best.",
       },
     ];
+  }, [dashboardData]);
+
+  // Upcoming events from API
+  const upcomingEvents = useMemo(() => {
+    if (!dashboardData) return [];
+    const events = [];
+
+    const exam = dashboardData.stats.closestUpcomingExam;
+    if (exam) {
+      events.push({
+        title: exam.title,
+        start: new Date(exam.startTime), // ✅ start date
+        end: new Date(exam.endTime), // ✅ end date
+        registrationId: exam.registrationId, // ✅ from backend
+        registeredAt: new Date(exam.registeredAt), // ✅ convert to Date
+        duration: exam.duration, // ✅ in minutes
+        totalMarks: exam.totalMarks,
+        examCode: exam.examCode,
+      });
+    }
+
+    return events;
+  }, [dashboardData]);
+
+  // Line chart: Performance history
+  const performanceHistory = useMemo(() => {
+    if (!dashboardData || !dashboardData.stats?.performanceHistory) {
+      return {
+        labels: [],
+        datasets: [
+          {
+            label: "Marks Scored",
+            data: [],
+            borderColor: "rgba(54, 162, 235, 1)",
+            backgroundColor: "rgba(54, 162, 235, 0.3)",
+            tension: 0.3,
+          },
+        ],
+      };
+    }
+
+    const labels = dashboardData.stats.performanceHistory.map(
+      (exam) => exam.title
+    );
+    const data = dashboardData.stats.performanceHistory.map(
+      (exam) => exam.score
+    );
+
+    return {
+      labels,
+      datasets: [
+        {
+          label: "Marks Scored",
+          data,
+          borderColor: "rgba(54, 162, 235, 1)",
+          backgroundColor: "rgba(54, 162, 235, 0.3)",
+          tension: 0.3,
+        },
+      ],
+    };
+  }, [dashboardData]);
+
+  const chartOptions = useMemo(
+    () => ({
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: { y: { beginAtZero: true } },
+    }),
+    []
+  );
+
+  // Fetch student dashboard data
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(
+          "http://localhost:5000/api/student/dashboard",
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              "x-auth-token": localStorage.getItem("token"),
+            },
+          }
+        );
+
+        if (!response.ok) throw new Error("Failed to fetch dashboard data");
+        const data = await response.json();
+        setDashboardData(data);
+      } catch (err) {
+        console.error("Dashboard fetch error:", err);
+        setDashboardData(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDashboardData();
   }, []);
-
-  // Static upcoming events (student exams)
-  const upcomingEvents = useMemo(
-    () => [
-      {
-        title: "OOP Final Exam",
-        start: new Date("2025-09-15T10:00:00"),
-        end: new Date("2025-09-15T12:00:00"),
-      },
-      {
-        title: "Networking Quiz",
-        start: new Date("2025-09-20T09:00:00"),
-        end: new Date("2025-09-20T10:00:00"),
-      },
-    ],
-    []
-  );
-
-  // Static recent activities (exam-related for student)
-  const activities = useMemo(
-    () => [
-      {
-        id: 1,
-        action: "completed",
-        type: "exam",
-        title: "Midterm - DB Systems",
-        time: "2 days ago",
-      },
-      {
-        id: 2,
-        action: "scored 75%",
-        type: "exam",
-        title: "Quiz - OOP",
-        time: "1 week ago",
-      },
-      {
-        id: 3,
-        action: "registered for",
-        type: "exam",
-        title: "Final Exam - Algorithms",
-        time: "just now",
-      },
-    ],
-    []
-  );
 
   return (
     <div className="student-dashboard container-fluid flex-grow-1">
       {/* Header */}
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h1 className="h3 fw-bold m-0" data-cy="welcome-message">
-          Welcome back {username} 👋
-        </h1>
-      </div>
+      <DashboardHeader username={username} />
 
-      {/* Dashboard Body */}
       <div className="dashboard-main-body">
         <div className="main-left-side">
           {/* Metric Cards */}
@@ -103,37 +186,128 @@ const DashboardView = ({ username }) => {
           </div>
 
           <div className="main-columns">
-            {/* Activities */}
+            {/* Performance History */}
             <DashboardInfoPane
-              title="Recent Activities"
-              subtitle="Your latest exam updates"
+              title="Performance History"
+              subtitle="Your past exams and marks"
             >
-              <div
-                className="activity-feed"
-                style={{ maxHeight: "300px", overflowY: "auto" }}
-              >
-                {activities.map((activity) => (
-                  <div
-                    key={activity.id}
-                    className="activity-item border-bottom pb-3 mb-3"
-                  >
-                    <div className="d-flex justify-content-between">
-                      <span className="fw-semibold">
-                        You {activity.action} {activity.type}: "{activity.title}"
-                      </span>
-                      <span className="text-muted small">{activity.time}</span>
-                    </div>
-                  </div>
-                ))}
+              <div style={{ height: "350px" }}>
+                <Line data={performanceHistory} options={chartOptions} />
               </div>
             </DashboardInfoPane>
+
+            <div className="main-right">
+              {/* Recent Activity */}
+              <DashboardInfoPane
+                title="Recent Activities"
+                subtitle="Your latest exam updates"
+              >
+                <RecentActivity activities={dashboardData?.recentActivities} />
+              </DashboardInfoPane>
+
+              {/* Quick Actions */}
+              <DashboardInfoPane
+                title="Quick Actions"
+                containerClassName="flex-grow-1"
+              >
+                <div
+                  className="quick-action-buttons"
+                  style={{ maxHeight: "300px", overflowY: "auto" }}
+                >
+                  <div className="action-buttons">
+                    <button type="button" className="btn btn-outline-secondary">
+                      View Results <i className="fa fa-poll ms-2"></i>
+                    </button>
+                    <button type="button" className="btn btn-outline-secondary">
+                      Upcoming Exams <i className="fa fa-calendar ms-2"></i>
+                    </button>
+                  </div>
+                  <div className="action-buttons">
+                    <button type="button" className="btn btn-outline-secondary">
+                      Register Now <i className="fa fa-sign-in ms-2"></i>
+                    </button>
+                    <button type="button" className="btn btn-outline-secondary">
+                      Generate Report <i className="fa fa-lightbulb ms-2"></i>
+                    </button>
+                  </div>
+                </div>
+              </DashboardInfoPane>
+            </div>
           </div>
         </div>
 
         {/* Upcoming Exams */}
         <div className="main-right-side">
-          <DashboardInfoPane title="Upcoming Exams" subtitle="Exam Calendar">
-            <DashboardCalendar events={upcomingEvents} />
+          <DashboardInfoPane
+            title="Upcoming Exams"
+            subtitle="Interactive Calendar"
+          >
+            <div>
+              <DashboardCalendar upcomingEvents={upcomingEvents} />
+            </div>
+
+            <div style={{ marginTop: "1.75rem" }}>
+              {upcomingEvents.length > 0 ? (
+                <div
+                  style={{
+                    padding: "1rem 1.25rem",
+                    borderRadius: "12px",
+                    backgroundColor: "#ffffff",
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+                    border: "1px solid #e5e7eb",
+                    transition: "transform 0.2s ease, box-shadow 0.2s ease",
+                    cursor: "pointer",
+                  }}
+                >
+                  <h3
+                    style={{
+                      margin: "0 0 0.5rem 0",
+                      fontSize: "1.1rem",
+                      fontWeight: "600",
+                      color: "#111827",
+                    }}
+                  >
+                    {upcomingEvents[0].title}
+                  </h3>
+                  <p style={{ margin: "0.25rem 0", fontSize: "0.9rem" }}>
+                    <strong>Date:</strong>{" "}
+                    {new Date(upcomingEvents[0].start).toLocaleString()}
+                  </p>
+                  <p style={{ margin: "0.25rem 0", fontSize: "0.9rem" }}>
+                    <strong>Duration:</strong> {upcomingEvents[0].duration} mins
+                  </p>
+                  <p style={{ margin: "0.25rem 0", fontSize: "0.9rem" }}>
+                    <strong>Total Marks:</strong> {upcomingEvents[0].totalMarks}
+                  </p>
+                  <p style={{ margin: "0.25rem 0", fontSize: "0.9rem" }}>
+                    <strong>Exam Code:</strong> {upcomingEvents[0].examCode}
+                  </p>
+                  <p style={{ margin: "0.25rem 0", fontSize: "0.9rem" }}>
+                    <strong>Registration ID:</strong>{" "}
+                    {upcomingEvents[0].registrationId}
+                  </p>
+                  <p style={{ margin: "0.25rem 0", fontSize: "0.9rem" }}>
+                    <strong>Registered At:</strong>{" "}
+                    {new Date(upcomingEvents[0].registeredAt).toLocaleString()}
+                  </p>
+                </div>
+              ) : (
+                <div
+                  style={{
+                    padding: "1rem",
+                    borderRadius: "8px",
+                    backgroundColor: "#f3f4f6",
+                    textAlign: "center",
+                    color: "#6b7280",
+                    fontStyle: "italic",
+                    border: "1px dashed #d1d5db",
+                  }}
+                >
+                  No upcoming exams scheduled. Stay tuned — new exams will
+                  appear here when published.
+                </div>
+              )}
+            </div>
           </DashboardInfoPane>
         </div>
       </div>
