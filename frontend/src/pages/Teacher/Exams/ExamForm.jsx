@@ -145,9 +145,7 @@ const ExamForm = ({ onBack, examToEdit = null }) => {
           questionRef: q._id
         }))
       };
-      
-      console.log(isEditMode ? "Exam Updated:" : "Exam Created:", examPayload);
-      
+            
       const url = isEditMode 
         ? `http://localhost:5000/api/exams/${examToEdit._id}`
         : "http://localhost:5000/api/exams";
@@ -169,7 +167,6 @@ const ExamForm = ({ onBack, examToEdit = null }) => {
         throw new Error(responseData.error || `Failed to ${isEditMode ? 'update' : 'create'} exam`);
       }
       
-      console.log(isEditMode ? "Exam updated:" : "Exam saved:", responseData);
       setSuccessMessage(`Exam ${isEditMode ? 'updated' : 'created'} successfully!`);
       setTimeout(() => {
         onBack(); // Go back to previous page

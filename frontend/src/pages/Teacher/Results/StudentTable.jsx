@@ -136,7 +136,6 @@ const StudentTable = ({ students, examId, avgScore }) => {
       );
       if (!res.ok) throw new Error("Failed to fetch student report");
       const data = await res.json();
-      console.log("Report detailed data", data);
       setStudentReport(data);
     } catch (err) {
       console.error("❌ Error fetching student attempt report:", err);

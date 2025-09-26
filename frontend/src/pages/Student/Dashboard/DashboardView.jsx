@@ -93,14 +93,14 @@ const DashboardView = ({ username }) => {
     return events;
   }, [dashboardData]);
 
-  // Line chart: Performance history
+  // Line chart: Last Completed Exams
   const performanceHistory = useMemo(() => {
-    if (!dashboardData || !dashboardData.stats?.performanceHistory) {
+    if (!dashboardData || !dashboardData.stats?.lastCompletedExams) {
       return {
         labels: [],
         datasets: [
           {
-            label: "Marks Scored",
+            label: "Percentage (%)",
             data: [],
             borderColor: "rgba(54, 162, 235, 1)",
             backgroundColor: "rgba(54, 162, 235, 0.3)",
@@ -110,18 +110,18 @@ const DashboardView = ({ username }) => {
       };
     }
 
-    const labels = dashboardData.stats.performanceHistory.map(
+    const labels = dashboardData.stats.lastCompletedExams.map(
       (exam) => exam.title
     );
-    const data = dashboardData.stats.performanceHistory.map(
-      (exam) => exam.score
+    const data = dashboardData.stats.lastCompletedExams.map(
+      (exam) => exam.percentage
     );
 
     return {
       labels,
       datasets: [
         {
-          label: "Marks Scored",
+          label: "Percentage (%)",
           data,
           borderColor: "rgba(54, 162, 235, 1)",
           backgroundColor: "rgba(54, 162, 235, 0.3)",
@@ -135,7 +135,7 @@ const DashboardView = ({ username }) => {
     () => ({
       responsive: true,
       maintainAspectRatio: false,
-      scales: { y: { beginAtZero: true } },
+      scales: { y: { beginAtZero: true, max: 100 } },
     }),
     []
   );
@@ -281,10 +281,6 @@ const DashboardView = ({ username }) => {
                   </p>
                   <p style={{ margin: "0.25rem 0", fontSize: "0.9rem" }}>
                     <strong>Exam Code:</strong> {upcomingEvents[0].examCode}
-                  </p>
-                  <p style={{ margin: "0.25rem 0", fontSize: "0.9rem" }}>
-                    <strong>Registration ID:</strong>{" "}
-                    {upcomingEvents[0].registrationId}
                   </p>
                   <p style={{ margin: "0.25rem 0", fontSize: "0.9rem" }}>
                     <strong>Registered At:</strong>{" "}

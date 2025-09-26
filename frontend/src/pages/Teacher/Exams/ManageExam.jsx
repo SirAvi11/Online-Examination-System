@@ -63,7 +63,6 @@ const ManageExam = ({ onCreate, onEdit }) => {
           const startTimeStr = start.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false });
           const endTimeStr = end.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false });
           const timeRange = `${startTimeStr} - ${endTimeStr}`;
-          console.log("TIme range", timeRange)
 
           return {
             id: exam._id,
@@ -419,7 +418,6 @@ const ManageExam = ({ onCreate, onEdit }) => {
         exam={selectedExam}
         onClose={() => setShowModal(false)}
         onSave={(updatedExam) => {
-          console.log("Save updated exam:", updatedExam);
           setShowModal(false);
         }}
       />

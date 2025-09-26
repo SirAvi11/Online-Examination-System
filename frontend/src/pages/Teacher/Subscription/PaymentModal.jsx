@@ -41,7 +41,6 @@ const PaymentModal = ({ show, handleClose, plan, onPaymentSuccess }) => {
       if (!response.ok) throw new Error("Failed to create subscription");
 
       const data = await response.json();
-      console.log("Subscription created:", data);
 
       setPaymentStatus("success");
 

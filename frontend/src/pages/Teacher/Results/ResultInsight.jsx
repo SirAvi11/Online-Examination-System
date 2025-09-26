@@ -28,7 +28,6 @@ const ResultInsight = ({ examId, onBack }) => {
         }
 
         const data = await res.json();
-        console.log("Data", data);
         setRawData(data);
         setAttemptedStudents(data.attemptedStudents || []);
         setAbsentStudents(data.absentStudents || []);

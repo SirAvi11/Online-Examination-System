@@ -126,6 +126,38 @@ exports.getDashboard = async (req, res) => {
     const closestUpcomingExam =
       upcoming && upcoming.length ? upcoming[0] : null;
 
+     // 7) Last 4 completed exams
+    const lastCompletedExams = await StudentAttempt.aggregate([
+      { $match: { studentId: new mongoose.Types.ObjectId(studentId), status: "submitted" } },
+      {
+        $lookup: {
+          from: Exam.collection.name,
+          localField: "examId",
+          foreignField: "_id",
+          as: "exam",
+        },
+      },
+      { $unwind: "$exam" },
+      { $sort: { submittedAt: -1 } }, // latest first
+      { $limit: 4 },
+      {
+        $project: {
+          _id: 0,
+          title: "$exam.title",
+          percentage: {
+            $cond: [
+              { $gt: ["$totalMarks", 0] },
+              { $multiply: [{ $divide: ["$score", "$totalMarks"] }, 100] },
+              0,
+            ],
+          },
+          score: "$score",
+          totalMarks: "$totalMarks",
+          submittedAt: 1,
+        },
+      },
+    ]);
+
     res.json({
       stats: {
         totalExamsAttempted,
@@ -133,7 +165,8 @@ exports.getDashboard = async (req, res) => {
         averageScore: Number(averageScore.toFixed(2)),
         passRate: Number(passRate.toFixed(2)),
         highestExam,
-        closestUpcomingExam, // 👈 new field
+        closestUpcomingExam, 
+        lastCompletedExams
       },
     });
   } catch (err) {

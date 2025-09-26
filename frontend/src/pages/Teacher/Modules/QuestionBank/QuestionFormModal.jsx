@@ -269,7 +269,6 @@ const QuestionFormModal = ({
                   placeholder="Enter your question here..."
                   value={newQuestion.questionText}
                   onChange={(e) => {
-                    console.log("", newQuestion);
                     setNewQuestion({
                       ...newQuestion,
                       questionText: e.target.value,
