@@ -13,7 +13,7 @@ const DashboardInfoPane = ({
         className={`card rounded-3 border-light shadow ${cardClassName}`} 
         style={{ width: maxWidth, height:"100%" }}
       >
-        <div className={`card-body p-3 ${bodyClassName}`}>
+        <div className={`card-body p-3 ${bodyClassName}`} style={{height: "100%"}}>
           {title && <h2 className="h6 fw-semibold mb-1">{title}</h2>}
           {subtitle && <p className="text-muted small mb-4">{subtitle}</p>}
           

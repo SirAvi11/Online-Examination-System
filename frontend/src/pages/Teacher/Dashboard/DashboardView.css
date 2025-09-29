@@ -4,6 +4,7 @@
   display: flex;
   flex-direction: column;
   flex-wrap: nowrap;
+  padding-bottom: 15px;
 }
 
 .activity-feed {
@@ -58,7 +59,6 @@
   display: flex;
   flex-direction: column;
   gap:1.2rem;
-  flex-grow:1
 }
 .quick-action-buttons{
   display: flex;
@@ -67,12 +67,6 @@
     justify-content: flex-start;
     align-items: center;
     margin-top: 14px;
-}
-.action-buttons{
-  display: flex;
-  gap:8px;
-  flex-direction: column;
-  flex-grow: 1
 }
 
 .btn-outline-secondary:hover {

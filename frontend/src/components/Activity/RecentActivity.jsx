@@ -19,7 +19,7 @@ const RecentActivity = ({ activities }) => {
   return (
     <div
       className="activity-feed"
-      style={{ maxHeight: "300px", overflowY: "auto" }}
+      style={{ maxHeight: "210px", overflowY: "auto" }}
     >
       {activities.map((activity) => (
         <div

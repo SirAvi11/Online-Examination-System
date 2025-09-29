@@ -181,15 +181,13 @@ const DashboardView = ({ username, setActiveView }) => {
   );
 
   return (
-    <div className="teacher-dashboard container-fluid flex-grow-1">
-      {/* Header with clear separation */}
-      <DashboardHeader
+    <div className="teacher-dashboard container-fluid">
+       <DashboardHeader
         username={username}
         isSubscribed={dashboardData?.stats?.hasActiveSubscription}
         setActiveView={setActiveView}
       />
-
-      {/* Metrics Grid - Left-aligned cards */}
+     
       <div className="dashboard-main-body">
         <div className="main-left-side">
           <div className="metrics-cards">
@@ -200,50 +198,98 @@ const DashboardView = ({ username, setActiveView }) => {
             ))}
           </div>
           <div className="main-columns">
-            <DashboardInfoPane
-              title="Average Exam Scores"
-              subtitle="June - December 2025"
-            >
-              <div style={{ height: "350px" }}>
-                <Bar data={topExams} options={chartOptions} />
-              </div>
-            </DashboardInfoPane>
-            <div className="main-right">
+            <div>
               <DashboardInfoPane
-                title="Recent Activities"
-                subtitle="Latest changes in your account"
+                title="Average Exam Scores"
+                subtitle="June - December 2025"
               >
-                <RecentActivity activities={dashboardData?.recentActivities} />
+                <div style={{ height: "300px" }}>
+                  <Bar data={topExams} options={chartOptions} />
+                </div>
               </DashboardInfoPane>
-              <DashboardInfoPane
+            </div>
+            <div className="flex-grow-1 d-flex flex-column" style={{gap:"1.2rem"}}>
+              <div className="flex-grow-1 d-flex flex-column">
+                <DashboardInfoPane
+                  title="Recent Activities"
+                  subtitle="Latest changes in your account"
+                >
+                  <RecentActivity activities={dashboardData?.recentActivities} />
+                </DashboardInfoPane>
+              </div>
+              <div className="flex-grow-1 d-flex flex-column">
+                <DashboardInfoPane
                 title="Quick Actions"
                 containerClassName="flex-grow-1"
                 subtitle=""
               >
                 <div
                   className="quick-action-buttons"
-                  style={{ maxHeight: "300px", overflowY: "auto" }}
+                >
+                    
+                    <button type="button" class="btn btn-outline-secondary btn-sm">
+                      Generate Reports
+                      <i class="fa-solid fa-chart-area ms-2"></i>
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm">
+                      View Modules<i class="fa-solid fa-book ms-2"></i>
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm">
+                      Create Exams<i class="fa-solid fa-user-graduate ms-2"></i>
+                    </button>
+                </div>
+              </DashboardInfoPane>
+              </div>
+            </div>
+            {/* <div>
+              <DashboardInfoPane
+                title="Average Exam Scores"
+                subtitle="June - December 2025"
+              >
+                <div style={{ height: "350px" }}>
+                  <Bar data={topExams} options={chartOptions} />
+                </div>
+              </DashboardInfoPane>
+            </div> */}
+            {/* <div className="main-right" style={{height: "100%"}}>
+              <div className="flex-grow-1 d-flex flex-column">
+                <DashboardInfoPane
+                  title="Recent Activities"
+                  subtitle="Latest changes in your account"
+                >
+                  <RecentActivity activities={dashboardData?.recentActivities} />
+                </DashboardInfoPane>
+              </div>
+              <div className="flex-grow-1 d-flex flex-column">
+                <DashboardInfoPane
+                title="Quick Actions"
+                containerClassName="flex-grow-1"
+                subtitle=""
+              >
+                <div
+                  className="quick-action-buttons"
                 >
                   <div className="action-buttons">
-                    <button type="button" class="btn btn-outline-secondary">
+                    <button type="button" class="btn btn-outline-secondary btn-sm">
                       Generate Exam With AI<i class="fa fa-star ms-2"></i>
                     </button>
-                    <button type="button" class="btn btn-outline-secondary">
+                    <button type="button" class="btn btn-outline-secondary btn-sm">
                       Generate Reports
                       <i class="fa-solid fa-chart-area ms-2"></i>
                     </button>
                   </div>
                   <div className="action-buttons">
-                    <button type="button" class="btn btn-outline-secondary">
+                    <button type="button" class="btn btn-outline-secondary btn-sm">
                       View Modules<i class="fa-solid fa-book ms-2"></i>
                     </button>
-                    <button type="button" class="btn btn-outline-secondary">
+                    <button type="button" class="btn btn-outline-secondary btn-sm">
                       Create Exams<i class="fa-solid fa-user-graduate ms-2"></i>
                     </button>
                   </div>
                 </div>
               </DashboardInfoPane>
-            </div>
+              </div>
+            </div> */}
           </div>
         </div>
         <div className="main-right-side">
