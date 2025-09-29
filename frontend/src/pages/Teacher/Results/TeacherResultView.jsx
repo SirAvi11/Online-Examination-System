@@ -183,18 +183,17 @@ const TeacherResultView = () => {
           />
 
           <section style={{
-            display: 'flex',
-            flexDirection: 'row',
-            flexWrap: 'wrap',
-            gap: '1rem'
+            display: "grid",
+            gridTemplateColumns: "repeat(5, 1fr)", // 5 fixed slots
+            gap: "1rem",
+            justifyItems: "center" // keeps cards centered in their slot
           }}>
             {currentExams.length > 0 ? (
               currentExams.map((exam) => (
                 <div
                   key={exam.id}
                   style={{
-                    flex: '1 1 calc(33.333% - 1rem)',
-                    maxWidth: '15rem'
+                    width: "240px" // fixed width for each card
                   }}
                 >
                   <ExamStatusCard

@@ -8,7 +8,7 @@ const ResultView = () => {
   const role = user.role;
   
   return (
-    <div className="container p-4" style={{position: "relative"}}>
+    <div className="container p-4">
 
       {/* 🔄 Role-specific Views */}
       {role === "Student" ? (
