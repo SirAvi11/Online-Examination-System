@@ -1,22 +1,23 @@
-import {
-  Card,
-  Badge
-} from "react-bootstrap";
+import { Card, Badge } from "react-bootstrap";
 import { useState } from "react";
 import QuestionFormModal from "./QuestionFormModal";
 import { OverlayTrigger, Tooltip, Button } from "react-bootstrap";
 
-const QuestionDetailRow = ({ question, index, addQuestion }) => {
-
+const QuestionDetailRow = ({
+  question,
+  index,
+  addQuestion,
+  showEdit = true,
+}) => {
   const [showModal, setShowModal] = useState(false);
 
-  const handleEdit = ()=>{
+  const handleEdit = () => {
     setShowModal(true);
-  }
+  };
 
-  const saveChanges = async(data) => {
+  const saveChanges = async (data) => {
     return await addQuestion({
-      ...data,          // keep all existing fields in `data`
+      ...data, // keep all existing fields in `data`
       questionId: question._id, // add the questionId
     });
   };
@@ -31,20 +32,25 @@ const QuestionDetailRow = ({ question, index, addQuestion }) => {
                 <div className="d-flex justify-content-between align-items-center mb-2">
                   <div className="d-flex flex-row gap-3 justify-content-center align-items-center">
                     <h6 className="fw-bold mb-0">Q{index + 1}</h6>
-                    {question.isUsedInExam ? (
-                      <OverlayTrigger
-                        placement="top"
-                        overlay={<Tooltip id="tooltip-disabled">Locked — already used in an exam</Tooltip>}
-                      >
-                        <span className="d-inline-block">
-                          <Button disabled style={{ pointerEvents: "none" }}>
-                            Edit
-                          </Button>
-                        </span>
-                      </OverlayTrigger>
-                    ) : (
-                      <Button onClick={handleEdit}>Edit</Button>
-                    )}
+                    {showEdit &&
+                      (question.isUsedInExam ? (
+                        <OverlayTrigger
+                          placement="top"
+                          overlay={
+                            <Tooltip id="tooltip-disabled">
+                              Locked — already used in an exam
+                            </Tooltip>
+                          }
+                        >
+                          <span className="d-inline-block">
+                            <Button disabled style={{ pointerEvents: "none" }}>
+                              Edit
+                            </Button>
+                          </span>
+                        </OverlayTrigger>
+                      ) : (
+                        <Button onClick={handleEdit}>Edit</Button>
+                      ))}
                   </div>
                   {question.imageUrl && <Badge bg="secondary">Has Image</Badge>}
                 </div>
@@ -93,7 +99,6 @@ const QuestionDetailRow = ({ question, index, addQuestion }) => {
         />
       )}
     </>
-    
   );
 };
 

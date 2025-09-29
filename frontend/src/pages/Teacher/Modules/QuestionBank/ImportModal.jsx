@@ -291,6 +291,7 @@ export default function ImportModal({
             onSelectAll={handleSelectAll}
             onExpand={handleExpand}
             expandedRow={expandedRow}
+            showEdit={false}
           />
         </Modal.Body>
 
