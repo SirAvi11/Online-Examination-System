@@ -76,29 +76,6 @@ const SystemUsersView = () => {
     }
   };
 
-  const handleReject = async (id) => {
-    const reason = prompt("Enter rejection reason:");
-    if (!reason) return;
-
-    try {
-      await fetch(`http://localhost:5000/api/users/${id}/reject`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reason }),
-      });
-
-      // Show notification
-      setSuccessInfo({ show: true, message: "Teacher rejected successfully!" });
-
-      setTimeout(async () => {
-        const res = await fetch("http://localhost:5000/api/users");
-        setUsers(await res.json());
-      }, 500);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
   const statusBadge = (status) => {
     switch (status) {
       case "Active":
@@ -137,11 +114,14 @@ const SystemUsersView = () => {
     try {
       await fetch(`http://localhost:5000/api/users/${id}/reconsider`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" }
+        headers: { "Content-Type": "application/json" },
       });
 
       // Show success notification
-      setSuccessInfo({ show: true, message: "Teacher moved back to Under Review!" });
+      setSuccessInfo({
+        show: true,
+        message: "Teacher moved back to Under Review!",
+      });
 
       // Refresh user list
       const res = await fetch("http://localhost:5000/api/users");
@@ -150,7 +130,6 @@ const SystemUsersView = () => {
       console.error("Error moving teacher to Under Review:", err);
     }
   };
-
 
   return (
     <div className="teacher-dashboard container-fluid flex-grow-1">
@@ -258,6 +237,20 @@ const SystemUsersView = () => {
                 >
                   Status
                 </th>
+                {statusTab == "Rejected" && (
+                  <th
+                    style={{
+                      position: "sticky",
+                      top: 0,
+                      background: "#f8f9fa",
+                      zIndex: 1,
+                      textAlign: "center",
+                    }}
+                  >
+                    Reason
+                  </th>
+                )}
+
                 <th
                   style={{
                     position: "sticky",
@@ -294,6 +287,11 @@ const SystemUsersView = () => {
                         {user.status || "Under Review"}
                       </span>
                     </td>
+                    {statusTab == "Rejected" && (
+                      <td style={{ textAlign: "center" }}>
+                        {user.rejectionReason}
+                      </td>
+                    )}
                     <td style={{ textAlign: "center" }}>
                       {new Date(user.createdAt).toLocaleDateString("en-GB")}
                     </td>
@@ -330,7 +328,11 @@ const SystemUsersView = () => {
                               Suspend
                             </Button>
                           ) : (
-                            <Button size="sm" variant="outline-primary" onClick={() => handleMoveToReview(user._id)}>
+                            <Button
+                              size="sm"
+                              variant="outline-primary"
+                              onClick={() => handleMoveToReview(user._id)}
+                            >
                               Move to Review
                             </Button>
                           )}

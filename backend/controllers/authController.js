@@ -30,8 +30,8 @@ exports.registerUser = async (req, res) => {
       name, 
       email, 
       passwordHash: password, // hashed by pre-save hook
-      role: role || 'student',
-      status: role === 'teacher' ? 'Under Review' : 'Active' // optional logic
+      role: role || 'Student',
+      status: role === 'Teacher' ? 'Under Review' : 'Active' // optional logic
     });
     
     await user.save();

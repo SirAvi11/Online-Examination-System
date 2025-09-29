@@ -1,66 +1,66 @@
-import { useState } from 'react';
-import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
-import './AuthPage.css';
+import { useState } from "react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import "./AuthPage.css";
 
 export default function AuthPage() {
   const [isLoginView, setIsLoginView] = useState(true);
-  const navigate = useNavigate()
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    username: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-    role: ''
+    username: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    role: "",
   });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState("");
 
   // API base URL - replace with your backend URL
-  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+  const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
     // Clear error when user types
     if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
+      setErrors((prev) => ({ ...prev, [name]: "" }));
     }
   };
 
   const validateForm = () => {
     const newErrors = {};
-    
+
     if (!formData.username.trim()) {
-      newErrors.username = 'Username is required';
+      newErrors.username = "Username is required";
     } else if (formData.username.length < 3) {
-      newErrors.username = 'Username must be at least 3 characters';
+      newErrors.username = "Username must be at least 3 characters";
     }
-    
+
     if (!isLoginView && !formData.email.trim()) {
-      newErrors.email = 'Email is required';
+      newErrors.email = "Email is required";
     } else if (!isLoginView && !/^\S+@\S+\.\S+$/.test(formData.email)) {
-      newErrors.email = 'Email is invalid';
+      newErrors.email = "Email is invalid";
     }
-    
+
     if (!formData.password) {
-      newErrors.password = 'Password is required';
+      newErrors.password = "Password is required";
     } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
+      newErrors.password = "Password must be at least 6 characters";
     }
-    
+
     if (!isLoginView && formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
+      newErrors.confirmPassword = "Passwords do not match";
     }
 
     if (!isLoginView && !formData.role) {
-      newErrors.role = 'Please select a role';
+      newErrors.role = "Please select a role";
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -71,16 +71,16 @@ export default function AuthPage() {
         name: formData.username,
         email: formData.email,
         password: formData.password,
-        role: formData.role
+        role: formData.role,
       });
-      
+
       return response.data;
     } catch (error) {
       if (error.response) {
         // Handle backend validation errors
         if (error.response.data.errors) {
           const backendErrors = {};
-          error.response.data.errors.forEach(err => {
+          error.response.data.errors.forEach((err) => {
             backendErrors[err.path] = err.msg;
           });
           setErrors(backendErrors);
@@ -88,7 +88,7 @@ export default function AuthPage() {
           setErrors({ submit: error.response.data.message });
         }
       } else {
-        setErrors({ submit: 'Network error. Please try again.' });
+        setErrors({ submit: "Network error. Please try again." });
       }
       throw error;
     }
@@ -98,14 +98,14 @@ export default function AuthPage() {
     try {
       const response = await axios.post(`${API_URL}/users/login`, {
         name: formData.username,
-        password: formData.password
+        password: formData.password,
       });
       return response.data;
     } catch (error) {
       if (error.response) {
         setErrors({ submit: error.response.data.message });
       } else {
-        setErrors({ submit: 'Network error. Please try again.' });
+        setErrors({ submit: "Network error. Please try again." });
       }
       throw error;
     }
@@ -114,46 +114,57 @@ export default function AuthPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
-    
+
     setIsLoading(true);
     setErrors({});
-    setSuccessMessage('');
-    
+    setSuccessMessage("");
+
     try {
       let response;
       if (isLoginView) {
         response = await handleLogin();
 
-        localStorage.setItem('token', response.token);
-        localStorage.setItem('user', JSON.stringify(response.user));
+        localStorage.setItem("token", response.token);
+        localStorage.setItem("user", JSON.stringify(response.user));
 
-        setSuccessMessage('Login successful! Redirecting...');
+        setSuccessMessage("Login successful! Redirecting...");
         // Redirect based on role
         setTimeout(() => {
-            if (response.user.role === 'Teacher') {
-            navigate('/teacher-dashboard');
-            } else if(response.user.role === 'Student') {
-            navigate('/student-dashboard');
-            }else if(response.user.role === 'Admin') {
-           navigate('/admin-dashboard');
-            }
+          if (response.user.role === "Teacher") {
+            navigate("/teacher-dashboard");
+          } else if (response.user.role === "Student") {
+            navigate("/student-dashboard");
+          } else if (response.user.role === "Admin") {
+            navigate("/admin-dashboard");
+          }
         }, 200);
       } else {
         response = await handleRegister();
-        setSuccessMessage('Registration successful! You can now login.');
+        if (response.user.role == "Teacher") {
+          setSuccessMessage(
+            "Registration successful! Account under verification."
+          );
+        } else if (response.user.role == "Student") {
+          setSuccessMessage("Registration successful! You can now login.");
+        }
+
         // Clear form after successful registration
         setFormData({
-          username: '',
-          email: '',
-          password: '',
-          confirmPassword: '',
-          role:''
+          username: "",
+          email: "",
+          password: "",
+          confirmPassword: "",
+          role: "",
         });
         // Optionally switch to login view
-        setIsLoginView(true);
+        // Redirect based on role
+        setTimeout(() => {
+          setSuccessMessage("");
+          setIsLoginView(true);
+        }, 2000);
       }
     } catch (error) {
-      console.error('Authentication error:', error);
+      console.error("Authentication error:", error);
     } finally {
       setIsLoading(false);
     }
@@ -162,12 +173,18 @@ export default function AuthPage() {
   const toggleView = () => {
     setIsLoginView(!isLoginView);
     setErrors({});
-    setSuccessMessage('');
+    setSuccessMessage("");
   };
 
   return (
-    <div className="d-flex flex-column flex-md-row shadow rounded-3" style={{ height: '100%', width: '100%' }}>
-      <div className="left-side d-flex flex-column align-items-center justify-content-center flex-shrink-0" style={{ width: '50%' }}>
+    <div
+      className="d-flex flex-column flex-md-row shadow rounded-3"
+      style={{ height: "100%", width: "100%" }}
+    >
+      <div
+        className="left-side d-flex flex-column align-items-center justify-content-center flex-shrink-0"
+        style={{ width: "50%" }}
+      >
         <img
           src="https://storage.googleapis.com/a1aa/image/b2b265dd-7f2f-4d31-de14-d0fac5f917b3.jpg"
           alt="Illustration of a student sitting on a chair writing exam papers with mathematical symbols around"
@@ -175,9 +192,15 @@ export default function AuthPage() {
           height="280"
           className="img-fluid"
         />
-        <h2 className="mt-4 fw-semibold text-dark" style={{ fontSize: '1.5rem' }}>Skills Check</h2>
+        <h2
+          className="mt-4 fw-semibold text-dark"
+          style={{ fontSize: "1.5rem" }}
+        >
+          Skills Check
+        </h2>
         <p className="abc text-secondary small mt-2 px-3">
-          Unleash Your Academic Success with Exam Mastery Hub's Exam Excellence Platform
+          Unleash Your Academic Success with Exam Mastery Hub's Exam Excellence
+          Platform
         </p>
         <div className="pagination-dots">
           <span className="dot"></span>
@@ -185,7 +208,10 @@ export default function AuthPage() {
           <span className="dot"></span>
         </div>
       </div>
-      <div className="right-side d-flex flex-column justify-content-center" style={{ width: '50%' }}>
+      <div
+        className="right-side d-flex flex-column justify-content-center"
+        style={{ width: "50%" }}
+      >
         <div className="mb-5 d-flex justify-content-center">
           <h1 className="logo-text">
             <i className="fas fa-graduation-cap"></i>
@@ -196,14 +222,22 @@ export default function AuthPage() {
 
         {/* Success message */}
         {successMessage && (
-          <div className="alert alert-success mb-4" role="alert" data-cy="register-success">
+          <div
+            className="alert alert-success mb-4"
+            role="alert"
+            data-cy="register-success"
+          >
             {successMessage}
           </div>
         )}
 
         {/* Error message */}
         {errors.submit && (
-          <div className="alert alert-danger mb-4" role="alert" data-cy="register-error">
+          <div
+            className="alert alert-danger mb-4"
+            role="alert"
+            data-cy="register-error"
+          >
             {errors.submit}
           </div>
         )}
@@ -211,10 +245,17 @@ export default function AuthPage() {
         <form onSubmit={handleSubmit}>
           {!isLoginView && (
             <div className="mb-3 d-flex flex-column align-items-start">
-              <label htmlFor="email" className="form-label text-secondary small">Email</label>
+              <label
+                htmlFor="email"
+                className="form-label text-secondary small"
+              >
+                Email
+              </label>
               <input
                 type="email"
-                className={`form-control input-focus ${errors.email ? 'is-invalid' : ''}`}
+                className={`form-control input-focus ${
+                  errors.email ? "is-invalid" : ""
+                }`}
                 id="email"
                 name="email"
                 value={formData.email}
@@ -222,53 +263,71 @@ export default function AuthPage() {
                 placeholder="Enter your email"
                 data-cy="register-email"
               />
-              {errors.email && <div className="invalid-feedback">{errors.email}</div>}
+              {errors.email && (
+                <div className="invalid-feedback">{errors.email}</div>
+              )}
             </div>
           )}
-          
+
           <div className="mb-3 d-flex flex-column align-items-start">
-            <label htmlFor="username" className="form-label text-secondary small">
-              {isLoginView ? 'Username' : 'Username'}
+            <label
+              htmlFor="username"
+              className="form-label text-secondary small"
+            >
+              {isLoginView ? "Username" : "Username"}
             </label>
             <input
               type="text"
-              className={`form-control input-focus ${errors.username ? 'is-invalid' : ''}`}
+              className={`form-control input-focus ${
+                errors.username ? "is-invalid" : ""
+              }`}
               id="username"
               name="username"
               value={formData.username}
               onChange={handleChange}
-              placeholder={isLoginView ? 'Enter username' : 'Choose a username'}
+              placeholder={isLoginView ? "Enter username" : "Choose a username"}
               data-cy="login-email"
-
             />
-            {errors.username && <div className="invalid-feedback">{errors.username}</div>}
+            {errors.username && (
+              <div className="invalid-feedback">{errors.username}</div>
+            )}
           </div>
 
           {!isLoginView && (
             <div className="mb-3 d-flex flex-column align-items-start">
-              <label htmlFor="role" className="form-label text-secondary small">Role</label>
+              <label htmlFor="role" className="form-label text-secondary small">
+                Role
+              </label>
               <select
                 id="role"
                 name="role"
-                className={`form-select ${errors.role ? 'is-invalid' : ''}`}
+                className={`form-select ${errors.role ? "is-invalid" : ""}`}
                 value={formData.role}
                 onChange={handleChange}
                 data-cy="register-role"
-
               >
                 <option value="">-- Select Role --</option>
                 <option value="Teacher">Teacher</option>
                 <option value="Student">Student</option>
               </select>
-              {errors.role && <div className="invalid-feedback">{errors.role}</div>}
+              {errors.role && (
+                <div className="invalid-feedback">{errors.role}</div>
+              )}
             </div>
           )}
 
           <div className="mb-3 d-flex flex-column align-items-start">
-            <label htmlFor="password" className="form-label text-secondary small">Password</label>
+            <label
+              htmlFor="password"
+              className="form-label text-secondary small"
+            >
+              Password
+            </label>
             <input
               type="password"
-              className={`form-control input-focus ${errors.password ? 'is-invalid' : ''}`}
+              className={`form-control input-focus ${
+                errors.password ? "is-invalid" : ""
+              }`}
               id="password"
               name="password"
               value={formData.password}
@@ -276,15 +335,24 @@ export default function AuthPage() {
               placeholder="Enter password"
               data-cy="register-password"
             />
-            {errors.password && <div className="invalid-feedback">{errors.password}</div>}
+            {errors.password && (
+              <div className="invalid-feedback">{errors.password}</div>
+            )}
           </div>
 
           {!isLoginView && (
             <div className="mb-3 d-flex flex-column align-items-start">
-              <label htmlFor="confirmPassword" className="form-label text-secondary small">Confirm Password</label>
+              <label
+                htmlFor="confirmPassword"
+                className="form-label text-secondary small"
+              >
+                Confirm Password
+              </label>
               <input
                 type="password"
-                className={`form-control input-focus ${errors.confirmPassword ? 'is-invalid' : ''}`}
+                className={`form-control input-focus ${
+                  errors.confirmPassword ? "is-invalid" : ""
+                }`}
                 id="confirmPassword"
                 name="confirmPassword"
                 value={formData.confirmPassword}
@@ -292,13 +360,20 @@ export default function AuthPage() {
                 placeholder="Confirm your password"
                 data-cy="register-confirm-password"
               />
-              {errors.confirmPassword && <div className="invalid-feedback">{errors.confirmPassword}</div>}
+              {errors.confirmPassword && (
+                <div className="invalid-feedback">{errors.confirmPassword}</div>
+              )}
             </div>
           )}
 
           {isLoginView && (
             <div className="text-end mt-1">
-              <button type="button" className="link-green btn btn-link p-0 small">Forgot password?</button>
+              <button
+                type="button"
+                className="link-green btn btn-link p-0 small"
+              >
+                Forgot password?
+              </button>
             </div>
           )}
 
@@ -310,11 +385,17 @@ export default function AuthPage() {
           >
             {isLoading ? (
               <>
-                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                {isLoginView ? 'Signing in...' : 'Creating account...'}
+                <span
+                  className="spinner-border spinner-border-sm me-2"
+                  role="status"
+                  aria-hidden="true"
+                ></span>
+                {isLoginView ? "Signing in..." : "Creating account..."}
               </>
+            ) : isLoginView ? (
+              "Sign in"
             ) : (
-              isLoginView ? 'Sign in' : 'Create Account'
+              "Create Account"
             )}
           </button>
         </form>
@@ -324,7 +405,7 @@ export default function AuthPage() {
         <button
           type="button"
           className="btn btn-outline-secondary d-flex align-items-center justify-content-center gap-2 w-100 mb-4"
-          style={{ fontSize: '0.875rem' }}
+          style={{ fontSize: "0.875rem" }}
         >
           <img
             src="https://storage.googleapis.com/a1aa/image/2dfae7aa-6c6f-474c-186e-4440834a396c.jpg"
@@ -335,15 +416,15 @@ export default function AuthPage() {
           <span>Sign in with Google</span>
         </button>
 
-        <p className="text-center text-secondary small mb-0">
-          {isLoginView ? 'Are you new? ' : 'Already have an account? '}
-          <button 
-            className="link-green btn btn-link p-0 small" 
+        <p className="text-center text-secondary small mb-0 d-flex align-items-center justify-content-center gap-2">
+          {isLoginView ? "Are you new? " : "Already have an account? "}
+          <button
+            className="link-green btn btn-link p-0 small"
             onClick={toggleView}
-            style={{ textDecoration: 'none' }}
+            style={{ textDecoration: "none" }}
             data-cy="toggle-auth-view"
           >
-            {isLoginView ? 'Create an Account' : 'Sign in'}
+            {isLoginView ? "Create an Account" : "Sign in"}
           </button>
         </p>
       </div>
