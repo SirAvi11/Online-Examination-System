@@ -94,14 +94,30 @@ const ExamForm = ({ onBack, examToEdit = null }) => {
   };
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setExamData((prev) => ({ ...prev, [name]: value }));
-    
-    // Clear validation error when field is edited
-    if (validationErrors[name]) {
-      setValidationErrors(prev => ({ ...prev, [name]: "" }));
+  const { name, value } = e.target;
+
+  setExamData((prev) => {
+    const updatedData = { ...prev, [name]: value };
+
+    // Auto-calculate duration if startTime or endTime changes
+    if (name === "startTime" || name === "endTime") {
+      if (updatedData.startTime && updatedData.endTime) {
+        const start = new Date(updatedData.startTime);
+        const end = new Date(updatedData.endTime);
+        const diffMinutes = Math.max(0, Math.floor((end - start) / (1000 * 60))); // in minutes
+        updatedData.duration = diffMinutes;
+      }
     }
-  };
+
+    return updatedData;
+  });
+
+  // Clear validation error for this field
+  if (validationErrors[name]) {
+    setValidationErrors(prev => ({ ...prev, [name]: "" }));
+  }
+};
+
 
   const handleQuestionsChange = (questions) => {
     setExamData((prev) => ({ ...prev, selectedQuestions: questions }));
@@ -291,38 +307,6 @@ const ExamForm = ({ onBack, examToEdit = null }) => {
                 </div>
 
                 <div className="col-md-6 mb-3">
-                  <label className="form-label fw-semibold">Duration (minutes) *</label>
-                  <input
-                    type="number"
-                    className={`form-control ${validationErrors.duration ? "is-invalid" : ""}`}
-                    name="duration"
-                    value={examData.duration}
-                    onChange={handleChange}
-                    min="1"
-                    required
-                  />
-                  {validationErrors.duration && <div className="invalid-feedback">{validationErrors.duration}</div>}
-                </div>
-
-                <div className="col-md-6 mb-3">
-                  <label className="form-label fw-semibold">Total Marks *</label>
-                  <input
-                    type="number"
-                    className={`form-control ${validationErrors.totalMarks ? "is-invalid" : ""}`}
-                    name="totalMarks"
-                    value={examData.totalMarks}
-                    onChange={handleChange}
-                    min="1"
-                    required
-                    readOnly={isEditMode} // Total marks is calculated from questions in edit mode
-                  />
-                  {isEditMode && (
-                    <div className="form-text">Total marks is calculated from selected questions</div>
-                  )}
-                  {validationErrors.totalMarks && <div className="invalid-feedback">{validationErrors.totalMarks}</div>}
-                </div>
-
-                <div className="col-md-6 mb-3">
                   <label className="form-label fw-semibold">Start Time *</label>
                   <input
                     type="datetime-local"
@@ -346,6 +330,39 @@ const ExamForm = ({ onBack, examToEdit = null }) => {
                     required
                   />
                   {validationErrors.endTime && <div className="invalid-feedback">{validationErrors.endTime}</div>}
+                </div>
+
+                <div className="col-md-6 mb-3">
+                  <label className="form-label fw-semibold">Duration (minutes) *</label>
+                  <input
+                    type="number"
+                    className={`form-control ${validationErrors.duration ? "is-invalid" : ""}`}
+                    name="duration"
+                    value={examData.duration}
+                    onChange={handleChange}
+                    min="1"
+                    readOnly
+                    required
+                  />
+                  {validationErrors.duration ? <div className="invalid-feedback">{validationErrors.duration}</div> : <div className="form-text">Auto-calculated from start and end time</div>}
+                </div>
+
+                <div className="col-md-6 mb-3">
+                  <label className="form-label fw-semibold">Total Marks *</label>
+                  <input
+                    type="number"
+                    className={`form-control ${validationErrors.totalMarks ? "is-invalid" : ""}`}
+                    name="totalMarks"
+                    value={examData.totalMarks}
+                    onChange={handleChange}
+                    min="1"
+                    required
+                    readOnly={isEditMode} // Total marks is calculated from questions in edit mode
+                  />
+                  {isEditMode && (
+                    <div className="form-text">Total marks is calculated from selected questions</div>
+                  )}
+                  {validationErrors.totalMarks && <div className="invalid-feedback">{validationErrors.totalMarks}</div>}
                 </div>
               </div>
             </div>

@@ -155,9 +155,11 @@ const useQuestion = (moduleId) => {
         });
       }
 
-      if (!res.ok) throw new Error("Failed to save question");
 
       const savedQuestion = await res.json();
+
+      if (!res.ok) throw new Error("Failed to save question");
+
 
       // 6️⃣ Update state
       setQuestions((prev) => {
@@ -234,7 +236,7 @@ const useQuestion = (moduleId) => {
         "http://localhost:5000/api/questions/archive-toggle",
         {
           method: "PUT",
-          headers: { "Content-Type": "application/json", "x-auth-token": localStorage.get('token') },
+          headers: { "Content-Type": "application/json", "x-auth-token": localStorage.getItem('token') },
           body: JSON.stringify({ questionIds, archive }),
         }
       );

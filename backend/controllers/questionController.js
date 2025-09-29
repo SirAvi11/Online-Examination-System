@@ -41,6 +41,8 @@ const updateQuestion = async (req, res) => {
       return res.status(400).json({ message: "questionId is required" });
     }
 
+    console.log("ARchiving from hereee");
+
     const { paperId, moduleId, questionText, options, correctOptionIndex, marks, imageUrl } = req.body;
 
     // Validate and parse options
@@ -66,7 +68,6 @@ const updateQuestion = async (req, res) => {
     }
 
     let url = null;
-    console.log("Incoming image url", imageUrl);
     if(req.file){
       url = `/uploads/questions/${req.file.filename}`;
     } else if(imageUrl && imageUrl.trim() !== ''){
@@ -74,8 +75,6 @@ const updateQuestion = async (req, res) => {
     }else {
       url = null;
     }
-    console.log("Outgoing image url", url);
-
 
     // Build update object
     const updateData = {
@@ -152,6 +151,13 @@ const createQuestion = async (req, res) => {
       return res.status(400).json({ error: "Options must be an array" });
     }
 
+    parsedOptions = parsedOptions.filter(opt => opt && opt.trim() !== "");
+
+    // Ensure at least 2 valid options remain
+    if (parsedOptions.length < 2) {
+      return res.status(400).json({ error: "A question must have at least 2 valid options" });
+    }
+    
     const question = new Question({
       paperId: paperId || null,
       moduleId: validatedModuleId,
@@ -227,6 +233,9 @@ const bulkDeleteQuestions = async (req, res) => {
 const toggleArchiveQuestions = async (req, res) => {
   try {
     const { questionIds, archive } = req.body;
+
+        console.log("ARchiving from hereee - proper");
+
 
     if (!Array.isArray(questionIds) || questionIds.length === 0) {
       return res.status(400).json({ message: "No questionIds provided" });
