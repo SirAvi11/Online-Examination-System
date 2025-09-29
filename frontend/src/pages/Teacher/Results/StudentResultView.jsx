@@ -4,7 +4,6 @@ import StudentResultInsight from "./StudentResultInsight";
 import ResultHeader from "./ResultHeader";
 
 const StudentResultView = () => {
-
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   const role = user.role;
 
@@ -21,12 +20,15 @@ const StudentResultView = () => {
       setLoading(true);
       setError(null);
 
-      const response = await fetch("http://localhost:5000/api/exams/student/completed", {
-        headers: {
-          "Content-Type": "application/json",
-          "x-auth-token": localStorage.getItem("token"),
-        },
-      });
+      const response = await fetch(
+        "http://localhost:5000/api/exams/student/completed",
+        {
+          headers: {
+            "Content-Type": "application/json",
+            "x-auth-token": localStorage.getItem("token"),
+          },
+        }
+      );
 
       if (!response.ok) throw new Error("Failed to fetch student exams");
       const data = await response.json();
@@ -45,7 +47,6 @@ const StudentResultView = () => {
           minute: "2-digit",
           hour12: false,
         });
-
 
         return {
           id: exam.examId,
@@ -133,32 +134,50 @@ const StudentResultView = () => {
   if (error) return <p className="text-danger">{error}</p>;
 
   return (
-     
     <>
       <ResultHeader
-          role={role}
-          filters={filters}
-          setFilters={setFilters}
-          showFilterPane={showFilterPane}
-          setShowFilterPane={setShowFilterPane}
-          handleApplyFilters={handleApplyFilters}
-        />
-      <div className="d-flex flex-wrap gap-3">
+        role={role}
+        filters={filters}
+        setFilters={setFilters}
+        showFilterPane={showFilterPane}
+        setShowFilterPane={setShowFilterPane}
+        handleApplyFilters={handleApplyFilters}
+      />
+
+      <section
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(5, 1fr)", // 5 fixed slots
+          gap: "1rem",
+          justifyItems: "center", // keeps cards centered in their slot
+        }}
+      >
         {filteredExams.length > 0 ? (
           filteredExams.map((exam) => (
-            <ExamStatusCard
+            <div
               key={exam.id}
-              title={exam.title}
-              subtitle={`By ${exam.createdBy}`}
-              dateRange={exam.dateRange}
-              timeRange={exam.timeRange}
-              totalMarks={exam.totalMarks}
-              status = {exam.resultPublished ? `${exam.score}/${exam.totalMarks} (${exam.percentage}%)` : `Not Published Yet`}
-              statusVariant={exam.resultPublished ? "success" : "danger"}
-              showFooter={exam.resultPublished}
-              showChevron = {false}
-              onCardClick={() => setSelectedExam(exam)}
-            />
+              style={{
+                width: "240px", // fixed width for each card
+              }}
+            >
+              <ExamStatusCard
+                key={exam.id}
+                title={exam.title}
+                subtitle={`By ${exam.createdBy}`}
+                dateRange={exam.dateRange}
+                timeRange={exam.timeRange}
+                totalMarks={exam.totalMarks}
+                status={
+                  exam.resultPublished
+                    ? `${exam.score}/${exam.totalMarks} (${exam.percentage}%)`
+                    : `Not Published Yet`
+                }
+                statusVariant={exam.resultPublished ? "success" : "danger"}
+                showFooter={exam.resultPublished}
+                showChevron={false}
+                onCardClick={() => setSelectedExam(exam)}
+              />
+            </div>
           ))
         ) : (
           <div className="text-center py-5" style={{ width: "100%" }}>
@@ -168,7 +187,7 @@ const StudentResultView = () => {
             </p>
           </div>
         )}
-      </div>
+      </section>
 
       {/* Result Modal */}
       <StudentResultInsight
