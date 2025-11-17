@@ -164,43 +164,45 @@ const ExamWindow = () => {
     };
     fetchExam();
   }, [examId, token]);
+useEffect(() => {
+  const timer = setInterval(() => {
+    setTimeLeft((prev) => {
+      if (!prev) return prev;
+      let { hours, minutes, seconds } = prev;
 
-  // Timer effect
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (!prev) return prev;
-        let { hours, minutes, seconds } = prev;
+      if (seconds > 0) {
+        seconds--;
+      } else if (minutes > 0) {
+        minutes--;
+        seconds = 59;
+      } else if (hours > 0) {
+        hours--;
+        minutes = 59;
+        seconds = 59;
+      } else {
+        // Time is up
+        clearInterval(timer);
+        return { hours: 0, minutes: 0, seconds: 0 };
+      }
 
-        if (seconds > 0) {
-          seconds--;
-        } else {
-          if (minutes > 0) {
-            minutes--;
-            seconds = 59;
-          } else {
-            if (hours > 0) {
-              hours--;
-              minutes = 59;
-              seconds = 59;
-            } else {
-              clearInterval(timer);
+      return { hours, minutes, seconds };
+    });
+  }, 1000);
 
-              // ⏰ Auto-submit when time runs out
-              alert("Time is up! Your exam will be submitted automatically.");
-              handleFinalSubmit(true);
+  return () => clearInterval(timer);
+}, []);
 
-              return { hours: 0, minutes: 0, seconds: 0 };
-            }
-          }
-        }
+useEffect(() => {
+  if (
+    timeLeft &&
+    timeLeft.hours === 0 &&
+    timeLeft.minutes === 0 &&
+    timeLeft.seconds === 0
+  ) {
+    handleFinalSubmit(true, false);
+  }
+}, [timeLeft]);
 
-        return { hours, minutes, seconds };
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, []);
 
   useEffect(() => {
     if (exam && tabSwitchCount >= exam?.tabSwitchLimit) {

@@ -29,7 +29,7 @@ const ExamGuard = ({ setTabSwitchCount }) => {
 
     // attach listeners
     window.addEventListener("blur", handleBlur);
-    // document.addEventListener("contextmenu", handleContextMenu);
+    document.addEventListener("contextmenu", handleContextMenu);
     document.addEventListener("copy", handleCopy);
     document.addEventListener("cut", handleCut);
     document.addEventListener("paste", handlePaste);
@@ -37,7 +37,7 @@ const ExamGuard = ({ setTabSwitchCount }) => {
     return () => {
       // cleanup
       window.removeEventListener("blur", handleBlur);
-    //   document.removeEventListener("contextmenu", handleContextMenu);
+      document.removeEventListener("contextmenu", handleContextMenu);
       document.removeEventListener("copy", handleCopy);
       document.removeEventListener("cut", handleCut);
       document.removeEventListener("paste", handlePaste);
