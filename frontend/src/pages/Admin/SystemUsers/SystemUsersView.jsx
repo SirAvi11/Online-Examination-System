@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Dropdown, DropdownButton, Table, Button, Nav } from "react-bootstrap";
 import SuccessNotification from "../../Teacher/Modules/QuestionBank/SuccessNotification";
 import RejectModal from "./RejectModal";
+import DocumentViewer from "./DocumentViewer";
 import "./SystemUsersView.css";
 
 const SystemUsersView = () => {
@@ -262,6 +263,19 @@ const SystemUsersView = () => {
                 >
                   Registered On
                 </th>
+                {roleFilter == "Teachers" && (
+                  <th
+                    style={{
+                      position: "sticky",
+                      top: 0,
+                      background: "#f8f9fa",
+                      zIndex: 1,
+                      textAlign: "center",
+                    }}
+                  >
+                    Documents Uploaded
+                  </th>
+                )}
                 <th
                   style={{
                     position: "sticky",
@@ -295,6 +309,13 @@ const SystemUsersView = () => {
                     <td style={{ textAlign: "center" }}>
                       {new Date(user.createdAt).toLocaleDateString("en-GB")}
                     </td>
+                    {roleFilter == "Teachers" && (
+                      <td style={{ textAlign: "center" }}>
+                        <DocumentViewer
+                          path={`http://localhost:5000/uploads/teacherIds/${user.teacherIdFile}`}
+                        />
+                      </td>
+                    )}
                     <td style={{ textAlign: "center" }}>
                       {roleFilter === "Teachers" ? (
                         <>

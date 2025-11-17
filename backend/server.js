@@ -59,6 +59,9 @@ app.get('/api/test', (req, res) => {
 // Serve static files from React
 app.use(express.static(path.join(__dirname, "../frontend/build")));
 
+// Serve teacher ID PDFs
+app.use("/uploads/teacherIds", express.static(path.join(__dirname, "uploads/teacherIds")));
+
 // IMPORTANT: Catch-all route for client-side routing
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../frontend/build/index.html'));
