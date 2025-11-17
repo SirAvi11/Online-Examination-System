@@ -29,6 +29,83 @@ const ExamWindow = () => {
   // Timer state
   const [timeLeft, setTimeLeft] = useState(null);
 
+   const handleFinalSubmit = async (isAuto = false, cheated = false) => {
+    try {
+      const attemptId = localStorage.getItem("attemptId");
+      if (!attemptId) {
+        alert("No active attempt found.");
+        return;
+      }
+
+      const formattedAnswers = exam.questions.map((q, idx) => ({
+        questionId: q.questionRef._id,
+        selectedOption: answers[idx]?.answer || null,
+      }));
+
+      const res = await fetch(
+        `http://localhost:5000/api/attempt/${attemptId}/submit`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "x-auth-token": token,
+          },
+          body: JSON.stringify({
+            answers: formattedAnswers,
+            tabSwitchCount: tabSwitchCount,
+          }),
+        }
+      );
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Submission failed");
+
+      if (isAuto) {
+        cheated // ❌ Cheating limit exceeded
+          ? setAlertConfig({
+              message:
+                "Maximum tab switch attempts reached. Submitting exam...",
+              type: "error",
+              autoClose: true,
+              duration: 5,
+              closeWindow: true,
+            }) // ⏰ Auto-submit
+          : setAlertConfig({
+              message: "Time is up! Exam auto-submitted.",
+              type: "info",
+              autoClose: true,
+              duration: 5,
+              closeWindow: true,
+            });
+      } else {
+        setAlertConfig({
+          message: "Exam submitted successfully!",
+          type: "success",
+          autoClose: true,
+          duration: 5,
+          closeWindow: true,
+        });
+      }
+      // close window after 5 seconds
+      setTimeout(() => {
+        window.close();
+      }, 5000);
+
+      setShowSubmitModal(false);
+      // optional redirect
+      // navigate(`/exam-result/${exam._id}`);
+    } catch (err) {
+      console.error("❌ Error submitting exam:", err);
+      setAlertConfig({
+        message: "Failed to submit exam. Try again.",
+        type: "success",
+        autoClose: false,
+        duration: 5,
+        closeWindow: false,
+      });
+    }
+  };
+
   // Fetch exam data
   useEffect(() => {
     const fetchExam = async () => {
@@ -329,82 +406,7 @@ const ExamWindow = () => {
     setShowSubmitModal(true);
   };
 
-  const handleFinalSubmit = async (isAuto = false, cheated = false) => {
-    try {
-      const attemptId = localStorage.getItem("attemptId");
-      if (!attemptId) {
-        alert("No active attempt found.");
-        return;
-      }
-
-      const formattedAnswers = exam.questions.map((q, idx) => ({
-        questionId: q.questionRef._id,
-        selectedOption: answers[idx]?.answer || null,
-      }));
-
-      const res = await fetch(
-        `http://localhost:5000/api/attempt/${attemptId}/submit`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            "x-auth-token": token,
-          },
-          body: JSON.stringify({
-            answers: formattedAnswers,
-            tabSwitchCount: tabSwitchCount,
-          }),
-        }
-      );
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Submission failed");
-
-      if (isAuto) {
-        cheated // ❌ Cheating limit exceeded
-          ? setAlertConfig({
-              message:
-                "Maximum tab switch attempts reached. Submitting exam...",
-              type: "error",
-              autoClose: true,
-              duration: 5,
-              closeWindow: true,
-            }) // ⏰ Auto-submit
-          : setAlertConfig({
-              message: "Time is up! Exam auto-submitted.",
-              type: "info",
-              autoClose: true,
-              duration: 5,
-              closeWindow: true,
-            });
-      } else {
-        setAlertConfig({
-          message: "Exam submitted successfully!",
-          type: "success",
-          autoClose: true,
-          duration: 5,
-          closeWindow: true,
-        });
-      }
-      // close window after 5 seconds
-      setTimeout(() => {
-        window.close();
-      }, 5000);
-
-      setShowSubmitModal(false);
-      // optional redirect
-      // navigate(`/exam-result/${exam._id}`);
-    } catch (err) {
-      console.error("❌ Error submitting exam:", err);
-      setAlertConfig({
-        message: "Failed to submit exam. Try again.",
-        type: "success",
-        autoClose: false,
-        duration: 5,
-        closeWindow: false,
-      });
-    }
-  };
+ 
 
   // Check if current question has an image
   const hasImage = question.imageUrl;

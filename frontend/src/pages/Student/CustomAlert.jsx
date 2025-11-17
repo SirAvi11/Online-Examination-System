@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Modal, Button } from "react-bootstrap";
 
 const CustomAlert = ({ config, onClose }) => {
-  const { message, type = "info", autoClose = false, duration = 5, closeWindow = false } = config;
+  const { message, type = "info", autoClose = false, duration = 3, closeWindow = false } = config;
   const [countdown, setCountdown] = useState(duration);
 
   useEffect(() => {

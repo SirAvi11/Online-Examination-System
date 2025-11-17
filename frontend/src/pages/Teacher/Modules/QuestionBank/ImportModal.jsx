@@ -103,7 +103,7 @@ export default function ImportModal({
       }
       if (
         !q.options ||
-        q.options.filter((opt) => opt && opt.trim() !== "").length < 2
+        !q.options || q.options.filter((opt) => (opt + "").trim() !== "").length < 2
       ) {
         rowErrors.push("At least 2 options required");
       }
@@ -177,47 +177,29 @@ export default function ImportModal({
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
     const rows = XLSX.utils.sheet_to_json(sheet);
 
-    // Map rows to Question objects
-    const parsedQuestions = rows.map((row, idx) => {
-      const options = [
-        row["Option A *"] || "",
-        row["Option B *"] || "",
-        row["Option C"] || "",
-        row["Option D"] || "",
-      ];
+const parsedQuestions = rows.map((row, idx) => {
+  const options = [
+    (row["Option A *"].toString() || "").trim(),
+    (row["Option B *"].toString() || "").trim(),
+    (row["Option C"].toString() || "").trim(),
+    (row["Option D"].toString() || "").trim(),
+  ];
 
-      const correctOptionIndex = (() => {
-        const letter = (row["Correct Option *"] || "")
-          .toString()
-          .trim()
-          .toUpperCase();
-        switch (letter) {
-          case "A":
-            return 0;
-          case "B":
-            return 1;
-          case "C":
-            return 2;
-          case "D":
-            return 3;
-          default:
-            return 0; // fallback
-        }
-      })();
+  const correctOptionLetter = (row["Correct Option *"] || "").toString().trim().toUpperCase();
+  const correctOptionIndex = { A:0, B:1, C:2, D:3 }[correctOptionLetter] ?? 0;
+  const correctAnswer = options[correctOptionIndex] || "";
 
-      const correctAnswer =
-        correctOptionIndex >= 0 ? options[correctOptionIndex] : "";
-
-      return {
-        _id: idx, // temp ID for UI
-        questionText: row["Question Text *"] || "",
-        options,
-        answer: correctAnswer,
-        marks: Number(row["Marks"]) || 1,
-        imageUrl: row["ImageUrl"] || "",
-        moduleId: selectedModule._id,
-      };
-    });
+  return {
+    _id: idx,
+    questionText: (row["Question Text *"] || "").toString().trim(),
+    options,
+    answer: correctAnswer,
+    correctOptionIndex: correctOptionIndex,
+    marks: Number(row["Marks"]) || 1,
+    imageUrl: row["ImageUrl"] || "",
+    moduleId: selectedModule._id,
+  };
+});
 
     const validatedQuestions = validateQuestions(parsedQuestions);
 

@@ -63,7 +63,7 @@ const DashboardView = ({ username }) => {
         title: "Best Subject",
         value: stats.highestExam?.title || "N/A",
         subtitle: stats.highestExam?.percentage
-          ? `Highest avg: ${stats.highestExam?.percentage}%`
+          ? `Highest avg: ${Number(stats.highestExam.percentage).toFixed(2)}%`
           : "No data yet",
         icon: "fa-star",
         tooltip: "Subject in which you perform best.",
