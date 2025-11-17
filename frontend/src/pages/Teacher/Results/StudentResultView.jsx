@@ -144,16 +144,16 @@ const StudentResultView = () => {
         handleApplyFilters={handleApplyFilters}
       />
 
-      <section
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(5, 1fr)", // 5 fixed slots
-          gap: "1rem",
-          justifyItems: "center", // keeps cards centered in their slot
-        }}
-      >
-        {filteredExams.length > 0 ? (
-          filteredExams.map((exam) => (
+      {filteredExams.length > 0 ? (
+        <section
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(5, 1fr)", // 5 fixed slots
+            gap: "1rem",
+            justifyItems: "center", // keeps cards centered in their slot
+          }}
+        >
+          {filteredExams.map((exam) => (
             <div
               key={exam.id}
               style={{
@@ -178,16 +178,16 @@ const StudentResultView = () => {
                 onCardClick={() => setSelectedExam(exam)}
               />
             </div>
-          ))
-        ) : (
-          <div className="text-center py-5" style={{ width: "100%" }}>
-            <h5 className="text-muted mb-2">No completed exams available</h5>
-            <p className="text-muted small">
-              Once you attempt exams, they will appear here with your scores.
-            </p>
-          </div>
-        )}
-      </section>
+          ))}
+        </section>
+      ) : (
+        <div className="text-center py-5" style={{ width: "100%" }}>
+          <h5 className="text-muted mb-2">No completed exams available</h5>
+          <p className="text-muted small">
+            Once you attempt exams, they will appear here with your scores.
+          </p>
+        </div>
+      )}
 
       {/* Result Modal */}
       <StudentResultInsight

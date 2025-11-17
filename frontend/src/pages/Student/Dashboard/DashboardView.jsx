@@ -61,9 +61,9 @@ const DashboardView = ({ username }) => {
       },
       {
         title: "Best Subject",
-        value: stats.highestExam.title || "N/A",
-        subtitle: stats.highestExam.percentage
-          ? `Highest avg: ${stats.highestExam.percentage}%`
+        value: stats.highestExam?.title || "N/A",
+        subtitle: stats.highestExam?.percentage
+          ? `Highest avg: ${stats.highestExam?.percentage}%`
           : "No data yet",
         icon: "fa-star",
         tooltip: "Subject in which you perform best.",
@@ -79,7 +79,7 @@ const DashboardView = ({ username }) => {
     const exam = dashboardData.stats.closestUpcomingExam;
     if (exam) {
       events.push({
-        title: exam.title,
+        title: exam?.title,
         start: new Date(exam.startTime), // ✅ start date
         end: new Date(exam.endTime), // ✅ end date
         registrationId: exam.registrationId, // ✅ from backend
@@ -111,7 +111,7 @@ const DashboardView = ({ username }) => {
     }
 
     const labels = dashboardData.stats.lastCompletedExams.map(
-      (exam) => exam.title
+      (exam) => exam?.title
     );
     const data = dashboardData.stats.lastCompletedExams.map(
       (exam) => exam.percentage
@@ -267,7 +267,7 @@ const DashboardView = ({ username }) => {
                       color: "#111827",
                     }}
                   >
-                    {upcomingEvents[0].title}
+                    {upcomingEvents[0]?.title}
                   </h3>
                   <p style={{ margin: "0.25rem 0", fontSize: "0.9rem" }}>
                     <strong>Date:</strong>{" "}

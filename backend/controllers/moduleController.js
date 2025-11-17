@@ -85,6 +85,7 @@ exports.updateModule = async (req, res) => {
   try {
     const { id } = req.params;
     const { name, description } = req.body;
+    const teacherId = req.user.userId;
 
     const questions = await Question.find({ moduleId: id }).select('_id');
     const questionIds = questions.map((q) => q._id);
@@ -110,8 +111,6 @@ exports.updateModule = async (req, res) => {
       return res.status(404).json({ message: 'Module not found' });
     }
 
-    res.json(updated);
-
     // log activity
     await logActivity({
       userId: teacherId,
@@ -120,6 +119,10 @@ exports.updateModule = async (req, res) => {
       entityType: "module",
       entityName: updated.name
     });
+
+    res.json(updated);
+
+    
 
   } catch (err) {
     res.status(500).json({ message: err.message });

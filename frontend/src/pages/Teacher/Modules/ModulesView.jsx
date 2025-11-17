@@ -426,7 +426,7 @@ export default function ModulesView({ teacherId }) {
                           >
                             {!module.usedInExam && (<i
                                 className={`fa ${
-                                  isEditingName ? "fa-save" : "fa-edit"
+                                  isEditingDesc ? "fa-save" : "fa-edit"
                                 }`}
                               />)}
                           </Button>

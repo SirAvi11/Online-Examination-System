@@ -61,8 +61,7 @@ const TeacherResultView = () => {
           month: "short",
           day: "numeric",
         });
-        const dateRange =
-          startDateStr;
+        const dateRange = startDateStr;
 
         const startTimeStr = start.toLocaleTimeString(undefined, {
           hour: "2-digit",
@@ -145,7 +144,10 @@ const TeacherResultView = () => {
   // ✅ Pagination logic
   const totalPages = Math.ceil(filteredExams.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentExams = filteredExams.slice(startIndex, startIndex + itemsPerPage);
+  const currentExams = filteredExams.slice(
+    startIndex,
+    startIndex + itemsPerPage
+  );
 
   const goToPage = (page) => {
     if (page >= 1 && page <= totalPages) {
@@ -182,18 +184,20 @@ const TeacherResultView = () => {
             handleApplyFilters={handleApplyFilters}
           />
 
-          <section style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(5, 1fr)", // 5 fixed slots
-            gap: "1rem",
-            justifyItems: "center" // keeps cards centered in their slot
-          }}>
-            {currentExams.length > 0 ? (
-              currentExams.map((exam) => (
+          {currentExams.length > 0 ? (
+            <section
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(5, 1fr)", // 5 fixed slots
+                gap: "1rem",
+                justifyItems: "center", // keeps cards centered in their slot
+              }}
+            >
+              {currentExams.map((exam) => (
                 <div
                   key={exam.id}
                   style={{
-                    width: "240px" // fixed width for each card
+                    width: "240px", // fixed width for each card
                   }}
                 >
                   <ExamStatusCard
@@ -207,23 +211,27 @@ const TeacherResultView = () => {
                     maxWidth="100%"
                   />
                 </div>
-              ))
-            ) : (
-              <div className="text-center py-5" style={{ width: "100%" }}>
-                <h5 className="text-muted mb-2">No completed exams available</h5>
-                <p className="text-muted small">
-                  Once you’ve conducted exams, they will appear here for review.
-                </p>
-              </div>
-            )}
-          </section>
+              ))}
+            </section>
+          ) : (
+            <div className="text-center py-5" style={{ width: "100%" }}>
+              <h5 className="text-muted mb-2">No completed exams available</h5>
+              <p className="text-muted small">
+                Once you’ve conducted exams, they will appear here for review.
+              </p>
+            </div>
+          )}
 
           {/* ✅ Pagination Controls */}
           {filteredExams.length > itemsPerPage && (
             <div className="d-flex justify-content-center mt-4">
               <nav>
                 <ul className="pagination mb-0">
-                  <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
+                  <li
+                    className={`page-item ${
+                      currentPage === 1 ? "disabled" : ""
+                    }`}
+                  >
                     <button
                       className="page-link"
                       onClick={() => goToPage(currentPage - 1)}
@@ -235,7 +243,9 @@ const TeacherResultView = () => {
                   {Array.from({ length: totalPages }, (_, index) => (
                     <li
                       key={index}
-                      className={`page-item ${currentPage === index + 1 ? "active" : ""}`}
+                      className={`page-item ${
+                        currentPage === index + 1 ? "active" : ""
+                      }`}
                     >
                       <button
                         className="page-link"
@@ -246,7 +256,11 @@ const TeacherResultView = () => {
                     </li>
                   ))}
 
-                  <li className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}>
+                  <li
+                    className={`page-item ${
+                      currentPage === totalPages ? "disabled" : ""
+                    }`}
+                  >
                     <button
                       className="page-link"
                       onClick={() => goToPage(currentPage + 1)}
