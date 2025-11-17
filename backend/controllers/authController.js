@@ -6,6 +6,14 @@ const jwt = require('jsonwebtoken');
 exports.registerUser = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
+
+    // Validation: Teacher must upload PDF
+    if (role === "Teacher" && !req.file) {
+      return res.status(400).json({
+        success: false,
+        message: "Teacher ID PDF is required for Teacher registration.",
+      });
+    }
     
     // Check if email already exists
     const existingEmail = await User.findOne({ email });
@@ -31,7 +39,8 @@ exports.registerUser = async (req, res) => {
       email, 
       passwordHash: password, // hashed by pre-save hook
       role: role || 'Student',
-      status: role === 'Teacher' ? 'Under Review' : 'Active' // optional logic
+      status: role === 'Teacher' ? 'Under Review' : 'Active', // optional logic
+      teacherIdFile: req.file ? req.file.filename : null, // save filename
     });
     
     await user.save();

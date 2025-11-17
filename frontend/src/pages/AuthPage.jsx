@@ -23,12 +23,14 @@ export default function AuthPage() {
   const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, files } = e.target;
+
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: files ? files[0] : value, // <-- File or text
     }));
-    // Clear error when user types
+
+    // Clear error when user types or uploads a file
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
     }
@@ -69,11 +71,22 @@ export default function AuthPage() {
 
   const handleRegister = async () => {
     try {
-      const response = await axios.post(`${API_URL}/users/register`, {
-        name: formData.username,
-        email: formData.email,
-        password: formData.password,
-        role: formData.role,
+      const form = new FormData();
+
+      form.append("name", formData.username);
+      form.append("email", formData.email);
+      form.append("password", formData.password);
+      form.append("role", formData.role);
+
+      // Append file ONLY if teacher
+      if (formData.role === "Teacher" && formData.teacherIdFile) {
+        form.append("teacherIdFile", formData.teacherIdFile);
+      }
+
+      const response = await axios.post(`${API_URL}/users/register`, form, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       });
 
       return response.data;

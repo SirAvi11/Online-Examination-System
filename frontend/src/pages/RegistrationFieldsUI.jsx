@@ -1,6 +1,10 @@
 import React from "react";
 
-export default function RegistrationFieldsUI({ formData, errors, handleChange }) {
+export default function RegistrationFieldsUI({
+  formData,
+  errors,
+  handleChange,
+}) {
   return (
     <>
       <div className="mb-3 d-flex flex-column align-items-start">
@@ -9,7 +13,9 @@ export default function RegistrationFieldsUI({ formData, errors, handleChange })
         </label>
         <input
           type="email"
-          className={`form-control input-focus ${errors.email ? "is-invalid" : ""}`}
+          className={`form-control input-focus ${
+            errors.email ? "is-invalid" : ""
+          }`}
           id="email"
           name="email"
           value={formData.email}
@@ -25,7 +31,9 @@ export default function RegistrationFieldsUI({ formData, errors, handleChange })
         </label>
         <input
           type="text"
-          className={`form-control input-focus ${errors.username ? "is-invalid" : ""}`}
+          className={`form-control input-focus ${
+            errors.username ? "is-invalid" : ""
+          }`}
           id="username"
           name="username"
           value={formData.username}
@@ -37,22 +45,71 @@ export default function RegistrationFieldsUI({ formData, errors, handleChange })
         )}
       </div>
 
-      <div className="mb-3 d-flex flex-column align-items-start">
-        <label htmlFor="role" className="form-label text-secondary small">
-          Role
-        </label>
-        <select
-          id="role"
-          name="role"
-          className={`form-select ${errors.role ? "is-invalid" : ""}`}
-          value={formData.role}
-          onChange={handleChange}
-        >
-          <option value="">-- Select Role --</option>
-          <option value="Teacher">Teacher</option>
-          <option value="Student">Student</option>
-        </select>
-        {errors.role && <div className="invalid-feedback">{errors.role}</div>}
+      <div className="mb-3 d-flex flex-column align-items-start w-100">
+        <div className="d-flex w-100 gap-2 align-items-start">
+          <div className="d-flex flex-column flex-grow-1">
+            <label htmlFor="role" className="form-label text-secondary small">
+            Role
+          </label>
+          {/* Role Dropdown */}
+          <select
+            id="role"
+            name="role"
+            className={`form-select ${errors.role ? "is-invalid" : ""}`}
+            style={{ flex: formData.role === "Teacher" ? 1 : 1 }}
+            value={formData.role}
+            onChange={handleChange}
+          >
+            <option value="">-- Select Role --</option>
+            <option value="Teacher">Teacher</option>
+            <option value="Student">Student</option>
+          </select>
+          </div>
+          
+
+          {/* Conditional Upload Field */}
+          {formData.role === "Teacher" && (
+            <div
+              className="d-flex flex-column"
+              style={{ flex: 1, maxWidth: "160px" }}
+            >
+              <label
+                htmlFor="teacherId"
+                className="form-label text-secondary small"
+              >
+                Teacher ID
+              </label>
+
+               <label
+                htmlFor="teacherId"
+                className="btn btn-outline-secondary text-truncate"
+                style={{
+                  cursor: "pointer",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textAlign: "center",
+                  padding: "5px"
+                }}
+              >
+                {formData.teacherIdFile ? formData.teacherIdFile.name : "Upload PDF"}
+              </label>
+
+              <input
+                id="teacherId"
+                type="file"
+                accept="application/pdf"
+                name="teacherIdFile"
+                className="form-control"
+                onChange={handleChange}
+                style={{ display: "none" }}
+              />
+            </div>
+          )}
+        </div>
+
+        {errors.role && (
+          <div className="invalid-feedback d-block">{errors.role}</div>
+        )}
       </div>
 
       <div className="mb-3 d-flex flex-column align-items-start">
@@ -61,7 +118,9 @@ export default function RegistrationFieldsUI({ formData, errors, handleChange })
         </label>
         <input
           type="password"
-          className={`form-control input-focus ${errors.password ? "is-invalid" : ""}`}
+          className={`form-control input-focus ${
+            errors.password ? "is-invalid" : ""
+          }`}
           id="password"
           name="password"
           value={formData.password}

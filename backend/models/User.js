@@ -29,6 +29,10 @@ const userSchema = new mongoose.Schema({
     required: [true, 'Role is required'],
     default: 'Student'
   },
+  teacherIdFile: {
+    type: String,
+    default: null
+  },
   status: {
     type: String,
     enum: ['Active', 'Under Review', 'Rejected'],
